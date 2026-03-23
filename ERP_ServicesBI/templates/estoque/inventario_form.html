@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}{% if inventario.status == 'finalizado' or inventario.status == 'concluido' %}Visualizar{% else %}Editar{% endif %} Inventário - ERP ServicesBI{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 20px;">
+    <h2 style="margin: 0; font-size: 24px; color: #1f2937;">ESTOQUE</h2>
+    <p style="margin: 5px 0 0 0; color: #6b7280;">{% if inventario.status == 'finalizado' or inventario.status == 'concluido' %}Visualização de{% else %}Realização de{% endif %} inventário</p>
+</div>
+
+{% if inventario.status != 'finalizado' and inventario.status != 'concluido' %}
+<div style="background: #fef3c7; border: 1px solid #fcd34d; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+    <strong style="color: #92400e;">Progresso:</strong> 
+    <span style="color: #92400e;">{{ contados|default:0 }} de {{ total_itens|default:itens.count }} produtos contados ({{ divergentes|default:0 }} divergências)</span>
+</div>
+{% endif %}
+
+<div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #e5e7eb; flex-wrap: wrap; gap: 15px;">
+        <h3 style="margin: 0; font-size: 18px; color: #1f2937;">Inventário #{{ inventario.numero|default:inventario.id }} - {{ inventario.descricao|default:"Sem descrição" }}</h3>
+        <div>
+            {% if inventario.status != 'finalizado' and inventario.status != 'concluido' %}
+                <form method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="finalizar">
+                    <button type="submit" style="padding: 10px 20px; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;" onclick="return confirm('Tem certeza que deseja finalizar o inventário? O estoque será ajustado.')">✅ Finalizar Inventário</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #f59e0b; color: white;">
+                    <th style="padding: 12px; text-align: left;">Produto</th>
+                    <th style="padding: 12px; text-align: left;">Código</th>
+                    <th style="padding: 12px; text-align: center;">Qtd. Sistema</th>
+                    <th style="padding: 12px; text-align: center;">Qtd. Contada</th>
+                    <th style="padding: 12px; text-align: center;">Diferença</th>
+                    <th style="padding: 12px; text-align: center;">Ajuste</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in itens %}
+                <tr style="border-bottom: 1px solid #e5e7eb; {% if item.diferenca != 0 %}background: #fef3c7;{% endif %}">
+                    <td style="padding: 12px;">{{ item.produto.descricao }}</td>
+                    <td style="padding: 12px;">{{ item.produto.codigo|default:"-" }}</td>
+                    <td style="padding: 12px; text-align: center;">{{ item.quantidade_sistema|floatformat:3 }}</td>
+                    <td style="padding: 12px; text-align: center;">
+                        {% if inventario.status != 'finalizado' and inventario.status != 'concluido' %}
+                            <form method="post" style="display: flex; gap: 5px; justify-content: center;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="update_item">
+                                <input type="hidden" name="item_id" value="{{ item.id }}">
+                                <input type="number" name="quantidade_contada" value="{{ item.quantidade_contada|default:0 }}" 
+                                       style="width: 100px; text-align: center; padding: 6px; border: 1px solid #d1d5db; border-radius: 4px;" 
+                                       min="0" step="0.001" onchange="this.form.submit()">
+                            </form>
+                        {% else %}
+                            <strong>{{ item.quantidade_contada|floatformat:3 }}</strong>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 12px; text-align: center; font-weight: 600; color: {% if item.diferenca > 0 %}#22c55e{% elif item.diferenca < 0 %}#ef4444{% else %}#6b7280{% endif %};">
+                        {% if item.diferenca > 0 %}+{% endif %}{{ item.diferenca|floatformat:3 }}
+                    </td>
+                    <td style="padding: 12px; text-align: center;">
+                        {% if item.diferenca != 0 %}
+                            <span style="color: {% if item.diferenca > 0 %}#22c55e{% else %}#ef4444{% endif %}; font-weight: 500;">
+                                {% if item.diferenca > 0 %}📥 Entrada{% else %}📤 Saída{% endif %}
+                            </span>
+                        {% else %}
+                            <span style="color: #6b7280;">✓ OK</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="padding: 40px; text-align: center; color: #6b7280;">
+                        Nenhum item no inventário
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div style="margin-top: 20px;">
+    <a href="{% url 'inventario_list' %}" style="padding: 10px 20px; background: #6b7280; color: white; border: none; border-radius: 6px; text-decoration: none; font-size: 14px; display: inline-block;">← Voltar</a>
+</div>
+{% endblock %}

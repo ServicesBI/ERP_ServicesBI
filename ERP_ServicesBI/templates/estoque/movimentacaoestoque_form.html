@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Nova Movimentação - ERP ServicesBI{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 20px;">
+    <h2 style="margin: 0; font-size: 24px; color: #1f2937;">ESTOQUE</h2>
+    <p style="margin: 5px 0 0 0; color: #6b7280;">Registrar movimentação manual</p>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'error' %}
+        <div style="margin-bottom: 15px; padding: 12px; border-radius: 6px; background: #fee2e2; color: #dc2626; border: 1px solid #fecaca;">
+            {{ message }}
+        </div>
+        {% else %}
+        <div style="margin-bottom: 15px; padding: 12px; border-radius: 6px; background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0;">
+            {{ message }}
+        </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px;">
+    <form method="post">
+        {% csrf_token %}
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <label style="font-weight: 500; color: #374151;">Produto *</label>
+                <select name="produto" required style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
+                    <option value="">Selecione...</option>
+                    {% for produto in produtos %}
+                        <option value="{{ produto.id }}">
+                            {{ produto.descricao }} (Estoque: {{ produto.quantidade_estoque|default:produto.estoque_atual|floatformat:3 }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <label style="font-weight: 500; color: #374151;">Tipo *</label>
+                <select name="tipo" id="tipo" required onchange="atualizarEstoqueInfo()" style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
+                    <option value="">Selecione...</option>
+                    {% for value, label in tipos %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <label style="font-weight: 500; color: #374151;">Quantidade *</label>
+                <input type="number" name="quantidade" id="quantidade" required min="0.001" step="0.001" style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <label style="font-weight: 500; color: #374151;">Observações</label>
+                <input type="text" name="observacoes" placeholder="Motivo da movimentação..." style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 10px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <button type="submit" style="padding: 10px 20px; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 5px;">💾 Salvar Movimentação</button>
+            <a href="{% url 'movimentacaoestoque_list' %}" style="padding: 10px 20px; background: #6b7280; color: white; border: none; border-radius: 6px; text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 5px;">❌ Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<script>
+function atualizarEstoqueInfo() {
+    const tipo = document.getElementById('tipo').value;
+    const quantidadeInput = document.getElementById('quantidade');
+    
+    if (tipo === 'saida') {
+        quantidadeInput.style.borderColor = '#ef4444';
+    } else if (tipo === 'entrada') {
+        quantidadeInput.style.borderColor = '#22c55e';
+    } else {
+        quantidadeInput.style.borderColor = '#d1d5db';
+    }
+}
+</script>
+{% endblock %}

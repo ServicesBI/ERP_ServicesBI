@@ -1,0 +1,342 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}
+    {% if nota %}Editar{% else %}Nova{% endif %} NF Entrada - ERP ServicesBI
+{% endblock %}
+
+{% block content %}
+<div class="erp-page-header erp-mb-6">
+    <h1 class="erp-page-title">CADASTRO</h1>
+    <p class="erp-page-subtitle">{% if nota %}Editar{% else %}Nova{% endif %} Nota Fiscal de Entrada</p>
+</div>
+
+<div class="erp-card" style="max-width: 1200px;">
+    {% if messages %}
+        {% for message in messages %}
+            {% if message.tags == 'error' %}
+            <div class="erp-alert erp-alert--error erp-mb-4">
+                {{ message }}
+            </div>
+            {% else %}
+            <div class="erp-alert erp-alert--success erp-mb-4">
+                {{ message }}
+            </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" id="form-nota" class="erp-form">
+        {% csrf_token %}
+        
+        <!-- CHECKBOX ATIVO -->
+        {% if nota %}
+        <div class="erp-form-group erp-mb-4">
+            <label class="erp-checkbox" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: var(--gray-700);">
+                <input type="hidden" name="ativo" value="False">
+                <input type="checkbox" 
+                       name="ativo" 
+                       value="True"
+                       {% if nota.ativo %}checked{% endif %}
+                       style="width: 16px; height: 16px; cursor: pointer;">
+                <span><strong>Nota Fiscal Ativa</strong></span>
+            </label>
+        </div>
+        {% endif %}
+        
+        <!-- ERROS DO FORMULÁRIO -->
+        {% if form.errors %}
+        <div class="erp-alert erp-alert--error erp-mb-4">
+            <strong>❌ Corrija os erros abaixo:</strong>
+            <ul style="margin-top: 8px; margin-bottom: 0; padding-left: 20px;">
+                {% for field in form %}
+                    {% for error in field.errors %}
+                    <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <h3 class="erp-section-title">Dados da Nota Fiscal</h3>
+        
+        <div class="erp-form-row">
+            <div class="erp-form-group" style="flex: 0 0 150px;">
+                <label class="erp-label erp-label-required" for="numero_nf">Número NF</label>
+                <input type="text" name="numero_nf" id="numero_nf" 
+                       value="{{ nota.numero_nf|default:'' }}" 
+                       class="erp-input" required>
+            </div>
+            
+            <div class="erp-form-group" style="flex: 2;">
+                <label class="erp-label erp-label-required" for="fornecedor">Fornecedor</label>
+                <select name="fornecedor" id="fornecedor" class="erp-select" required>
+                    <option value="">Selecione...</option>
+                    {% for fornecedor in fornecedores %}
+                    <option value="{{ fornecedor.id }}" {% if nota.fornecedor.id == fornecedor.id %}selected{% endif %}>
+                        {{ fornecedor.nome_razao_social }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="erp-form-group" style="flex: 0 0 150px;">
+                <label class="erp-label erp-label-required" for="data_entrada">Data Entrada</label>
+                <input type="date" name="data_entrada" id="data_entrada" 
+                       value="{{ nota.data_entrada|date:'Y-m-d' }}" 
+                       class="erp-input" required>
+            </div>
+            
+            <div class="erp-form-group" style="flex: 1;">
+                <label class="erp-label" for="pedido">Pedido Origem</label>
+                <select name="pedido" id="pedido" class="erp-select">
+                    <option value="">Nenhum</option>
+                    {% for pedido in pedidos %}
+                    <option value="{{ pedido.id }}" {% if nota.pedido_origem.id == pedido.id %}selected{% endif %}>
+                        {{ pedido.numero }} - {{ pedido.fornecedor.nome_razao_social }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        
+        <div class="erp-form-group erp-mb-4">
+            <label class="erp-label" for="observacoes">Observações</label>
+            <textarea name="observacoes" id="observacoes" rows="2" class="erp-textarea" 
+                      placeholder="Informações adicionais...">{{ nota.observacoes|default:'' }}</textarea>
+        </div>
+        
+        {% if not nota %}
+        <!-- BOTÕES PARA NOVA NF -->
+        <div class="erp-flex erp-gap-2 erp-mt-6">
+            <button type="submit" class="erp-btn erp-btn--primary">
+                <span>💾</span>
+                <span>Salvar e Continuar</span>
+            </button>
+            <a href="{% url 'ERP_ServicesBI:notafiscalentrada_list' %}" class="erp-btn erp-btn--outline" style="color: #fc4564; border-color: #fc4564;">
+                <span>Cancelar</span>
+            </a>
+        </div>
+        {% else %}
+        <!-- BOTÕES PARA EDIÇÃO -->
+        <div class="erp-flex erp-gap-2 erp-mt-4">
+            <button type="submit" class="erp-btn erp-btn--primary">
+                <span>💾</span>
+                <span>Atualizar Cabeçalho</span>
+            </button>
+            <a href="{% url 'ERP_ServicesBI:notafiscalentrada_list' %}" class="erp-btn erp-btn--outline" style="color: #fc4564; border-color: #fc4564;">
+                <span>Cancelar</span>
+            </a>
+        </div>
+        {% endif %}
+    </form>
+
+    {% if nota %}
+    <!-- SEÇÃO DE ITENS -->
+    <div class="erp-section-divider erp-mt-6 erp-pt-6" style="border-top: 2px solid var(--gray-200);">
+        <h3 class="erp-section-title">Itens da Nota Fiscal</h3>
+        
+        <!-- ALERTA DE ESTOQUE -->
+        <div class="erp-alert erp-alert--info erp-mb-4" style="background: var(--info-50); border-color: var(--info-200); color: var(--info-700);">
+            <strong>ℹ️ Informação:</strong> Ao adicionar itens, o estoque será automaticamente atualizado. Ao remover, o estoque será estornado.
+        </div>
+        
+        <!-- FORMULÁRIO ADICIONAR ITEM -->
+        <div class="erp-bg-gray-50 erp-p-4 erp-rounded erp-mb-4" style="background: var(--gray-50); padding: 20px; border-radius: 8px;">
+            <form method="post" id="form-add-item" class="erp-form erp-mb-0">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_item">
+                
+                <div class="erp-form-row erp-items-end">
+                    <div class="erp-form-group" style="flex: 3;">
+                        <label class="erp-label erp-label-required" for="produto">Produto</label>
+                        <select name="produto" id="produto" class="erp-select" required>
+                            <option value="">Selecione...</option>
+                            {% for produto in produtos %}
+                            <option value="{{ produto.id }}" 
+                                    data-preco="{{ produto.preco_custo|default:produto.preco_venda }}" 
+                                    data-estoque="{{ produto.estoque_atual }}">
+                                {{ produto.codigo }} - {{ produto.descricao }} (Estoque: {{ produto.estoque_atual|number_br }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="erp-form-group" style="flex: 1;">
+                        <label class="erp-label erp-label-required" for="quantidade">Quantidade</label>
+                        <input type="number" name="quantidade" id="quantidade" step="0.001" value="1" 
+                               class="erp-input" required min="0.001">
+                    </div>
+                    <div class="erp-form-group" style="flex: 1;">
+                        <label class="erp-label erp-label-required" for="preco_unitario">Preço Unit. (R$)</label>
+                        <input type="text" name="preco_unitario" id="preco_unitario" 
+                               class="erp-input moeda" placeholder="0,00" required>
+                    </div>
+                    <div class="erp-form-group" style="flex: 0 0 auto;">
+                        <button type="submit" class="erp-btn erp-btn--success">
+                            <span>+</span>
+                            <span>Adicionar</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- TABELA DE ITENS -->
+        {% if itens %}
+        <div class="erp-table-container">
+            <table class="erp-table">
+                <thead>
+                    <tr>
+                        <th class="erp-text-left">Produto</th>
+                        <th class="erp-text-center" style="width: 100px;">Qtd</th>
+                        <th class="erp-text-right" style="width: 150px;">Preço Unit.</th>
+                        <th class="erp-text-right" style="width: 150px;">Total</th>
+                        <th class="erp-text-center" style="width: 100px;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in itens %}
+                    <tr>
+                        <td class="erp-text-left">
+                            <strong>{{ item.produto.descricao }}</strong>
+                            <br><small style="color: var(--gray-500);">{{ item.produto.codigo }}</small>
+                        </td>
+                        <td class="erp-text-center">{{ item.quantidade|number_br }}</td>
+                        <td class="erp-text-right">{{ item.preco_unitario|currency_br }}</td>
+                        <td class="erp-text-right erp-font-semibold">{{ item.subtotal|currency_br }}</td>
+                        <td class="erp-text-center">
+                            <div class="erp-actions">
+                                <button class="erp-actions__btn" type="button">
+                                    ⚙️ Ações ▼
+                                </button>
+                                <div class="erp-actions__menu">
+                                    <a href="{% url 'ERP_ServicesBI:notafiscalentrada_item_edit' nota.pk item.pk %}" class="erp-actions__item">
+                                        ✏️ Editar
+                                    </a>
+                                    <form method="post" style="display: contents;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="remove_item">
+                                        <input type="hidden" name="item_id" value="{{ item.id }}">
+                                        <button type="submit" class="erp-actions__item erp-actions__item--danger" 
+                                                style="width: 100%; text-align: left; background: none; border: none; cursor: pointer;"
+                                                onclick="return confirm('Remover este item? O estoque será estornado.')">
+                                            🗑️ Remover
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr style="background: var(--gray-100); font-weight: 600;">
+                        <td colspan="3" class="erp-text-right" style="font-size: 16px;">TOTAL DA NF:</td>
+                        <td class="erp-text-right erp-text-primary" style="font-size: 20px; color: var(--primary-600);">
+                            {{ nota.valor_total|currency_br }}
+                        </td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        {% else %}
+        <div class="erp-empty" style="padding: 48px; text-align: center; color: var(--gray-500);">
+            <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
+            <h3 style="font-size: 18px; font-weight: 600; color: var(--gray-700); margin-bottom: 8px;">
+                Nenhum item adicionado
+            </h3>
+            <p>Use o formulário acima para adicionar produtos à nota fiscal.</p>
+        </div>
+        {% endif %}
+        
+        <!-- BOTÕES FINAIS -->
+        <div class="erp-flex erp-gap-2 erp-justify-end erp-mt-6 erp-pt-4" style="border-top: 1px solid var(--gray-200);">
+            <a href="{% url 'ERP_ServicesBI:notafiscalentrada_list' %}" class="erp-btn erp-btn--primary">
+                <span>✓</span>
+                <span>Finalizar NF</span>
+            </a>
+            <a href="{% url 'ERP_ServicesBI:notafiscalentrada_list' %}" class="erp-btn erp-btn--outline" style="color: #fc4564; border-color: #fc4564;">
+                <span>Cancelar</span>
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Máscara Moeda Brasileira
+function mascaraMoeda(input) {
+    let valor = input.value.replace(/\D/g, '');
+    valor = (valor / 100).toFixed(2) + '';
+    valor = valor.replace('.', ',');
+    valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+    input.value = valor;
+}
+
+// Aplicar máscara aos campos de moeda
+document.querySelectorAll('.moeda').forEach(function(input) {
+    input.addEventListener('input', function() {
+        mascaraMoeda(this);
+    });
+    
+    // Formatar valor inicial se existir
+    if (input.value && !input.value.includes(',')) {
+        mascaraMoeda(input);
+    }
+});
+
+// Auto-preenche preço do produto
+document.getElementById('produto').addEventListener('change', function() {
+    var selected = this.options[this.selectedIndex];
+    var preco = selected.getAttribute('data-preco');
+    if (preco) {
+        var inputPreco = document.getElementById('preco_unitario');
+        inputPreco.value = parseFloat(preco).toFixed(2).replace('.', ',');
+        mascaraMoeda(inputPreco);
+    }
+});
+
+// Limpar máscaras antes de enviar formulários
+document.getElementById('form-add-item').addEventListener('submit', function(e) {
+    var inputPreco = document.getElementById('preco_unitario');
+    if (inputPreco) {
+        inputPreco.value = inputPreco.value.replace(/\./g, '').replace(',', '.');
+    }
+});
+
+// Dropdown de ações
+document.querySelectorAll('.erp-actions__btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        document.querySelectorAll('.erp-actions__menu').forEach(function(menu) {
+            if (menu !== btn.nextElementSibling) {
+                menu.classList.remove('active');
+            }
+        });
+        var menu = btn.nextElementSibling;
+        var rect = btn.getBoundingClientRect();
+        menu.style.left = (rect.right - 160) + 'px';
+        menu.style.top = (rect.bottom + 5) + 'px';
+        menu.classList.toggle('active');
+    });
+});
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.erp-actions')) {
+        document.querySelectorAll('.erp-actions__menu').forEach(function(menu) {
+            menu.classList.remove('active');
+        });
+    }
+});
+
+window.addEventListener('scroll', function() {
+    document.querySelectorAll('.erp-actions__menu').forEach(function(menu) {
+        menu.classList.remove('active');
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,346 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if produto %}Editar{% else %}Novo{% endif %} Produto - ERP ServicesBI
+{% endblock %}
+
+{% block content %}
+<div class="erp-page-header erp-mb-6">
+    <h1 class="erp-page-title">CADASTRO</h1>
+    <p class="erp-page-subtitle">{% if produto %}Editar{% else %}Novo{% endif %} Produto</p>
+</div>
+
+<div class="erp-card" style="max-width: 900px;">
+    {% if messages %}
+        {% for message in messages %}
+            {% if message.tags == 'error' %}
+            <div class="erp-alert erp-alert--error erp-mb-4">
+                {{ message }}
+            </div>
+            {% else %}
+            <div class="erp-alert erp-alert--success erp-mb-4">
+                {{ message }}
+            </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" id="produtoForm" class="erp-form" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <!-- CHECKBOX ATIVO - ACIMA DOS DADOS BÁSICOS -->
+        <div class="erp-form-group erp-mb-4">
+            <label class="erp-checkbox" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: var(--gray-700);">
+                <input type="hidden" name="ativo" value="False">
+                <input type="checkbox" 
+                       name="ativo" 
+                       value="True"
+                       {% if form.ativo.value == True or form.ativo.value == 'True' or form.ativo.value == 'on' %}checked{% endif %}
+                       {% if not form.ativo.value and not produto %}checked{% endif %}
+                       style="width: 16px; height: 16px; cursor: pointer;">
+                <span><strong>Produto Ativo</strong></span>
+            </label>
+        </div>
+        
+        <!-- MOSTRA ERROS DO FORMULÁRIO -->
+        {% if form.errors %}
+        <div class="erp-alert erp-alert--error erp-mb-4">
+            <strong>❌ Corrija os erros abaixo:</strong>
+            <ul style="margin-top: 8px; margin-bottom: 0; padding-left: 20px;">
+                {% for field in form %}
+                    {% for error in field.errors %}
+                    <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        <h3 class="erp-section-title">Dados Básicos</h3>
+        
+        <div class="erp-form-row">
+            <!-- Código/SKU -->
+            <div class="erp-form-group">
+                <label class="erp-label" for="codigo">Código/SKU</label>
+                <input type="text" name="codigo" id="codigo" 
+                       value="{{ produto.codigo|default:'' }}" 
+                       class="erp-input"
+                       placeholder="Gerado automaticamente se vazio">
+            </div>
+            
+            <!-- Código de Barras -->
+            <div class="erp-form-group">
+                <label class="erp-label" for="codigo_barras">Código de Barras (EAN)</label>
+                <input type="text" name="codigo_barras" id="codigo_barras" 
+                       value="{{ produto.codigo_barras|default:'' }}" 
+                       class="erp-input"
+                       placeholder="0000000000000"
+                       maxlength="14">
+            </div>
+        </div>
+        
+        <!-- Descrição/Nome -->
+        <div class="erp-form-group">
+            <label class="erp-label erp-label-required" for="descricao">Descrição/Nome</label>
+            <input type="text" name="descricao" id="descricao" 
+                   value="{{ produto.descricao|default:'' }}" 
+                   class="erp-input"
+                   placeholder="Digite a descrição do produto"
+                   required>
+        </div>
+        
+        <div class="erp-form-row">
+            <!-- Categoria -->
+            <div class="erp-form-group">
+                <label class="erp-label" for="categoria">Categoria</label>
+                <select name="categoria" id="categoria" class="erp-select">
+                    <option value="">Selecione...</option>
+                    {% for categoria in categorias %}
+                    <option value="{{ categoria.id }}" {% if produto.categoria_id == categoria.id %}selected{% endif %}>
+                        {{ categoria.nome }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Unidade de Medida -->
+            <div class="erp-form-group">
+                <label class="erp-label" for="unidade_medida">Unidade</label>
+                <select name="unidade_medida" id="unidade_medida" class="erp-select">
+                    <option value="UN" {% if produto.unidade_medida == 'UN' %}selected{% endif %}>Unidade (UN)</option>
+                    <option value="KG" {% if produto.unidade_medida == 'KG' %}selected{% endif %}>Quilograma (KG)</option>
+                    <option value="LT" {% if produto.unidade_medida == 'LT' %}selected{% endif %}>Litro (LT)</option>
+                    <option value="MT" {% if produto.unidade_medida == 'MT' %}selected{% endif %}>Metro (MT)</option>
+                    <option value="CX" {% if produto.unidade_medida == 'CX' %}selected{% endif %}>Caixa (CX)</option>
+                    <option value="PC" {% if produto.unidade_medida == 'PC' %}selected{% endif %}>Pacote (PC)</option>
+                    <option value="RL" {% if produto.unidade_medida == 'RL' %}selected{% endif %}>Rolo (RL)</option>
+                </select>
+            </div>
+        </div>
+        
+        <h3 class="erp-section-title erp-mt-6">Preços e Estoque</h3>
+        
+        <div class="erp-form-row">
+            <!-- Custo -->
+            <div class="erp-form-group">
+                <label class="erp-label erp-label-required" for="custo">Custo (R$)</label>
+                <input type="text" name="custo" id="custo" 
+                       value="{{ produto.custo|default:'' }}" 
+                       class="erp-input"
+                       placeholder="0,00"
+                       required>
+            </div>
+            
+            <!-- Preço de Venda -->
+            <div class="erp-form-group">
+                <label class="erp-label erp-label-required" for="preco_venda">Preço Venda (R$)</label>
+                <input type="text" name="preco_venda" id="preco_venda" 
+                       value="{{ produto.preco_venda|default:'' }}" 
+                       class="erp-input"
+                       placeholder="0,00"
+                       required>
+            </div>
+        </div>
+        
+        <div class="erp-form-row">
+            <!-- Estoque Atual -->
+            <div class="erp-form-group">
+                <label class="erp-label" for="estoque_atual">Estoque Atual</label>
+                <input type="number" name="estoque_atual" id="estoque_atual" 
+                       value="{{ produto.estoque_atual|default:'0' }}" 
+                       class="erp-input"
+                       placeholder="0"
+                       min="0"
+                       step="0.001">
+            </div>
+            
+            <!-- Estoque Mínimo -->
+            <div class="erp-form-group">
+                <label class="erp-label" for="estoque_minimo">Estoque Mínimo</label>
+                <input type="number" name="estoque_minimo" id="estoque_minimo" 
+                       value="{{ produto.estoque_minimo|default:'0' }}" 
+                       class="erp-input"
+                       placeholder="0"
+                       min="0"
+                       step="0.001">
+            </div>
+        </div>
+        
+        <h3 class="erp-section-title erp-mt-6">Dimensões e Peso</h3>
+        
+        <div class="erp-form-row">
+            <!-- Peso -->
+            <div class="erp-form-group">
+                <label class="erp-label" for="peso">Peso (kg)</label>
+                <input type="text" name="peso" id="peso" 
+                       value="{{ produto.peso|default:'' }}" 
+                       class="erp-input"
+                       placeholder="0,000">
+            </div>
+            
+            <!-- Largura -->
+            <div class="erp-form-group">
+                <label class="erp-label" for="largura">Largura (cm)</label>
+                <input type="text" name="largura" id="largura" 
+                       value="{{ produto.largura|default:'' }}" 
+                       class="erp-input"
+                       placeholder="0,00">
+            </div>
+        </div>
+        
+        <div class="erp-form-row">
+            <!-- Altura -->
+            <div class="erp-form-group">
+                <label class="erp-label" for="altura">Altura (cm)</label>
+                <input type="text" name="altura" id="altura" 
+                       value="{{ produto.altura|default:'' }}" 
+                       class="erp-input"
+                       placeholder="0,00">
+            </div>
+            
+            <!-- Comprimento -->
+            <div class="erp-form-group">
+                <label class="erp-label" for="comprimento">Comprimento (cm)</label>
+                <input type="text" name="comprimento" id="comprimento" 
+                       value="{{ produto.comprimento|default:'' }}" 
+                       class="erp-input"
+                       placeholder="0,00">
+            </div>
+        </div>
+        
+        <h3 class="erp-section-title erp-mt-6">Informações Adicionais</h3>
+        
+        <!-- Imagem -->
+        <div class="erp-form-group">
+            <label class="erp-label" for="imagem">Imagem do Produto</label>
+            <input type="file" name="imagem" id="imagem" 
+                   class="erp-input"
+                   accept="image/*">
+            {% if produto.imagem %}
+            <div class="erp-mt-2">
+                <img src="{{ produto.imagem.url }}" alt="{{ produto.descricao }}" style="max-width: 150px; max-height: 150px; border-radius: 8px; border: 1px solid var(--gray-200);">
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Observações -->
+        <div class="erp-form-group">
+            <label class="erp-label" for="observacoes">Observações</label>
+            <textarea name="observacoes" id="observacoes" rows="3" class="erp-textarea"
+                      placeholder="Informações adicionais sobre o produto...">{{ produto.observacoes|default:'' }}</textarea>
+        </div>
+        
+        <!-- BOTÕES DE AÇÃO -->
+        <div class="erp-flex erp-gap-2 erp-mt-6">
+            <button type="submit" class="erp-btn erp-btn--primary">
+                <span>💾</span>
+                <span>Salvar</span>
+            </button>
+            <a href="{% url 'ERP_ServicesBI:produto_list' %}" class="erp-btn erp-btn--outline" style="color: #fc4564; border-color: #fc4564;">
+                <span>Cancelar</span>
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+// Máscara Moeda Brasileira (R$)
+function mascaraMoeda(input) {
+    let valor = input.value.replace(/\D/g, '');
+    valor = (valor / 100).toFixed(2) + '';
+    valor = valor.replace('.', ',');
+    valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+    input.value = valor;
+}
+
+// Máscara Decimal (peso/dimensões)
+function mascaraDecimal(input, casas) {
+    let valor = input.value.replace(/\D/g, '');
+    if (casas === 3) {
+        valor = (valor / 1000).toFixed(3) + '';
+    } else {
+        valor = (valor / 100).toFixed(2) + '';
+    }
+    valor = valor.replace('.', ',');
+    input.value = valor;
+}
+
+// Código de Barras - apenas números
+function mascaraNumeros(input) {
+    input.value = input.value.replace(/\D/g, '');
+}
+
+// Aplicar máscaras
+document.addEventListener('DOMContentLoaded', function() {
+    // Campos de moeda
+    const camposMoeda = ['custo', 'preco_venda'];
+    camposMoeda.forEach(function(id) {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('input', function() {
+                mascaraMoeda(this);
+            });
+            if (input.value) {
+                mascaraMoeda(input);
+            }
+        }
+    });
+    
+    // Peso (3 casas decimais)
+    const pesoInput = document.getElementById('peso');
+    if (pesoInput) {
+        pesoInput.addEventListener('input', function() {
+            mascaraDecimal(this, 3);
+        });
+        if (pesoInput.value) {
+            mascaraDecimal(pesoInput, 3);
+        }
+    }
+    
+    // Dimensões (2 casas decimais)
+    const camposDimensao = ['largura', 'altura', 'comprimento'];
+    camposDimensao.forEach(function(id) {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('input', function() {
+                mascaraDecimal(this, 2);
+            });
+            if (input.value) {
+                mascaraDecimal(input, 2);
+            }
+        }
+    });
+    
+    // Código de barras
+    const codBarrasInput = document.getElementById('codigo_barras');
+    if (codBarrasInput) {
+        codBarrasInput.addEventListener('input', function() {
+            mascaraNumeros(this);
+        });
+    }
+});
+
+// Limpar máscaras antes de enviar
+document.getElementById('produtoForm').addEventListener('submit', function(e) {
+    const camposMoeda = ['custo', 'preco_venda'];
+    camposMoeda.forEach(function(id) {
+        const input = document.getElementById(id);
+        if (input) {
+            input.value = input.value.replace(/\./g, '').replace(',', '.');
+        }
+    });
+    
+    const camposDecimal = ['peso', 'largura', 'altura', 'comprimento'];
+    camposDecimal.forEach(function(id) {
+        const input = document.getElementById(id);
+        if (input && input.value) {
+            input.value = input.value.replace(/\./g, '').replace(',', '.');
+        }
+    });
+});
+</script>
+{% endblock %}

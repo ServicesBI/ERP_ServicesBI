@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}Excluir Nota Fiscal - ERP ServicesBI{% endblock %}
+
+{% block extra_css %}
+<style>
+.erp-confirm-delete {
+    max-width: 500px;
+    margin: 0 auto;
+    text-align: center;
+    padding: 40px 24px;
+}
+
+.erp-confirm-delete__icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 24px;
+    background: var(--danger-50);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+}
+
+.erp-confirm-delete__title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--danger);
+    margin: 0 0 16px 0;
+}
+
+.erp-confirm-delete__text {
+    color: var(--gray-600);
+    margin: 0 0 8px 0;
+    font-size: 16px;
+}
+
+.erp-confirm-delete__highlight {
+    color: var(--gray-800);
+    font-weight: 600;
+}
+
+.erp-confirm-delete__meta {
+    color: var(--gray-500);
+    font-size: 14px;
+    margin: 4px 0;
+}
+
+.erp-confirm-delete__value {
+    color: var(--gray-700);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.erp-confirm-delete__warning {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: var(--danger-50);
+    color: var(--danger);
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.erp-confirm-delete__actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 32px;
+}
+
+.erp-confirm-delete__actions .erp-btn {
+    min-width: 140px;
+    justify-content: center;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="erp-page-header erp-text-center erp-mb-6">
+    <h2 class="erp-page-header__title">VENDAS</h2>
+    <p class="erp-page-header__subtitle">Excluir nota fiscal de saída</p>
+</div>
+
+<div class="erp-card erp-confirm-delete">
+    <div class="erp-confirm-delete__icon">⚠️</div>
+    
+    <h3 class="erp-confirm-delete__title">Confirmar Exclusão</h3>
+    
+    <p class="erp-confirm-delete__text">
+        Tem certeza que deseja excluir a Nota Fiscal 
+        <span class="erp-confirm-delete__highlight">{{ nota.numero_nf }}</span>?
+    </p>
+    
+    <p class="erp-confirm-delete__meta">
+        Cliente: <span class="erp-confirm-delete__value">{{ nota.cliente.nome_razao_social }}</span>
+    </p>
+    
+    <p class="erp-confirm-delete__meta">
+        Valor Total: <span class="erp-confirm-delete__value">{{ nota.valor_total|currency_br }}</span>
+    </p>
+    
+    <div class="erp-confirm-delete__warning">
+        <span>🗑️</span>
+        <span>Esta ação não pode ser desfeita</span>
+    </div>
+    
+    <form method="post" class="erp-confirm-delete__actions">
+        {% csrf_token %}
+        <button type="submit" class="erp-btn erp-btn--danger">
+            <span>🗑️</span> Sim, Excluir
+        </button>
+        <a href="{% url 'notafiscalsaida_list' %}" class="erp-btn erp-btn--secondary">
+            <span>❌</span> Cancelar
+        </a>
+    </form>
+</div>
+{% endblock %}

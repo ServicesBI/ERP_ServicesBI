@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Excluir Produto - ERP ServicesBI{% endblock %}
+
+{% block content %}
+<div class="erp-page-header erp-mb-6">
+    <h1 class="erp-page-title">CADASTRO</h1>
+    <p class="erp-page-subtitle">Excluir Produto</p>
+</div>
+
+<div class="erp-card" style="max-width: 500px; margin: 0 auto;">
+    <div style="text-align: center; padding: 32px 24px;">
+        <!-- Ícone de Alerta -->
+        <div style="width: 80px; height: 80px; background: var(--danger-100); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
+            <span style="font-size: 40px;">⚠️</span>
+        </div>
+        
+        <h2 style="font-size: 20px; font-weight: 600; color: var(--gray-800); margin-bottom: 12px;">
+            Tem certeza que deseja excluir?
+        </h2>
+        
+        <p style="color: var(--gray-600); font-size: 14px; margin-bottom: 8px;">
+            Você está prestes a excluir o produto:
+        </p>
+        
+        <div style="background: var(--gray-100); padding: 16px; border-radius: 8px; margin: 16px 0;">
+            {% if produto.imagem %}
+            <div style="margin-bottom: 12px;">
+                <img src="{{ produto.imagem.url }}" alt="{{ produto.descricao }}" style="max-width: 100px; max-height: 100px; border-radius: 8px; border: 1px solid var(--gray-200);">
+            </div>
+            {% endif %}
+            <p style="font-size: 18px; font-weight: 600; color: var(--gray-800); margin: 0;">
+                {{ produto.descricao }}
+            </p>
+            {% if produto.codigo %}
+            <p style="font-size: 13px; color: var(--gray-500); margin: 4px 0 0 0; font-family: monospace;">
+                Código: {{ produto.codigo }}
+            </p>
+            {% endif %}
+            {% if produto.categoria %}
+            <p style="font-size: 13px; color: var(--gray-500); margin: 4px 0 0 0;">
+                Categoria: {{ produto.categoria.nome }}
+            </p>
+            {% endif %}
+        </div>
+        
+        <div style="background: var(--danger-50); border: 1px solid var(--danger-200); border-radius: 8px; padding: 12px 16px; margin-bottom: 24px;">
+            <p style="color: var(--danger-600); font-size: 13px; margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span>🚨</span>
+                <strong>Atenção:</strong> Esta ação não pode ser desfeita!
+            </p>
+        </div>
+        
+        {% if estoque_atual > 0 %}
+        <div style="background: var(--warning-50); border: 1px solid var(--warning-200); border-radius: 8px; padding: 12px 16px; margin-bottom: 24px;">
+            <p style="color: var(--warning-700); font-size: 13px; margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span>📦</span>
+                <strong>Atenção:</strong> Este produto possui {{ estoque_atual }} unidade(s) em estoque!
+            </p>
+        </div>
+        {% endif %}
+        
+        {% if vendas_count > 0 or compras_count > 0 %}
+        <div style="background: var(--warning-50); border: 1px solid var(--warning-200); border-radius: 8px; padding: 12px 16px; margin-bottom: 24px;">
+            <p style="color: var(--warning-700); font-size: 13px; margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span>📊</span>
+                <strong>Atenção:</strong> Existem movimentações vinculadas!
+            </p>
+            {% if vendas_count > 0 %}
+            <p style="color: var(--warning-600); font-size: 12px; margin: 4px 0 0 0;">
+                • {{ vendas_count }} venda(s)
+            </p>
+            {% endif %}
+            {% if compras_count > 0 %}
+            <p style="color: var(--warning-600); font-size: 12px; margin: 4px 0 0 0;">
+                • {{ compras_count }} compra(s)
+            </p>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <form method="post" style="display: flex; gap: 12px; justify-content: center;">
+            {% csrf_token %}
+            <button type="submit" class="erp-btn erp-btn--danger">
+                <span>🗑️</span>
+                <span>Sim, Excluir</span>
+            </button>
+            <a href="{% url 'ERP_ServicesBI:produto_list' %}" class="erp-btn erp-btn--outline" style="color: var(--gray-600); border-color: var(--gray-300);">
+                <span>Cancelar</span>
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}

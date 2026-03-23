@@ -1,0 +1,509 @@
+{% extends 'base.html' %}
+
+{% load custom_filters %}
+
+{% block title %}Relatório de Vendas - ERP ServicesBI{% endblock %}
+
+{% block extra_css %}
+<style>
+.erp-page-header {
+    margin-bottom: 24px;
+}
+
+.erp-page-header__title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--gray-800);
+}
+
+.erp-page-header__subtitle {
+    margin: 4px 0 0 0;
+    color: var(--gray-500);
+    font-size: 14px;
+}
+
+/* Cards de resumo */
+.erp-report-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.erp-report-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow);
+    border-left: 4px solid;
+}
+
+.erp-report-card--blue { border-left-color: var(--primary-600); }
+.erp-report-card--green { border-left-color: var(--success); }
+.erp-report-card--orange { border-left-color: var(--warning); }
+.erp-report-card--purple { border-left-color: #8b5cf6; }
+
+.erp-report-card__label {
+    margin: 0 0 4px 0;
+    font-size: 11px;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.erp-report-card__value {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--gray-800);
+}
+
+.erp-report-card__trend {
+    margin: 4px 0 0 0;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.erp-report-card__trend--up { color: var(--success); }
+.erp-report-card__trend--down { color: var(--danger); }
+
+.erp-report-card__meta {
+    margin: 4px 0 0 0;
+    font-size: 11px;
+    color: var(--gray-500);
+}
+
+/* GRÁFICOS - ALTURA AUMENTADA PARA 250px */
+.erp-report-charts {
+    display: grid;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.erp-report-charts--2-1 {
+    grid-template-columns: 2fr 1fr;
+}
+
+/* Container do gráfico com altura aumentada */
+.erp-chart-container {
+    background: white;
+    border-radius: var(--radius);
+    padding: 12px;
+    box-shadow: var(--shadow);
+    height: 300px; /* AUMENTADO de 200px para 250px */
+    position: relative;
+}
+
+.erp-chart-container__title {
+    margin: 0 0 8px 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-700);
+    height: 20px;
+}
+
+.erp-chart-container__canvas {
+    position: absolute;
+    top: 32px;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+}
+
+/* Filtros */
+.erp-report-filters {
+    background: white;
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+}
+
+.erp-report-filters__form {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.erp-report-filters__form .erp-form-group {
+    margin: 0;
+}
+
+.erp-report-filters__form .erp-label {
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.erp-report-filters__form .erp-input,
+.erp-report-filters__form .erp-select {
+    padding: 6px 10px;
+    font-size: 13px;
+    min-width: 150px;
+}
+
+.erp-report-filters__actions {
+    margin-top: 12px;
+    display: flex;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--gray-200);
+}
+
+/* Tabela */
+.erp-report-table-card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.erp-report-table-card__header {
+    padding: 16px;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.erp-report-table-card__title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+/* Empty state */
+.erp-empty {
+    padding: 32px 24px;
+    text-align: center;
+    color: var(--gray-500);
+}
+
+.erp-empty__icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+}
+
+.erp-empty__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gray-700);
+}
+
+/* Responsividade */
+@media (max-width: 1200px) {
+    .erp-report-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .erp-report-charts--2-1 {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .erp-report-cards {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="erp-page-header">
+    <h2 class="erp-page-header__title">RELATÓRIO DE VENDAS</h2>
+    <p class="erp-page-header__subtitle">Análise completa do faturamento</p>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'error' %}
+        <div class="erp-alert erp-alert--error erp-mb-4">
+            {{ message }}
+        </div>
+        {% else %}
+        <div class="erp-alert erp-alert--success erp-mb-4">
+            {{ message }}
+        </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<!-- CARDS DE RESUMO -->
+<div class="erp-report-cards">
+    <div class="erp-report-card erp-report-card--blue">
+        <p class="erp-report-card__label">Faturamento Total</p>
+        <p class="erp-report-card__value">{{ total_faturamento|default:0|currency_br }}</p>
+        <p class="erp-report-card__trend {% if var_faturamento >= 0 %}erp-report-card__trend--up{% else %}erp-report-card__trend--down{% endif %}">
+            {% if var_faturamento >= 0 %}▲{% else %}▼{% endif %} {{ var_faturamento|default:0|floatformat:1 }}%
+        </p>
+    </div>
+    
+    <div class="erp-report-card erp-report-card--green">
+        <p class="erp-report-card__label">Notas Fiscais</p>
+        <p class="erp-report-card__value">{{ total_nfs|default:0 }}</p>
+        <p class="erp-report-card__trend {% if var_nfs >= 0 %}erp-report-card__trend--up{% else %}erp-report-card__trend--down{% endif %}">
+            {% if var_nfs >= 0 %}▲{% else %}▼{% endif %} {{ var_nfs|default:0|floatformat:1 }}%
+        </p>
+    </div>
+    
+    <div class="erp-report-card erp-report-card--orange">
+        <p class="erp-report-card__label">Ticket Médio</p>
+        <p class="erp-report-card__value">{{ ticket_medio|default:0|currency_br }}</p>
+        <p class="erp-report-card__meta">Média por NF</p>
+    </div>
+    
+    <div class="erp-report-card erp-report-card--purple">
+        <p class="erp-report-card__label">Clientes Ativos</p>
+        <p class="erp-report-card__value">{{ clientes_ativos|default:0 }}</p>
+        <p class="erp-report-card__meta">No período</p>
+    </div>
+</div>
+
+<!-- GRÁFICOS - ALTURA AUMENTADA -->
+<div class="erp-report-charts erp-report-charts--2-1">
+    <div class="erp-chart-container">
+        <h3 class="erp-chart-container__title">📈 Evolução Mensal (12 Meses)</h3>
+        <canvas id="graficoLinha" class="erp-chart-container__canvas"></canvas>
+    </div>
+    
+    <div class="erp-chart-container">
+        <h3 class="erp-chart-container__title">🍩 Top 5 Clientes</h3>
+        <canvas id="graficoRosca" class="erp-chart-container__canvas"></canvas>
+    </div>
+</div>
+
+<div class="erp-chart-container erp-mb-4">
+    <h3 class="erp-chart-container__title">📊 Top 10 Produtos Mais Vendidos</h3>
+    <canvas id="graficoBarras" class="erp-chart-container__canvas"></canvas>
+</div>
+
+<!-- FILTROS -->
+<div class="erp-report-filters">
+    <form method="get" class="erp-report-filters__form">
+        <div class="erp-form-group">
+            <label class="erp-label">Data Inicial</label>
+            <input type="date" name="data_inicial" value="{{ data_inicial|default:'' }}" class="erp-input">
+        </div>
+        <div class="erp-form-group">
+            <label class="erp-label">Data Final</label>
+            <input type="date" name="data_final" value="{{ data_final|default:'' }}" class="erp-input">
+        </div>
+        <div class="erp-form-group">
+            <label class="erp-label">Cliente</label>
+            <select name="cliente" class="erp-select">
+                <option value="">Todos</option>
+                {% for cliente in clientes %}
+                <option value="{{ cliente.id }}" {% if cliente_selecionado == cliente.id %}selected{% endif %}>
+                    {{ cliente.nome_razao_social }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="erp-btn erp-btn--primary">
+            <span>🔍</span> Filtrar
+        </button>
+        <a href="{% url 'ERP_ServicesBI:relatorio_vendas' %}" class="erp-btn erp-btn--secondary">
+            <span>❌</span> Limpar
+        </a>
+    </form>
+    
+    <div class="erp-report-filters__actions">
+        <button onclick="window.print()" class="erp-btn erp-btn--primary">
+            <span>📄</span> Imprimir
+        </button>
+        <button onclick="exportarExcel()" class="erp-btn erp-btn--success">
+            <span>📊</span> Exportar Excel
+        </button>
+    </div>
+</div>
+
+<!-- TABELA -->
+<div class="erp-report-table-card">
+    <div class="erp-report-table-card__header">
+        <h3 class="erp-report-table-card__title">📋 Detalhamento de Vendas</h3>
+    </div>
+    <div class="erp-table-container">
+        <table class="erp-table" id="tabelaVendas">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Cliente</th>
+                    <th>NF</th>
+                    <th class="erp-text-center">Itens</th>
+                    <th class="erp-text-right">Valor Total</th>
+                    <th>Produtos</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for nota in notas %}
+                <tr>
+                    <td>{{ nota.data_emissao|date:"d/m/Y" }}</td>
+                    <td>{{ nota.cliente.nome_razao_social }}</td>
+                    <td>{{ nota.numero_nf }}</td>
+                    <td class="erp-text-center">{{ nota.itens.count }}</td>
+                    <td class="erp-text-right erp-font-semibold">{{ nota.valor_total|currency_br }}</td>
+                    <td style="font-size: 12px; color: var(--gray-500);">
+                        {% for item in nota.itens.all|slice:":3" %}
+                            {{ item.produto.descricao }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                        {% if nota.itens.count > 3 %}...{% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">
+                        <div class="erp-empty">
+                            <div class="erp-empty__icon">📋</div>
+                            <div class="erp-empty__title">Nenhuma venda encontrada</div>
+                            <p style="color: var(--gray-500);">No período selecionado</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Configuração comum
+const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: {
+            labels: {
+                boxWidth: 10,
+                font: { size: 10 },
+                padding: 8
+            }
+        }
+    }
+};
+
+// Gráfico de Linha
+const ctxLinha = document.getElementById('graficoLinha').getContext('2d');
+new Chart(ctxLinha, {
+    type: 'line',
+    data: {
+        labels: {{ meses_labels|safe|default:'[]' }},
+        datasets: [{
+            label: 'Faturamento',
+            data: {{ meses_valores|safe|default:'[]' }},
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 3
+        }, {
+            label: 'Qtd NFs',
+            data: {{ meses_qtd|safe|default:'[]' }},
+            borderColor: '#22c55e',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            yAxisID: 'y1',
+            tension: 0.4,
+            pointRadius: 2
+        }]
+    },
+    options: {
+        ...chartOptions,
+        interaction: { intersect: false, mode: 'index' },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    font: { size: 9 },
+                    callback: v => 'R$ ' + v.toLocaleString('pt-BR')
+                }
+            },
+            y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                grid: { drawOnChartArea: false },
+                ticks: { font: { size: 9 } }
+            },
+            x: { ticks: { font: { size: 9 } } }
+        }
+    }
+});
+
+// Gráfico de Rosca
+const ctxRosca = document.getElementById('graficoRosca').getContext('2d');
+new Chart(ctxRosca, {
+    type: 'doughnut',
+    data: {
+        labels: {{ clientes_labels|safe|default:'[]' }},
+        datasets: [{
+            data: {{ clientes_valores|safe|default:'[]' }},
+            backgroundColor: ['#2563eb', '#22c55e', '#f59e0b', '#8b5cf6', '#ef4444'],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        ...chartOptions,
+        cutout: '60%',
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: { boxWidth: 8, font: { size: 9 }, padding: 6 }
+            }
+        }
+    }
+});
+
+// Gráfico de Barras
+const ctxBarras = document.getElementById('graficoBarras').getContext('2d');
+new Chart(ctxBarras, {
+    type: 'bar',
+    data: {
+        labels: {{ produtos_labels|safe|default:'[]' }},
+        datasets: [{
+            label: 'Total Vendido',
+            data: {{ produtos_valores|safe|default:'[]' }},
+            backgroundColor: '#2563eb',
+            borderRadius: 2
+        }]
+    },
+    options: {
+        ...chartOptions,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    font: { size: 9 },
+                    callback: v => 'R$ ' + (v/1000).toFixed(0) + 'k'
+                }
+            },
+            x: {
+                ticks: { font: { size: 8 }, maxRotation: 45, minRotation: 45 }
+            }
+        }
+    }
+});
+
+// Exportar Excel
+function exportarExcel() {
+    const tabela = document.getElementById('tabelaVendas');
+    let csv = [];
+    tabela.querySelectorAll('thead th').forEach(th => csv.push(th.innerText));
+    const headers = csv.join(';');
+    csv = [headers];
+    
+    tabela.querySelectorAll('tbody tr').forEach(tr => {
+        const row = [];
+        tr.querySelectorAll('td').forEach(td => row.push(td.innerText));
+        csv.push(row.join(';'));
+    });
+    
+    const blob = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'relatorio_vendas.csv';
+    link.click();
+}
+</script>
+{% endblock %}

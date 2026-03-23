@@ -1,0 +1,1140 @@
+# -*- coding: utf-8 -*-
+"""
+ERP ServicesBI - Models Corrigidos
+Segurança: Thread-safe sequenciais
+Performance: Otimizado para PostgreSQL
+"""
+from django.db import models, transaction
+from django.contrib.auth.models import User
+from django.core.validators import MinValueValidator
+from django.utils import timezone
+from django.apps import apps
+from datetime import timedelta
+
+
+# =============================================================================
+# GERENCIADOR DE SEQUENCIAIS - THREAD SAFE
+# =============================================================================
+
+class SequencialManager:
+    """
+    Gerenciador thread-safe de sequenciais numéricos usando PostgreSQL
+    """
+    @staticmethod
+    @transaction.atomic
+    def proximo_numero(model, campo_prefixo='numero', prefixo='', padding=5):
+        """
+        Gera próximo número sequencial com lock no banco de dados
+        
+        Args:
+            model: Classe do modelo Django
+            campo_prefixo: Nome do campo que armazena o número
+            prefixo: String prefixo (ex: 'ORC-', 'PV-')
+            padding: Zeros à esquerda
+        """
+        # LOCK: SELECT FOR UPDATE garante sequencial único
+        ultimo = model.objects.select_for_update().order_by('-id').first()
+        
+        if ultimo and getattr(ultimo, campo_prefixo, None):
+            # Extrai número do último código (ex: 'ORC-00001' → 1)
+            ultimo_numero = getattr(ultimo, campo_prefixo).replace(prefixo, '')
+            try:
+                novo_id = int(ultimo_numero) + 1
+            except ValueError:
+                novo_id = 1
+        else:
+            novo_id = 1
+            
+        return f"{prefixo}{novo_id:0{padding}d}"
+
+
+# Mixin para modelos com numeração sequencial
+class SequencialMixin(models.Model):
+    """
+    Mixin que garante geração thread-safe de códigos sequenciais
+    """
+    class Meta:
+        abstract = True
+    
+    def save(self, *args, **kwargs):
+        if not self.pk:  # Apenas na criação
+            campo_numero = getattr(self, 'CAMPO_NUMERO', 'numero')
+            prefixo = getattr(self, 'PREFIXO_NUMERO', '')
+            padding = getattr(self, 'PADDING_NUMERO', 5)
+            
+            if not getattr(self, campo_numero):
+                setattr(self, campo_numero, SequencialManager.proximo_numero(
+                    self.__class__, 
+                    campo_numero,
+                    prefixo,
+                    padding
+                ))
+        
+        super().save(*args, **kwargs)
+
+
+# =============================================================================
+# MÓDULO: CADASTRO
+# Ordem: Cliente, Empresa, Fornecedor, Categoria, Produto
+# =============================================================================
+
+class Pessoa(models.Model):
+    """
+    Modelo abstrato base para Cliente e Fornecedor
+    """
+    TIPO_CHOICES = [
+        ('F', 'Física'),
+        ('J', 'Jurídica'),
+    ]
+    
+    nome_razao_social = models.CharField(max_length=255, blank=True, null=True)
+    tipo_pessoa = models.CharField(max_length=1, choices=TIPO_CHOICES, default='J')
+    cpf_cnpj = models.CharField(max_length=20, unique=True)
+    rg_inscricao_estadual = models.CharField(max_length=20, blank=True, null=True)
+    telefone = models.CharField(max_length=20, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    cep = models.CharField(max_length=10, blank=True, null=True)
+    endereco = models.CharField(max_length=255, blank=True, null=True)
+    numero = models.CharField(max_length=10, blank=True, null=True)
+    bairro = models.CharField(max_length=100, blank=True, null=True)
+    cidade = models.CharField(max_length=100, blank=True, null=True)
+    estado = models.CharField(max_length=2, blank=True, null=True)
+    ativo = models.BooleanField(default=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        abstract = True
+    
+    def __str__(self):
+        return self.nome_razao_social or "Sem nome"
+    
+    @property
+    def nome(self):
+        return self.nome_razao_social or ""
+
+
+# 1. CLIENTE
+class Cliente(Pessoa):
+    """
+    Cadastro de clientes do sistema
+    """
+    nome_fantasia = models.CharField(max_length=255, blank=True, null=True)
+    limite_credito = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True, blank=True)
+    observacoes = models.TextField(blank=True, null=True)
+    
+    class Meta:
+        verbose_name = 'Cliente'
+        verbose_name_plural = 'Clientes'
+        ordering = ['nome_razao_social']
+
+
+# 2. EMPRESA
+class Empresa(models.Model):
+    """
+    Cadastro da empresa matriz/filial do sistema
+    """
+    nome_fantasia = models.CharField(max_length=100)
+    razao_social = models.CharField(max_length=100)
+    cnpj = models.CharField(max_length=20, unique=True)
+    inscricao_estadual = models.CharField(max_length=20, blank=True, null=True)
+    inscricao_municipal = models.CharField(max_length=20, blank=True, null=True)
+    telefone = models.CharField(max_length=20, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    cep = models.CharField(max_length=10, blank=True, null=True)
+    endereco = models.CharField(max_length=255, blank=True, null=True)
+    numero = models.CharField(max_length=10, blank=True, null=True)
+    bairro = models.CharField(max_length=100, blank=True, null=True)
+    cidade = models.CharField(max_length=100, blank=True, null=True)
+    estado = models.CharField(max_length=2, blank=True, null=True)
+    ativo = models.BooleanField(default=True)
+    
+    class Meta:
+        verbose_name = 'Empresa'
+        verbose_name_plural = 'Empresas'
+        ordering = ['nome_fantasia']
+    
+    def __str__(self):
+        return self.nome_fantasia
+
+
+# 3. FORNECEDOR
+class Fornecedor(Pessoa):
+    """
+    Cadastro de fornecedores do sistema
+    """
+    nome_fantasia = models.CharField(max_length=255, blank=True, null=True)
+    observacoes = models.TextField(blank=True, null=True)
+    
+    class Meta:
+        verbose_name = 'Fornecedor'
+        verbose_name_plural = 'Fornecedores'
+        ordering = ['nome_razao_social']
+    
+    @property
+    def cnpj(self):
+        return self.cpf_cnpj if self.tipo_pessoa == 'J' else ''
+
+
+# 4. CATEGORIA
+class Categoria(models.Model):
+    """
+    Categorias para classificação de produtos
+    """
+    nome = models.CharField(max_length=100, unique=True)
+    descricao = models.TextField(blank=True, null=True)
+    ativo = models.BooleanField(default=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Categoria'
+        verbose_name_plural = 'Categorias'
+        ordering = ['nome']
+    
+    def __str__(self):
+        return self.nome
+
+
+# 5. PRODUTO
+class Produto(SequencialMixin, models.Model):
+    """
+    Cadastro de produtos/serviços do sistema
+    """
+    UNIDADE_CHOICES = [
+        ('UN', 'Unidade'),
+        ('KG', 'Quilograma'),
+        ('LT', 'Litro'),
+        ('MT', 'Metro'),
+        ('PC', 'Peça'),
+    ]
+    
+    codigo = models.CharField(max_length=20, unique=True, blank=True, null=True)
+    descricao = models.CharField(max_length=255)
+    categoria = models.ForeignKey(Categoria, on_delete=models.SET_NULL, null=True, blank=True, related_name='produtos')
+    fornecedor = models.ForeignKey(Fornecedor, on_delete=models.SET_NULL, null=True, blank=True, related_name='produtos')
+    unidade = models.CharField(max_length=2, choices=UNIDADE_CHOICES, default='UN')
+    preco_custo = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True, blank=True)
+    preco_venda = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True, blank=True)
+    estoque_atual = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True, blank=True)
+    estoque_minimo = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True, blank=True)
+    observacoes = models.TextField(blank=True, null=True)
+    ativo = models.BooleanField(default=True)
+    
+    # Configuração do sequencial
+    CAMPO_NUMERO = 'codigo'
+    PREFIXO_NUMERO = ''
+    PADDING_NUMERO = 3
+    
+    class Meta:
+        verbose_name = 'Produto'
+        verbose_name_plural = 'Produtos'
+        ordering = ['descricao']
+    
+    def __str__(self):
+        return f"{self.codigo} - {self.descricao}"
+    
+    @property
+    def nome(self):
+        return self.descricao
+
+# =============================================================================
+# MÓDULO: COMPRAS
+# =============================================================================
+
+class Cotacao(SequencialMixin, models.Model):
+    STATUS_CHOICES = [
+        ('pendente', 'Pendente'),
+        ('respondida', 'Respondida'),
+        ('aprovada', 'Aprovada'),
+        ('convertida', 'Convertida'),
+        ('cancelada', 'Cancelada'),
+    ]
+    
+    numero = models.CharField(max_length=20, unique=True, blank=True)
+    solicitante = models.CharField(max_length=100, verbose_name='Solicitante')
+    fornecedor = models.ForeignKey(Fornecedor, on_delete=models.PROTECT, related_name='cotacoes')
+    data_solicitacao = models.DateField(auto_now_add=True)
+    data_criacao = models.DateTimeField(auto_now_add=True)
+    prazo_entrega = models.DateField()
+    observacoes = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
+    valor_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    ativo = models.BooleanField(default=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+    
+    # Configuração do sequencial
+    CAMPO_NUMERO = 'numero'
+    PREFIXO_NUMERO = 'COT-'
+    PADDING_NUMERO = 5
+    
+    class Meta:
+        verbose_name = 'Cotação'
+        verbose_name_plural = 'Cotações'
+        ordering = ['-data_solicitacao']
+    
+    def __str__(self):
+        return f"Cotação {self.numero} - {self.fornecedor.nome_razao_social}"
+    
+    def calcular_total(self):
+        total = self.itens.aggregate(total=models.Sum('preco_total'))['total'] or 0
+        self.valor_total = total
+        self.save(update_fields=['valor_total'])
+
+
+class ItemCotacao(models.Model):
+    cotacao = models.ForeignKey(Cotacao, on_delete=models.CASCADE, related_name='itens')
+    produto = models.ForeignKey(Produto, on_delete=models.PROTECT)
+    quantidade = models.DecimalField(max_digits=10, decimal_places=2, default=1)
+    preco_unitario = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    preco_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    
+    class Meta:
+        verbose_name = 'Item da Cotação'
+        verbose_name_plural = 'Itens da Cotação'
+    
+    def save(self, *args, **kwargs):
+        self.preco_total = self.quantidade * self.preco_unitario
+        self.subtotal = self.preco_total
+        super().save(*args, **kwargs)
+
+
+class PedidoCompra(SequencialMixin, models.Model):
+    STATUS_CHOICES = [
+        ('pendente', 'Pendente'),
+        ('aprovado', 'Aprovado'),
+        ('parcial', 'Parcial'),
+        ('atendido', 'Atendido'),
+        ('recebido', 'Recebido'),
+        ('cancelado', 'Cancelado'),
+    ]
+    
+    numero = models.CharField(max_length=20, unique=True, blank=True)
+    fornecedor = models.ForeignKey(Fornecedor, on_delete=models.PROTECT, related_name='pedidos_compra')
+    cotacao_origem = models.ForeignKey(Cotacao, on_delete=models.SET_NULL, null=True, blank=True, related_name='pedido_gerado')
+    data_pedido = models.DateField(auto_now_add=True)
+    data_prevista_entrega = models.DateField()
+    observacoes = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
+    valor_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    ativo = models.BooleanField(default=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+    
+    # Configuração do sequencial
+    CAMPO_NUMERO = 'numero'
+    PREFIXO_NUMERO = 'PC-'
+    PADDING_NUMERO = 5
+    
+    class Meta:
+        verbose_name = 'Pedido de Compra'
+        verbose_name_plural = 'Pedidos de Compra'
+        ordering = ['-data_pedido']
+    
+    def __str__(self):
+        return f"Pedido {self.numero} - {self.fornecedor.nome_razao_social}"
+    
+    def calcular_total(self):
+        total = self.itens.aggregate(total=models.Sum('preco_total'))['total'] or 0
+        self.valor_total = total
+        self.save(update_fields=['valor_total'])
+
+
+class ItemPedidoCompra(models.Model):
+    pedido = models.ForeignKey(PedidoCompra, on_delete=models.CASCADE, related_name='itens')
+    produto = models.ForeignKey(Produto, on_delete=models.PROTECT)
+    quantidade = models.DecimalField(max_digits=10, decimal_places=2, default=1)
+    preco_unitario = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    preco_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    quantidade_recebida = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    class Meta:
+        verbose_name = 'Item do Pedido'
+        verbose_name_plural = 'Itens do Pedido'
+    
+    def save(self, *args, **kwargs):
+        self.preco_total = self.quantidade * self.preco_unitario
+        self.subtotal = self.preco_total
+        super().save(*args, **kwargs)
+
+
+class NotaFiscalEntrada(models.Model):
+    STATUS_CHOICES = [
+        ('pendente', 'Pendente'),
+        ('confirmada', 'Confirmada'),
+        ('cancelada', 'Cancelada'),
+    ]
+    
+    numero_nf = models.CharField(max_length=20)
+    numero = models.CharField(max_length=20, blank=True)
+    fornecedor = models.ForeignKey(Fornecedor, on_delete=models.PROTECT, related_name='notas_entrada')
+    pedido_origem = models.ForeignKey(PedidoCompra, on_delete=models.SET_NULL, null=True, blank=True, related_name='notas_fiscais')
+    pedido = models.ForeignKey(PedidoCompra, on_delete=models.SET_NULL, null=True, blank=True, related_name='notas_fiscais_alt')
+    data_entrada = models.DateField(auto_now_add=True)
+    data_emissao = models.DateField()
+    observacoes = models.TextField(blank=True)
+    valor_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
+    ativo = models.BooleanField(default=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Nota Fiscal de Entrada'
+        verbose_name_plural = 'Notas Fiscais de Entrada'
+        ordering = ['-data_entrada']
+        unique_together = ['numero_nf', 'fornecedor']
+    
+    def __str__(self):
+        return f"NF Entrada {self.numero_nf} - {self.fornecedor.nome_razao_social}"
+    
+    def calcular_total(self):
+        total = self.itens.aggregate(total=models.Sum('preco_total'))['total'] or 0
+        self.valor_total = total
+        self.save(update_fields=['valor_total'])
+    
+    def atualizar_estoque(self):
+        """Método chamado quando NF é confirmada"""
+        MovimentacaoEstoque = apps.get_model('ERP_ServicesBI', 'MovimentacaoEstoque')
+        
+        for item in self.itens.select_related('produto').all():
+            MovimentacaoEstoque.objects.create(
+                produto=item.produto,
+                tipo='entrada',
+                quantidade=item.quantidade,
+                nota_fiscal_entrada=self,
+                observacoes=f'Entrada via NF {self.numero_nf}',
+                usuario_id=1
+            )
+            # Atualiza estoque com F() para evitar race condition
+            Produto.objects.filter(pk=item.produto.pk).update(
+                estoque_atual=models.F('estoque_atual') + item.quantidade
+            )
+
+
+class ItemNotaFiscalEntrada(models.Model):
+    nota_fiscal = models.ForeignKey(NotaFiscalEntrada, on_delete=models.CASCADE, related_name='itens')
+    produto = models.ForeignKey(Produto, on_delete=models.PROTECT)
+    quantidade = models.DecimalField(max_digits=10, decimal_places=2, default=1)
+    preco_unitario = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    preco_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    
+    class Meta:
+        verbose_name = 'Item da NF Entrada'
+        verbose_name_plural = 'Itens da NF Entrada'
+    
+    def save(self, *args, **kwargs):
+        self.preco_total = self.quantidade * self.preco_unitario
+        self.subtotal = self.preco_total
+        super().save(*args, **kwargs)
+
+# =============================================================================
+# MÓDULO: VENDAS
+# =============================================================================
+
+class Orcamento(SequencialMixin, models.Model):
+    STATUS_CHOICES = [
+        ('pendente', 'Pendente'),
+        ('aprovado', 'Aprovado'),
+        ('convertido', 'Convertido'),
+        ('rejeitado', 'Rejeitado'),
+        ('expirado', 'Expirado'),
+        ('cancelado', 'Cancelado'),
+    ]
+    
+    numero = models.CharField(max_length=20, unique=True, blank=True)
+    cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, related_name='orcamentos')
+    vendedor = models.ForeignKey(User, on_delete=models.PROTECT, related_name='orcamentos_vendedor')
+    data_orcamento = models.DateField(auto_now_add=True)
+    data_criacao = models.DateTimeField(auto_now_add=True)
+    data_validade = models.DateField()
+    observacoes = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
+    valor_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    ativo = models.BooleanField(default=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+    
+    # Configuração do sequencial
+    CAMPO_NUMERO = 'numero'
+    PREFIXO_NUMERO = 'ORC-'
+    PADDING_NUMERO = 5
+    
+    class Meta:
+        verbose_name = 'Orçamento'
+        verbose_name_plural = 'Orçamentos'
+        ordering = ['-data_orcamento']
+    
+    def __str__(self):
+        return f"Orçamento {self.numero} - {self.cliente.nome_razao_social}"
+    
+    def calcular_total(self):
+        total = self.itens.aggregate(total=models.Sum('preco_total'))['total'] or 0
+        self.valor_total = total
+        self.save(update_fields=['valor_total'])
+
+
+class ItemOrcamento(models.Model):
+    orcamento = models.ForeignKey(Orcamento, on_delete=models.CASCADE, related_name='itens')
+    produto = models.ForeignKey(Produto, on_delete=models.PROTECT)
+    quantidade = models.DecimalField(max_digits=10, decimal_places=2, default=1)
+    preco_unitario = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    preco_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    desconto = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    class Meta:
+        verbose_name = 'Item do Orçamento'
+        verbose_name_plural = 'Itens do Orçamento'
+    
+    def save(self, *args, **kwargs):
+        self.preco_total = (self.quantidade * self.preco_unitario) - self.desconto
+        self.subtotal = self.preco_total
+        super().save(*args, **kwargs)
+
+
+class PedidoVenda(SequencialMixin, models.Model):
+    STATUS_CHOICES = [
+        ('pendente', 'Pendente'),
+        ('aprovado', 'Aprovado'),
+        ('parcial', 'Parcial'),
+        ('faturado', 'Faturado'),
+        ('entregue', 'Entregue'),
+        ('cancelado', 'Cancelado'),
+    ]
+    
+    numero = models.CharField(max_length=20, unique=True, blank=True)
+    cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, related_name='pedidos')
+    vendedor = models.ForeignKey(User, on_delete=models.PROTECT, related_name='pedidos_vendedor')
+    orcamento_origem = models.ForeignKey(Orcamento, on_delete=models.SET_NULL, null=True, blank=True, related_name='pedido_gerado')
+    data_pedido = models.DateField(auto_now_add=True)
+    data_prevista_entrega = models.DateField()
+    observacoes = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
+    valor_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    ativo = models.BooleanField(default=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+    
+    # Configuração do sequencial
+    CAMPO_NUMERO = 'numero'
+    PREFIXO_NUMERO = 'PV-'
+    PADDING_NUMERO = 5
+    
+    class Meta:
+        verbose_name = 'Pedido de Venda'
+        verbose_name_plural = 'Pedidos de Venda'
+        ordering = ['-data_pedido']
+    
+    def __str__(self):
+        return f"Pedido {self.numero} - {self.cliente.nome_razao_social}"
+    
+    def calcular_total(self):
+        total = self.itens.aggregate(total=models.Sum('preco_total'))['total'] or 0
+        self.valor_total = total
+        self.save(update_fields=['valor_total'])
+
+
+class ItemPedidoVenda(models.Model):
+    pedido = models.ForeignKey(PedidoVenda, on_delete=models.CASCADE, related_name='itens')
+    produto = models.ForeignKey(Produto, on_delete=models.PROTECT)
+    quantidade = models.DecimalField(max_digits=10, decimal_places=2, default=1)
+    preco_unitario = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    preco_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    desconto = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    quantidade_entregue = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    class Meta:
+        verbose_name = 'Item do Pedido'
+        verbose_name_plural = 'Itens do Pedido'
+    
+    def save(self, *args, **kwargs):
+        self.preco_total = (self.quantidade * self.preco_unitario) - self.desconto
+        self.subtotal = self.preco_total
+        super().save(*args, **kwargs)
+
+
+class NotaFiscalSaida(models.Model):
+    STATUS_CHOICES = [
+        ('pendente', 'Pendente'),
+        ('confirmada', 'Confirmada'),
+        ('cancelada', 'Cancelada'),
+    ]
+    
+    numero_nf = models.CharField(max_length=20, unique=True)
+    numero = models.CharField(max_length=20, blank=True)
+    cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, related_name='notas_saida')
+    pedido_origem = models.ForeignKey(PedidoVenda, on_delete=models.SET_NULL, null=True, blank=True, related_name='nota_fiscal')
+    pedido = models.ForeignKey(PedidoVenda, on_delete=models.SET_NULL, null=True, blank=True, related_name='nota_fiscal_alt')
+    data_emissao = models.DateField(auto_now_add=True)
+    data_saida = models.DateField(default=timezone.now)
+    observacoes = models.TextField(blank=True)
+    valor_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
+    ativo = models.BooleanField(default=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Nota Fiscal de Saída'
+        verbose_name_plural = 'Notas Fiscais de Saída'
+        ordering = ['-data_emissao']
+    
+    def __str__(self):
+        return f"NF Saída {self.numero_nf} - {self.cliente.nome_razao_social}"
+    
+    def save(self, *args, **kwargs):
+        if not self.numero and self.numero_nf:
+            self.numero = self.numero_nf
+        super().save(*args, **kwargs)
+    
+    def calcular_total(self):
+        total = self.itens.aggregate(total=models.Sum('preco_total'))['total'] or 0
+        self.valor_total = total
+        self.save(update_fields=['valor_total'])
+    
+    def atualizar_estoque(self):
+        """Método chamado quando NF é confirmada - CORRIGIDO"""
+        MovimentacaoEstoque = apps.get_model('ERP_ServicesBI', 'MovimentacaoEstoque')
+        
+        for item in self.itens.select_related('produto').all():
+            MovimentacaoEstoque.objects.create(
+                produto=item.produto,
+                tipo='saida',
+                quantidade=item.quantidade,
+                nota_fiscal_saida=self,
+                observacoes=f'Saída via NF {self.numero_nf}',
+                usuario_id=1
+            )
+            # Atualiza estoque com F() para evitar race condition
+            Produto.objects.filter(pk=item.produto.pk).update(
+                estoque_atual=models.F('estoque_atual') - item.quantidade
+            )
+    
+    def gerar_contas_receber(self):
+        """Gera conta a receber quando NF é confirmada - CORRIGIDO"""
+        ContaReceber = apps.get_model('ERP_ServicesBI', 'ContaReceber')
+        
+        ContaReceber.objects.create(
+            descricao=f'NF Saída {self.numero_nf} - {self.cliente.nome_razao_social}',
+            cliente=self.cliente,
+            nota_fiscal=self,
+            data_vencimento=timezone.now().date() + timedelta(days=30),
+            valor_original=self.valor_total,
+            valor=self.valor_total,
+            status='pendente'
+        )
+
+
+class ItemNotaFiscalSaida(models.Model):
+    nota_fiscal = models.ForeignKey(NotaFiscalSaida, on_delete=models.CASCADE, related_name='itens')
+    produto = models.ForeignKey(Produto, on_delete=models.PROTECT)
+    quantidade = models.DecimalField(max_digits=10, decimal_places=2, default=1)
+    preco_unitario = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    preco_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    
+    class Meta:
+        verbose_name = 'Item da NF Saída'
+        verbose_name_plural = 'Itens da NF Saída'
+    
+    def save(self, *args, **kwargs):
+        self.preco_total = self.quantidade * self.preco_unitario
+        self.subtotal = self.preco_total
+        super().save(*args, **kwargs)
+
+# =============================================================================
+# MÓDULO: FINANCEIRO
+# =============================================================================
+
+class CategoriaFinanceira(models.Model):
+    TIPO_CHOICES = [
+        ('receita', 'Receita'),
+        ('despesa', 'Despesa'),
+    ]
+    
+    GRUPO_DRE_CHOICES = [
+        ('receita_bruta', 'Receita Bruta'),
+        ('deducoes', 'Deduções da Receita'),
+        ('receita_liquida', 'Receita Líquida'),
+        ('outras_receitas', 'Outras Receitas'),
+        ('cmv', 'Custo das Mercadorias Vendidas'),
+        ('despesa_admin', 'Despesas Administrativas'),
+        ('despesa_vendas', 'Despesas com Vendas'),
+        ('despesa_financeira', 'Despesas Financeiras'),
+        ('outras_despesas', 'Outras Despesas'),
+    ]
+    
+    nome = models.CharField(max_length=100)
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
+    grupo_dre = models.CharField(max_length=20, choices=GRUPO_DRE_CHOICES)
+    codigo = models.CharField(max_length=10, unique=True)
+    descricao = models.TextField(blank=True)
+    ativo = models.BooleanField(default=True)
+    
+    class Meta:
+        ordering = ['codigo']
+        verbose_name = 'Categoria Financeira'
+        verbose_name_plural = 'Categorias Financeiras'
+    
+    def __str__(self):
+        return f"{self.codigo} - {self.nome}"
+
+
+class CentroCusto(models.Model):
+    TIPO_CHOICES = [
+        ('administrativo', 'Administrativo'),
+        ('vendas', 'Vendas'),
+        ('producao', 'Produção'),
+        ('financeiro', 'Financeiro'),
+        ('rh', 'Recursos Humanos'),
+        ('ti', 'Tecnologia'),
+        ('outros', 'Outros'),
+    ]
+    
+    nome = models.CharField(max_length=100)
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
+    responsavel = models.CharField(max_length=100, blank=True)
+    ativo = models.BooleanField(default=True)
+    
+    class Meta:
+        ordering = ['nome']
+        verbose_name = 'Centro de Custo'
+        verbose_name_plural = 'Centros de Custo'
+    
+    def __str__(self):
+        return f"{self.nome} ({self.get_tipo_display()})"
+
+
+class OrcamentoFinanceiro(models.Model):
+    PERIODO_CHOICES = [
+        ('mensal', 'Mensal'),
+        ('trimestral', 'Trimestral'),
+        ('anual', 'Anual'),
+    ]
+    
+    categoria = models.ForeignKey(CategoriaFinanceira, on_delete=models.CASCADE)
+    centro_custo = models.ForeignKey(CentroCusto, on_delete=models.SET_NULL, null=True, blank=True)
+    periodo = models.CharField(max_length=10, choices=PERIODO_CHOICES, default='mensal')
+    ano = models.IntegerField()
+    mes = models.IntegerField(null=True, blank=True)
+    trimestre = models.IntegerField(null=True, blank=True)
+    
+    valor_orcado = models.DecimalField(max_digits=15, decimal_places=2)
+    valor_realizado = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    
+    observacoes = models.TextField(blank=True)
+    criado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    data_criacao = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['categoria', 'centro_custo', 'periodo', 'ano', 'mes', 'trimestre']
+        ordering = ['-ano', '-mes', 'categoria']
+        verbose_name = 'Orçamento Financeiro'
+        verbose_name_plural = 'Orçamentos Financeiros'
+    
+    @property
+    def variacao(self):
+        if self.valor_orcado == 0:
+            return 0
+        return ((self.valor_realizado - self.valor_orcado) / self.valor_orcado) * 100
+    
+    def __str__(self):
+        periodo_str = f"{self.mes:02d}" if self.mes else (f"Q{self.trimestre}" if self.trimestre else 'Anual')
+        return f"{self.categoria} - {self.ano}/{periodo_str}"
+
+
+class ExtratoBancario(models.Model):
+    conta_bancaria = models.CharField(max_length=100)
+    data_arquivo = models.DateField()
+    data_upload = models.DateTimeField(auto_now_add=True)
+    data_importacao = models.DateTimeField(auto_now_add=True)
+    arquivo = models.FileField(upload_to='extratos/%Y/%m/')
+    importado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    processado = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['-data_arquivo']
+        verbose_name = 'Extrato Bancário'
+        verbose_name_plural = 'Extratos Bancários'
+    
+    def __str__(self):
+        return f"Extrato {self.conta_bancaria} - {self.data_arquivo}"
+
+
+class LancamentoExtrato(models.Model):
+    TIPO_CHOICES = [
+        ('entrada', 'Entrada'),
+        ('saida', 'Saída'),
+        ('debito', 'Débito'),
+        ('credito', 'Crédito'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('pendente', 'Pendente'),
+        ('conciliado', 'Conciliado'),
+        ('ignorado', 'Ignorado'),
+    ]
+    
+    extrato = models.ForeignKey(ExtratoBancario, on_delete=models.CASCADE, related_name='lancamentos')
+    data = models.DateField()
+    descricao = models.CharField(max_length=255)
+    documento = models.CharField(max_length=50, blank=True)
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
+    valor = models.DecimalField(max_digits=15, decimal_places=2)
+    
+    conciliado = models.BooleanField(default=False)
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='pendente')
+    conta_pagar = models.ForeignKey('ContaPagar', on_delete=models.SET_NULL, null=True, blank=True)
+    conta_receber = models.ForeignKey('ContaReceber', on_delete=models.SET_NULL, null=True, blank=True)
+    movimento_caixa = models.ForeignKey('MovimentoCaixa', on_delete=models.SET_NULL, null=True, blank=True)
+    
+    class Meta:
+        ordering = ['data', 'id']
+        verbose_name = 'Lançamento do Extrato'
+        verbose_name_plural = 'Lançamentos do Extrato'
+    
+    def __str__(self):
+        return f"{self.data} - {self.descricao} - R$ {self.valor}"
+    
+    def save(self, *args, **kwargs):
+        self.conciliado = (self.status == 'conciliado')
+        super().save(*args, **kwargs)
+
+
+class ContaReceber(models.Model):
+    STATUS_CHOICES = [
+        ('pendente', 'Pendente'),
+        ('aberto', 'Aberto'),
+        ('parcial', 'Parcial'),
+        ('recebido', 'Recebido'),
+        ('quitado', 'Quitado'),
+        ('atrasado', 'Atrasado'),
+        ('cancelado', 'Cancelado'),
+    ]
+    
+    descricao = models.CharField(max_length=255)
+    cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, related_name='contas_receber', null=True, blank=True)
+    nota_fiscal = models.ForeignKey(NotaFiscalSaida, on_delete=models.SET_NULL, null=True, blank=True, related_name='contas_receber')
+    
+    categoria = models.ForeignKey(CategoriaFinanceira, on_delete=models.SET_NULL, 
+                                   null=True, blank=True, 
+                                   limit_choices_to={'tipo': 'receita'},
+                                   related_name='contas_receber')
+    centro_custo = models.ForeignKey(CentroCusto, on_delete=models.SET_NULL, null=True, blank=True,
+                                      related_name='contas_receber')
+    
+    data_emissao = models.DateField(auto_now_add=True)
+    data_vencimento = models.DateField()
+    data_recebimento = models.DateField(null=True, blank=True)
+    data_baixa = models.DateField(null=True, blank=True)
+    valor_original = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    valor = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    valor_recebido = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    valor_saldo = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
+    observacoes = models.TextField(blank=True)
+    ativo = models.BooleanField(default=True)
+    
+    class Meta:
+        verbose_name = 'Conta a Receber'
+        verbose_name_plural = 'Contas a Receber'
+        ordering = ['data_vencimento']
+    
+    def __str__(self):
+        return f"{self.descricao} - R$ {self.valor_original}"
+    
+    def save(self, *args, **kwargs):
+        self.valor_saldo = self.valor_original - (self.valor_recebido or 0)
+        self.valor = self.valor_original
+        super().save(*args, **kwargs)
+    
+    @property
+    def dias_atraso(self):
+        if self.status in ['recebido', 'quitado', 'cancelado']:
+            return 0
+        hoje = timezone.now().date()
+        if hoje > self.data_vencimento:
+            return (hoje - self.data_vencimento).days
+        return 0
+    
+    def baixar(self, data_baixa=None, valor_recebido=None):
+        from decimal import Decimal
+        
+        if data_baixa:
+            self.data_recebimento = data_baixa
+            self.data_baixa = data_baixa
+        else:
+            self.data_recebimento = timezone.now().date()
+            self.data_baixa = timezone.now().date()
+        
+        if valor_recebido:
+            self.valor_recebido = Decimal(valor_recebido)
+        
+        if self.valor_recebido >= self.valor_original:
+            self.status = 'recebido'
+        elif self.valor_recebido > 0:
+            self.status = 'parcial'
+        
+        self.save()
+
+
+class ContaPagar(models.Model):
+    STATUS_CHOICES = [
+        ('pendente', 'Pendente'),
+        ('aberto', 'Aberto'),
+        ('parcial', 'Parcial'),
+        ('pago', 'Pago'),
+        ('quitado', 'Quitado'),
+        ('atrasado', 'Atrasado'),
+        ('cancelado', 'Cancelado'),
+    ]
+    
+    descricao = models.CharField(max_length=255)
+    fornecedor = models.ForeignKey(Fornecedor, on_delete=models.PROTECT, related_name='contas_pagar', null=True, blank=True)
+    nota_fiscal = models.ForeignKey(NotaFiscalEntrada, on_delete=models.SET_NULL, null=True, blank=True, related_name='contas_pagar')
+    
+    categoria = models.ForeignKey(CategoriaFinanceira, on_delete=models.SET_NULL, 
+                                   null=True, blank=True, 
+                                   limit_choices_to={'tipo': 'despesa'},
+                                   related_name='contas_pagar')
+    centro_custo = models.ForeignKey(CentroCusto, on_delete=models.SET_NULL, null=True, blank=True,
+                                      related_name='contas_pagar')
+    
+    data_emissao = models.DateField(auto_now_add=True)
+    data_vencimento = models.DateField()
+    data_pagamento = models.DateField(null=True, blank=True)
+    data_baixa = models.DateField(null=True, blank=True)
+    valor_original = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    valor = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    valor_pago = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    valor_saldo = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
+    observacoes = models.TextField(blank=True)
+    ativo = models.BooleanField(default=True)
+    
+    class Meta:
+        verbose_name = 'Conta a Pagar'
+        verbose_name_plural = 'Contas a Pagar'
+        ordering = ['data_vencimento']
+    
+    def __str__(self):
+        return f"{self.descricao} - R$ {self.valor_original}"
+    
+    def save(self, *args, **kwargs):
+        self.valor_saldo = self.valor_original - (self.valor_pago or 0)
+        self.valor = self.valor_original
+        super().save(*args, **kwargs)
+    
+    @property
+    def dias_atraso(self):
+        if self.status in ['pago', 'quitado', 'cancelado']:
+            return 0
+        hoje = timezone.now().date()
+        if hoje > self.data_vencimento:
+            return (hoje - self.data_vencimento).days
+        return 0
+    
+    def baixar(self, data_baixa=None, valor_pago=None):
+        from decimal import Decimal
+        
+        if data_baixa:
+            self.data_pagamento = data_baixa
+            self.data_baixa = data_baixa
+        else:
+            self.data_pagamento = timezone.now().date()
+            self.data_baixa = timezone.now().date()
+        
+        if valor_pago:
+            self.valor_pago = Decimal(valor_pago)
+        
+        if self.valor_pago >= self.valor_original:
+            self.status = 'pago'
+        elif self.valor_pago > 0:
+            self.status = 'parcial'
+        
+        self.save()
+
+
+class MovimentoCaixa(models.Model):
+    TIPO_CHOICES = [
+        ('entrada', 'Entrada'),
+        ('saida', 'Saída'),
+    ]
+    
+    descricao = models.CharField(max_length=255)
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
+    data = models.DateField(auto_now_add=True)
+    valor = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    conta_receber = models.ForeignKey(ContaReceber, on_delete=models.SET_NULL, null=True, blank=True, related_name='movimentos')
+    conta_pagar = models.ForeignKey(ContaPagar, on_delete=models.SET_NULL, null=True, blank=True, related_name='movimentos')
+    observacoes = models.TextField(blank=True)
+    usuario = models.ForeignKey(User, on_delete=models.PROTECT, related_name='movimentos_caixa')
+    
+    class Meta:
+        verbose_name = 'Movimento de Caixa'
+        verbose_name_plural = 'Movimentos de Caixa'
+        ordering = ['-data']
+    
+    def __str__(self):
+        return f"{self.descricao} - {self.tipo} - R$ {self.valor}"
+    
+# =============================================================================
+# MÓDULO: ESTOQUE
+# =============================================================================
+
+class MovimentacaoEstoque(models.Model):
+    TIPO_CHOICES = [
+        ('entrada', 'Entrada'),
+        ('saida', 'Saída'),
+        ('ajuste', 'Ajuste'),
+        ('transferencia', 'Transferência'),
+    ]
+    
+    produto = models.ForeignKey(Produto, on_delete=models.PROTECT, related_name='movimentacoes')
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
+    quantidade = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    data = models.DateTimeField(auto_now_add=True)
+    nota_fiscal_entrada = models.ForeignKey(NotaFiscalEntrada, on_delete=models.SET_NULL, null=True, blank=True, related_name='movimentacoes')
+    nota_fiscal_saida = models.ForeignKey(NotaFiscalSaida, on_delete=models.SET_NULL, null=True, blank=True, related_name='movimentacoes')
+    deposito_origem = models.CharField(max_length=100, blank=True)
+    deposito_destino = models.CharField(max_length=100, blank=True)
+    motivo = models.CharField(max_length=255, blank=True)
+    observacoes = models.TextField(blank=True)
+    usuario = models.ForeignKey(User, on_delete=models.PROTECT, related_name='movimentacoes_estoque')
+    
+    class Meta:
+        verbose_name = 'Movimentação de Estoque'
+        verbose_name_plural = 'Movimentações de Estoque'
+        ordering = ['-data']
+    
+    def __str__(self):
+        return f"{self.tipo} - {self.produto.descricao} - {self.quantidade}"
+    
+    def atualizar_estoque(self):
+        if self.tipo == 'entrada':
+            self.produto.estoque_atual += self.quantidade
+        elif self.tipo == 'saida':
+            self.produto.estoque_atual -= self.quantidade
+        self.produto.save(update_fields=['estoque_atual'])
+    
+    def reverter_estoque(self):
+        if self.tipo == 'entrada':
+            self.produto.estoque_atual -= self.quantidade
+        elif self.tipo == 'saida':
+            self.produto.estoque_atual += self.quantidade
+        self.produto.save(update_fields=['estoque_atual'])
+
+
+class Inventario(SequencialMixin, models.Model):
+    STATUS_CHOICES = [
+        ('aberto', 'Aberto'),
+        ('em_andamento', 'Em Andamento'),
+        ('concluido', 'Concluído'),
+        ('cancelado', 'Cancelado'),
+    ]
+    
+    numero = models.CharField(max_length=20, unique=True, blank=True)
+    data = models.DateField(auto_now_add=True)
+    data_criacao = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='aberto')
+    observacoes = models.TextField(blank=True)
+    usuario = models.ForeignKey(User, on_delete=models.PROTECT, related_name='inventarios')
+    
+    # Configuração do sequencial
+    CAMPO_NUMERO = 'numero'
+    PREFIXO_NUMERO = 'INV-'
+    PADDING_NUMERO = 5
+    
+    class Meta:
+        verbose_name = 'Inventário'
+        verbose_name_plural = 'Inventários'
+        ordering = ['-data']
+    
+    def __str__(self):
+        return f"Inventário {self.numero} - {self.data}"
+    
+    def aplicar_ajustes(self):
+        for item in self.itens.all():
+            if item.diferenca != 0:
+                MovimentacaoEstoque.objects.create(
+                    produto=item.produto,
+                    tipo='ajuste',
+                    quantidade=abs(item.diferenca),
+                    observacoes=f'Ajuste inventário {self.numero}',
+                    usuario=self.usuario
+                )
+                item.produto.estoque_atual = item.quantidade_contada
+                item.produto.save(update_fields=['estoque_atual'])
+
+
+class ItemInventario(models.Model):
+    inventario = models.ForeignKey(Inventario, on_delete=models.CASCADE, related_name='itens')
+    produto = models.ForeignKey(Produto, on_delete=models.PROTECT)
+    quantidade_sistema = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    quantidade_fisica = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    quantidade_contada = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    divergencia = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    diferenca = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    observacoes = models.TextField(blank=True)
+    
+    class Meta:
+        verbose_name = 'Item do Inventário'
+        verbose_name_plural = 'Itens do Inventário'
+    
+    def save(self, *args, **kwargs):
+        self.diferenca = self.quantidade_contada - self.quantidade_sistema
+        self.divergencia = self.diferenca
+        self.quantidade_fisica = self.quantidade_contada
+        super().save(*args, **kwargs)
+
+
+class TransferenciaEstoque(SequencialMixin, models.Model):
+    STATUS_CHOICES = [
+        ('pendente', 'Pendente'),
+        ('concluida', 'Concluída'),
+        ('efetivada', 'Efetivada'),
+        ('cancelada', 'Cancelada'),
+    ]
+    
+    numero = models.CharField(max_length=20, unique=True, blank=True)
+    origem = models.CharField(max_length=100)
+    destino = models.CharField(max_length=100)
+    deposito_origem = models.CharField(max_length=100, blank=True)
+    deposito_destino = models.CharField(max_length=100, blank=True)
+    data = models.DateField(auto_now_add=True)
+    data_efetivacao = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
+    observacoes = models.TextField(blank=True)
+    usuario = models.ForeignKey(User, on_delete=models.PROTECT, related_name='transferencias')
+    
+    # Configuração do sequencial
+    CAMPO_NUMERO = 'numero'
+    PREFIXO_NUMERO = 'TRF-'
+    PADDING_NUMERO = 5
+    
+    class Meta:
+        verbose_name = 'Transferência de Estoque'
+        verbose_name_plural = 'Transferências de Estoque'
+        ordering = ['-data']
+    
+    def __str__(self):
+        return f"Transferência {self.numero} - {self.origem} → {self.destino}"
+    
+    def save(self, *args, **kwargs):
+        if not self.deposito_origem:
+            self.deposito_origem = self.origem
+        if not self.deposito_destino:
+            self.deposito_destino = self.destino
+        super().save(*args, **kwargs)
+
+
+class ItemTransferencia(models.Model):
+    transferencia = models.ForeignKey(TransferenciaEstoque, on_delete=models.CASCADE, related_name='itens')
+    produto = models.ForeignKey(Produto, on_delete=models.PROTECT)
+    quantidade = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    class Meta:
+        verbose_name = 'Item da Transferência'
+        verbose_name_plural = 'Itens da Transferência'

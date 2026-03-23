@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo }} - ERP ServicesBI{% endblock %}
+
+{% block content %}
+<div class="erp-page-header erp-mb-6">
+    <h1 class="erp-page-title">COTAÇÃO {{ cotacao.numero }}</h1>
+    <p class="erp-page-subtitle">{{ titulo }}</p>
+</div>
+
+<div class="erp-card" style="max-width: 500px;">
+    <form method="post" class="erp-form">
+        {% csrf_token %}
+        
+        {% if item %}
+        <!-- MODO EDIÇÃO: mostra produto bloqueado -->
+        <div class="erp-form-group erp-mb-4">
+            <label class="erp-label">Produto</label>
+            <div style="padding: 10px; background: #f1f5f9; border-radius: 6px;">
+                <strong>{{ item.produto.codigo }}</strong> - {{ item.produto.descricao }}
+            </div>
+        </div>
+        <input type="hidden" name="produto" value="{{ item.produto.id }}">
+        {% else %}
+        <!-- MODO ADIÇÃO: select de produtos -->
+        <div class="erp-form-group erp-mb-4">
+            <label class="erp-label erp-label-required" for="produto">Produto</label>
+            <select name="produto" id="produto" class="erp-select" required>
+                <option value="">Selecione...</option>
+                {% for prod in produtos %}
+                <option value="{{ prod.id }}">{{ prod.codigo }} - {{ prod.descricao }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+        
+        <div class="erp-form-row">
+            <div class="erp-form-group">
+                <label class="erp-label erp-label-required" for="quantidade">Quantidade</label>
+                <input type="number" name="quantidade" id="quantidade" step="0.001" 
+                       value="{{ item.quantidade|default:1 }}" class="erp-input" required>
+            </div>
+            <div class="erp-form-group">
+                <label class="erp-label erp-label-required" for="preco_unitario">Preço Unitário</label>
+                <input type="text" name="preco_unitario" id="preco_unitario" 
+                       value="{{ item.preco_unitario|floatformat:2|default:'' }}" 
+                       class="erp-input moeda" required>
+            </div>
+        </div>
+        
+        <div class="erp-flex erp-gap-2 erp-mt-6">
+            <button type="submit" class="erp-btn erp-btn--primary">
+                <span>💾</span>
+                <span>{% if item %}Salvar Alterações{% else %}Adicionar{% endif %}</span>
+            </button>
+            <a href="{% url 'ERP_ServicesBI:cotacao_edit' cotacao.pk %}" 
+               class="erp-btn erp-btn--outline" style="color: #fc4564; border-color: #fc4564;">
+                <span>Cancelar</span>
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+function mascaraMoeda(input) {
+    let valor = input.value.replace(/\D/g, '');
+    valor = (valor / 100).toFixed(2) + '';
+    valor = valor.replace('.', ',');
+    valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+    input.value = valor;
+}
+
+document.querySelectorAll('.moeda').forEach(function(input) {
+    input.addEventListener('input', function() { mascaraMoeda(this); });
+    if (input.value && !input.value.includes(',')) mascaraMoeda(input);
+});
+
+document.querySelector('form').addEventListener('submit', function(e) {
+    var input = document.getElementById('preco_unitario');
+    if (input) input.value = input.value.replace(/\./g, '').replace(',', '.');
+});
+</script>
+{% endblock %}

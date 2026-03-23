@@ -1,0 +1,95 @@
+/* ============================================================
+   ERP ServicesBI - Responsividade
+   ============================================================ */
+
+@media (max-width: 1024px) {
+    :root {
+        --sidebar-width: 240px;
+    }
+    
+    .erp-grid--4,
+    .erp-grid--3 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .erp-dashboard-section {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .erp-sidebar {
+        transform: translateX(-100%);
+        width: 280px;
+    }
+    
+    .erp-sidebar.open {
+        transform: translateX(0);
+    }
+    
+    .erp-main {
+        margin-left: 0;
+    }
+    
+    .erp-sidebar-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 99;
+    }
+    
+    .erp-sidebar-overlay.open {
+        display: block;
+    }
+    
+    .erp-grid--4,
+    .erp-grid--3,
+    .erp-grid--2,
+    .erp-dashboard-section {
+        grid-template-columns: 1fr;
+    }
+    
+    .erp-header__title {
+        font-size: var(--text-lg);
+    }
+    
+    .erp-form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .erp-table-container {
+        overflow-x: auto;
+    }
+    
+    .erp-table {
+        min-width: 600px;
+    }
+}
+
+@media (max-width: 480px) {
+    :root {
+        --content-padding: 16px;
+    }
+    
+    .erp-card--metric__value {
+        font-size: var(--text-2xl);
+    }
+    
+    .erp-btn {
+        width: 100%;
+    }
+}
+@media (max-width: 1200px) {
+    .erp-dashboard-grid--4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .erp-dashboard-grid--4,
+    .erp-dashboard-grid--3,
+    .erp-dashboard-grid--2 {
+        grid-template-columns: 1fr;
+    }
+}

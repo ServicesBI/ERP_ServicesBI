@@ -1,0 +1,574 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}
+    {% if pedido %}Editar{% else %}Novo{% endif %} Pedido de Venda - ERP ServicesBI
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Layout do formulário */
+.erp-form-section {
+    margin-bottom: 32px;
+}
+
+.erp-form-section__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin: 0 0 16px 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.erp-form-grid {
+    display: grid;
+    gap: 20px;
+}
+
+.erp-form-grid--3 {
+    grid-template-columns: 2fr 1fr 1fr;
+}
+
+.erp-form-grid--5 {
+    grid-template-columns: 3fr 1fr 1fr 1fr auto;
+}
+
+/* Card de adicionar item */
+.erp-item-add {
+    background: var(--gray-50);
+    padding: 20px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 24px;
+}
+
+/* Tabela de itens inline */
+.erp-items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.erp-items-table th {
+    background: var(--primary-600);
+    color: white;
+    padding: 12px;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+}
+
+.erp-items-table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.erp-items-table tfoot td {
+    background: var(--gray-50);
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.erp-items-table tfoot .erp-currency {
+    font-size: 18px;
+    color: var(--primary-600);
+}
+
+/* Checkbox customizado */
+.erp-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--primary-600);
+}
+
+/* Modo edição inline - Estilo diferente para pedido */
+.erp-edit-row {
+    background: var(--primary-600);
+}
+
+.erp-edit-row form {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.erp-edit-row__field {
+    flex: 1;
+    min-width: 120px;
+}
+
+.erp-edit-row__field--produto {
+    flex: 2;
+    min-width: 200px;
+}
+
+.erp-edit-row__field label {
+    display: block;
+    font-size: 12px;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 4px;
+}
+
+.erp-edit-row__static {
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.2);
+    border-radius: var(--radius);
+    font-size: 14px;
+    color: white;
+}
+
+.erp-edit-row .erp-input {
+    border: none;
+}
+
+/* Toolbar de seleção */
+.erp-items-toolbar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 16px;
+    padding: 12px;
+    background: var(--gray-50);
+    border-radius: var(--radius);
+}
+
+.erp-items-toolbar__btn {
+    padding: 6px 12px;
+    background: white;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--gray-600);
+    transition: all var(--transition-fast);
+}
+
+.erp-items-toolbar__btn:hover {
+    background: var(--gray-100);
+    border-color: var(--gray-400);
+}
+
+.erp-items-toolbar__counter {
+    padding: 6px 12px;
+    color: var(--gray-500);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Empty state para itens */
+.erp-items-empty {
+    padding: 40px;
+    text-align: center;
+    color: var(--gray-500);
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+    border: 2px dashed var(--gray-200);
+}
+
+.erp-items-empty__icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+}
+
+/* Ações do formulário */
+.erp-form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding-top: 24px;
+    border-top: 2px solid var(--gray-200);
+    margin-top: 24px;
+}
+
+.erp-form-actions .erp-btn {
+    min-width: 160px;
+    justify-content: center;
+}
+
+/* Responsividade */
+@media (max-width: 1200px) {
+    .erp-form-grid--3 {
+        grid-template-columns: 1fr 1fr;
+    }
+    .erp-form-grid--5 {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .erp-form-grid--3,
+    .erp-form-grid--5 {
+        grid-template-columns: 1fr;
+    }
+    
+    .erp-edit-row form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .erp-edit-row__field,
+    .erp-edit-row__field--produto {
+        min-width: 100%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="erp-page-header erp-mb-4">
+    <h2 class="erp-page-header__title">VENDAS</h2>
+    <p class="erp-page-header__subtitle">
+        {% if pedido %}Editar{% else %}Novo{% endif %} pedido de venda
+    </p>
+</div>
+
+{% include "partials/messages.html" %}
+
+<div class="erp-card">
+    <!-- CABEÇALHO -->
+    <form method="post" id="form-pedido" class="erp-form-section">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update_header">
+        
+        <h3 class="erp-form-section__title">📋 Dados do Pedido</h3>
+        
+        <div class="erp-form-grid erp-form-grid--3">
+            <div class="erp-form-group">
+                <label class="erp-label erp-label-required">Cliente</label>
+                <select name="cliente" class="erp-select" required>
+                    <option value="">Selecione...</option>
+                    {% for cliente in clientes %}
+                    <option value="{{ cliente.id }}" {% if pedido.cliente.id == cliente.id %}selected{% endif %}>
+                        {{ cliente.nome_razao_social }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="erp-form-group">
+                <label class="erp-label erp-label-required">Data Prevista Entrega</label>
+                <input type="date" name="data_prevista_entrega" class="erp-input" 
+                       value="{{ pedido.data_prevista_entrega|date:'Y-m-d' }}" required>
+            </div>
+            <div class="erp-form-group">
+                <label class="erp-label">Status</label>
+                <select name="status" class="erp-select">
+                    {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if pedido.status == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        
+        <div class="erp-form-group erp-mt-3">
+            <label class="erp-label">Observações</label>
+            <textarea name="observacoes" class="erp-textarea" rows="2">{{ pedido.observacoes|default:'' }}</textarea>
+        </div>
+        
+        <div class="erp-flex erp-gap-2 erp-mt-3">
+            <button type="submit" class="erp-btn erp-btn--primary">
+                <span>💾</span> Atualizar Cabeçalho
+            </button>
+            <a href="{% url 'pedidovenda_list' %}" class="erp-btn erp-btn--secondary">
+                <span>❌</span> Voltar
+            </a>
+        </div>
+    </form>
+
+    {% if pedido %}
+    <!-- ITENS -->
+    <div class="erp-form-section" style="border-top: 2px solid var(--gray-200); padding-top: 32px;">
+        <h3 class="erp-form-section__title">🛒 Itens do Pedido</h3>
+        
+        <!-- FORMULÁRIO ADICIONAR ITEM -->
+        <form method="post" id="form-add-item" class="erp-item-add">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_item">
+            
+            <div class="erp-form-grid erp-form-grid--5">
+                <div class="erp-form-group">
+                    <label class="erp-label erp-label-required" style="font-size: 13px;">Produto</label>
+                    <select name="produto" class="erp-select" required>
+                        <option value="">Selecione...</option>
+                        {% for produto in produtos %}
+                        <option value="{{ produto.id }}" data-preco="{{ produto.preco_venda }}">
+                            {{ produto.codigo }} - {{ produto.descricao }} ({{ produto.preco_venda|currency_br }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="erp-form-group">
+                    <label class="erp-label erp-label-required" style="font-size: 13px;">Qtd</label>
+                    <input type="number" name="quantidade" step="0.01" value="1" class="erp-input" required>
+                </div>
+                <div class="erp-form-group">
+                    <label class="erp-label erp-label-required" style="font-size: 13px;">Preço Unit.</label>
+                    <input type="text" name="preco_unitario" class="erp-input moeda" placeholder="0,00" required>
+                </div>
+                <div class="erp-form-group">
+                    <label class="erp-label" style="font-size: 13px;">Desconto</label>
+                    <input type="text" name="desconto" class="erp-input moeda" placeholder="0,00" value="0">
+                </div>
+                <button type="submit" class="erp-btn erp-btn--success" style="height: 38px;">
+                    <span>+</span> Adicionar
+                </button>
+            </div>
+        </form>
+        
+        <!-- TABELA DE ITENS -->
+        {% if itens %}
+        <form method="post" id="form-itens-acoes">
+            {% csrf_token %}
+            
+            <div class="erp-items-toolbar">
+                <button type="button" onclick="selecionarTodos()" class="erp-items-toolbar__btn">
+                    Selecionar Todos
+                </button>
+                <button type="button" onclick="desselecionarTodos()" class="erp-items-toolbar__btn">
+                    Desselecionar Todos
+                </button>
+                <span id="contador-selecionados" class="erp-items-toolbar__counter">
+                    0 item(s) selecionado(s)
+                </span>
+            </div>
+            
+            <div class="erp-table-container">
+                <table class="erp-items-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px; text-align: center;">
+                                <input type="checkbox" id="checkbox-todos" onclick="toggleTodos()" class="erp-checkbox">
+                            </th>
+                            <th>Produto</th>
+                            <th class="erp-text-center">Qtd</th>
+                            <th class="erp-text-right">Preço Unit.</th>
+                            <th class="erp-text-right">Desconto</th>
+                            <th class="erp-text-right">Total</th>
+                            <th class="erp-text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in itens %}
+                        <tr id="item-row-{{ item.id }}">
+                            <!-- MODO VISUALIZAÇÃO -->
+                            <td class="erp-text-center view-mode-{{ item.id }}">
+                                <input type="checkbox" name="itens_selecionados" value="{{ item.id }}" 
+                                       class="erp-checkbox checkbox-item" onchange="atualizarContador()">
+                            </td>
+                            <td class="view-mode-{{ item.id }}">
+                                <strong>{{ item.produto.descricao }}</strong>
+                            </td>
+                            <td class="erp-text-center view-mode-{{ item.id }}">
+                                {{ item.quantidade|number_br }}
+                            </td>
+                            <td class="erp-text-right erp-currency view-mode-{{ item.id }}">
+                                {{ item.preco_unitario|currency_br }}
+                            </td>
+                            <td class="erp-text-right erp-currency view-mode-{{ item.id }}">
+                                {{ item.desconto|currency_br }}
+                            </td>
+                            <td class="erp-text-right erp-currency view-mode-{{ item.id }}" style="font-weight: 600;">
+                                {{ item.preco_total|currency_br }}
+                            </td>
+                            <td class="erp-text-center view-mode-{{ item.id }}">
+                                <div class="erp-flex erp-justify-center erp-gap-1">
+                                    <button type="button" data-item-id="{{ item.id }}" class="erp-btn erp-btn--sm btn-editar" title="Editar">
+                                        ✏️
+                                    </button>
+                                    <form method="post" style="display: inline;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="remove_item">
+                                        <input type="hidden" name="item_id" value="{{ item.id }}">
+                                        <button type="submit" onclick="return confirm('Remover este item?')" 
+                                                class="erp-btn erp-btn--danger erp-btn--sm" title="Excluir">
+                                            🗑️
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                            
+                            <!-- MODO EDIÇÃO (inicialmente oculto) -->
+                            <td class="edit-mode-{{ item.id }}" style="display: none;" colspan="7">
+                                <form method="post" class="erp-edit-row">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="update_item">
+                                    <input type="hidden" name="item_id" value="{{ item.id }}">
+                                    
+                                    <div class="erp-edit-row__field erp-edit-row__field--produto">
+                                        <label>Produto</label>
+                                        <div class="erp-edit-row__static">{{ item.produto.descricao }}</div>
+                                    </div>
+                                    <div class="erp-edit-row__field">
+                                        <label>Qtd *</label>
+                                        <input type="number" name="quantidade" step="0.01" 
+                                               value="{{ item.quantidade }}" class="erp-input" required>
+                                    </div>
+                                    <div class="erp-edit-row__field">
+                                        <label>Preço Unit. *</label>
+                                        <input type="text" name="preco_unitario" class="erp-input moeda" 
+                                               value="{{ item.preco_unitario|number_br }}" required>
+                                    </div>
+                                    <div class="erp-edit-row__field">
+                                        <label>Desconto</label>
+                                        <input type="text" name="desconto" class="erp-input moeda" 
+                                               value="{{ item.desconto|number_br }}">
+                                    </div>
+                                    <div class="erp-flex erp-gap-1">
+                                        <button type="submit" class="erp-btn erp-btn--sm" 
+                                                style="background: white; color: var(--primary-600); font-weight: 600;" 
+                                                title="Salvar">
+                                            💾
+                                        </button>
+                                        <button type="button" data-item-id="{{ item.id }}" 
+                                                class="erp-btn erp-btn--sm btn-cancelar" 
+                                                style="background: rgba(255,255,255,0.3); color: white;" 
+                                                title="Cancelar">
+                                            ❌
+                                        </button>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="5" class="erp-text-right">TOTAL DO PEDIDO:</td>
+                            <td class="erp-text-right erp-currency">
+                                {{ pedido.valor_total|currency_br }}
+                            </td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </form>
+        
+        <!-- BOTÕES SALVAR E CANCELAR -->
+        <div class="erp-form-actions">
+            <button type="submit" form="form-pedido" class="erp-btn erp-btn--primary erp-btn--lg">
+                <span>💾</span> Salvar Pedido
+            </button>
+            <a href="{% url 'pedidovenda_list' %}" class="erp-btn erp-btn--secondary erp-btn--lg">
+                <span>❌</span> Cancelar
+            </a>
+        </div>
+        
+        {% else %}
+        <div class="erp-items-empty">
+            <div class="erp-items-empty__icon">🛒</div>
+            <p>Nenhum item adicionado.</p>
+            <p style="font-size: 14px; margin-top: 8px;">Use o formulário acima para adicionar produtos.</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Máscara para campos de moeda (aceita vírgula)
+function aplicarMascaraMoeda(input) {
+    input.addEventListener('input', function(e) {
+        var valor = e.target.value.replace(/\D/g, '');
+        valor = (valor / 100).toFixed(2);
+        valor = valor.replace('.', ',');
+        valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+        e.target.value = valor;
+    });
+}
+
+// Aplica máscara em todos os campos com classe .moeda
+document.querySelectorAll('.moeda').forEach(function(input) {
+    aplicarMascaraMoeda(input);
+});
+
+// Auto-preenche preço do produto selecionado
+document.querySelector('select[name="produto"]').addEventListener('change', function() {
+    var selected = this.options[this.selectedIndex];
+    var preco = selected.getAttribute('data-preco');
+    if (preco) {
+        var precoFormatado = parseFloat(preco).toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+        document.querySelector('input[name="preco_unitario"]').value = precoFormatado;
+    }
+});
+
+// Delegação de eventos para botões de editar
+document.addEventListener('click', function(e) {
+    if (e.target && e.target.classList.contains('btn-editar')) {
+        var itemId = e.target.getAttribute('data-item-id');
+        editarItem(itemId);
+    }
+    if (e.target && e.target.classList.contains('btn-cancelar')) {
+        var itemId = e.target.getAttribute('data-item-id');
+        cancelarEdicao(itemId);
+    }
+});
+
+// Função para editar item inline
+function editarItem(itemId) {
+    var viewModes = document.querySelectorAll('.view-mode-' + itemId);
+    var editMode = document.querySelector('.edit-mode-' + itemId);
+    
+    viewModes.forEach(function(el) {
+        el.style.display = 'none';
+    });
+    if (editMode) {
+        editMode.style.display = 'table-cell';
+        // Reaplica máscara nos campos de edição
+        editMode.querySelectorAll('.moeda').forEach(function(input) {
+            aplicarMascaraMoeda(input);
+        });
+    }
+}
+
+// Função para cancelar edição
+function cancelarEdicao(itemId) {
+    var viewModes = document.querySelectorAll('.view-mode-' + itemId);
+    var editMode = document.querySelector('.edit-mode-' + itemId);
+    
+    viewModes.forEach(function(el) {
+        el.style.display = '';
+    });
+    if (editMode) {
+        editMode.style.display = 'none';
+    }
+}
+
+// Funções para checkbox
+function toggleTodos() {
+    var checkboxTodos = document.getElementById('checkbox-todos');
+    var checkboxes = document.querySelectorAll('.checkbox-item');
+    checkboxes.forEach(function(cb) {
+        cb.checked = checkboxTodos.checked;
+    });
+    atualizarContador();
+}
+
+function selecionarTodos() {
+    var checkboxes = document.querySelectorAll('.checkbox-item');
+    checkboxes.forEach(function(cb) {
+        cb.checked = true;
+    });
+    document.getElementById('checkbox-todos').checked = true;
+    atualizarContador();
+}
+
+function desselecionarTodos() {
+    var checkboxes = document.querySelectorAll('.checkbox-item');
+    checkboxes.forEach(function(cb) {
+        cb.checked = false;
+    });
+    document.getElementById('checkbox-todos').checked = false;
+    atualizarContador();
+}
+
+function atualizarContador() {
+    var checkboxes = document.querySelectorAll('.checkbox-item:checked');
+    document.getElementById('contador-selecionados').textContent = checkboxes.length + ' item(s) selecionado(s)';
+}
+</script>
+{% endblock %}

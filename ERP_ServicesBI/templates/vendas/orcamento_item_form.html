@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Adicionar Item - Orçamento {{ orcamento.numero }} - ERP ServicesBI{% endblock %}
+
+{% block content %}
+<div class="erp-page-header erp-mb-6">
+    <h1 class="erp-page-title">Adicionar Item</h1>
+    <p class="erp-page-subtitle">Orçamento {{ orcamento.numero }}</p>
+</div>
+
+<div class="erp-card">
+    {% if messages %}
+        {% for message in messages %}
+            {% if message.tags == 'error' %}
+            <div class="erp-alert erp-alert--error erp-mb-4">
+                {{ message }}
+            </div>
+            {% else %}
+            <div class="erp-alert erp-alert--success erp-mb-4">
+                {{ message }}
+            </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" id="form-item" class="erp-form">
+        {% csrf_token %}
+        
+        <h3 class="erp-section-title erp-mb-4">Dados do Item</h3>
+        
+        <div class="erp-form-row erp-items-end">
+            <div class="erp-form-group" style="flex: 3;">
+                <label class="erp-label erp-label-required" for="produto">Produto</label>
+                <select name="produto" id="produtoSelect" class="erp-select" required>
+                    <option value="">Selecione...</option>
+                    {% for produto in produtos %}
+                    <option value="{{ produto.id }}" data-preco="{{ produto.preco_venda }}" data-custo="{{ produto.preco_custo }}">
+                        {{ produto.codigo }} - {{ produto.descricao }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="erp-form-group">
+                <label class="erp-label erp-label-required" for="quantidade">Quantidade</label>
+                <input type="number" name="quantidade" id="quantidade" step="0.01" value="1" min="0.01" class="erp-input" required>
+            </div>
+            <div class="erp-form-group">
+                <label class="erp-label erp-label-required" for="precoUnitario">Preço Unitário</label>
+                <input type="text" name="preco_unitario" id="precoUnitario" class="erp-input moeda" placeholder="0,00" required>
+            </div>
+            <div class="erp-form-group">
+                <label class="erp-label" for="desconto">Desconto</label>
+                <input type="text" name="desconto" id="desconto" class="erp-input moeda" placeholder="0,00" value="0,00">
+            </div>
+        </div>
+        
+        <div class="erp-bg-gray-50 erp-p-4 erp-rounded erp-mb-4">
+            <div class="erp-flex erp-justify-between erp-items-center erp-mb-2">
+                <span class="erp-text-muted">Preço de Custo:</span>
+                <span id="precoCustoDisplay" class="erp-font-medium">R$ 0,00</span>
+            </div>
+            <div class="erp-flex erp-justify-between erp-items-center erp-mb-2">
+                <span class="erp-text-muted">Subtotal:</span>
+                <span id="subtotalDisplay" class="erp-font-medium">R$ 0,00</span>
+            </div>
+            <div class="erp-flex erp-justify-between erp-items-center erp-pt-2 erp-border-top">
+                <span class="erp-font-semibold">Total do Item:</span>
+                <span id="totalDisplay" class="erp-font-bold erp-text-primary erp-text-lg">R$ 0,00</span>
+            </div>
+        </div>
+        
+        <div class="erp-flex erp-gap-2">
+            <button type="submit" class="erp-btn erp-btn--primary">
+                <span>💾</span>
+                <span>Adicionar Item</span>
+            </button>
+            <a href="{% url 'ERP_ServicesBI:orcamento_edit' orcamento.pk %}" class="erp-btn erp-btn--secondary">
+                <span>Cancelar</span>
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+// Máscara para campos de moeda
+function aplicarMascaraMoeda(input) {
+    input.addEventListener('input', function(e) {
+        var valor = e.target.value.replace(/\D/g, '');
+        valor = (valor / 100).toFixed(2);
+        valor = valor.replace('.', ',');
+        valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+        e.target.value = valor;
+        calcularTotais();
+    });
+}
+
+document.querySelectorAll('.moeda').forEach(function(input) {
+    aplicarMascaraMoeda(input);
+});
+
+document.getElementById('produtoSelect').addEventListener('change', function() {
+    var selected = this.options[this.selectedIndex];
+    var preco = selected.getAttribute('data-preco');
+    var custo = selected.getAttribute('data-custo');
+    
+    if (preco) {
+        var precoFormatado = parseFloat(preco).toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+        document.getElementById('precoUnitario').value = precoFormatado;
+    }
+    if (custo) {
+        document.getElementById('precoCustoDisplay').textContent = 'R$ ' + parseFloat(custo).toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+    }
+    calcularTotais();
+});
+
+document.getElementById('quantidade').addEventListener('input', calcularTotais);
+
+function formatarMoeda(valor) {
+    return 'R$ ' + parseFloat(valor).toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+}
+
+function parseMoeda(valor) {
+    if (!valor) return 0;
+    return parseFloat(valor.replace(/\./g, '').replace(',', '.')) || 0;
+}
+
+function calcularTotais() {
+    var quantidade = parseFloat(document.getElementById('quantidade').value) || 0;
+    var precoUnitario = parseMoeda(document.getElementById('precoUnitario').value);
+    var desconto = parseMoeda(document.getElementById('desconto').value);
+    
+    var subtotal = quantidade * precoUnitario;
+    var total = subtotal - desconto;
+    
+    document.getElementById('subtotalDisplay').textContent = formatarMoeda(subtotal);
+    document.getElementById('totalDisplay').textContent = formatarMoeda(total);
+}
+</script>
+{% endblock %}

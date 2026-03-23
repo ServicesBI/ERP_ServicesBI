@@ -1,0 +1,1363 @@
+{% extends 'base.html' %}
+
+{% load custom_filters %}
+
+{% block title %}Dashboard - ERP ServicesBI{% endblock %}
+
+{% block extra_css %}
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --bg-primary: #f8fafc;
+    --bg-card: #ffffff;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --border-color: #e2e8f0;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    --radius: 12px;
+    --radius-sm: 8px;
+    
+    /* Cores tema claro */
+    --color-success: #10b981;
+    --color-success-light: #d1fae5;
+    --color-danger: #ef4444;
+    --color-danger-light: #fee2e2;
+    --color-warning: #f59e0b;
+    --color-warning-light: #fef3c7;
+    --color-info: #3b82f6;
+    --color-info-light: #dbeafe;
+    --color-purple: #8b5cf6;
+    --color-purple-light: #ede9fe;
+}
+
+[data-theme="dark"] {
+    --bg-primary: #0f172a;
+    --bg-card: #1e293b;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --border-color: #334155;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5);
+}
+
+* {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+    background: var(--bg-primary);
+    transition: background 0.3s ease;
+}
+
+/* Header do Dashboard */
+.erp-dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding: 16px 20px;
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+}
+
+.erp-dashboard-header__left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.erp-dashboard-header__title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.erp-dashboard-header__datetime {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.erp-dashboard-header__time {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.erp-dashboard-header__actions {
+    display: flex;
+    gap: 8px;
+}
+
+.erp-dashboard-btn {
+    padding: 8px 16px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.erp-dashboard-btn:hover {
+    background: var(--bg-primary);
+    border-color: var(--color-info);
+    color: var(--color-info);
+    transform: translateY(-1px);
+}
+
+.erp-dashboard-btn:active {
+    transform: translateY(0);
+}
+
+/* Grid Principal - CORRIGIDO */
+.erp-dashboard-grid {
+    display: grid;
+    gap: 20px;
+    margin-bottom: 20px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.erp-dashboard-grid--4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.erp-dashboard-grid--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.erp-dashboard-grid--2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.erp-dashboard-grid--1 {
+    grid-template-columns: 1fr;
+}
+
+/* Cards de Métricas Premium - CORRIGIDO */
+.erp-metric-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    min-width: 0;
+}
+
+.erp-metric-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.erp-metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent-color) 0%, var(--accent-color-light) 100%);
+}
+
+.erp-metric-card--success { --accent-color: var(--color-success); --accent-color-light: #34d399; }
+.erp-metric-card--danger { --accent-color: var(--color-danger); --accent-color-light: #f87171; }
+.erp-metric-card--info { --accent-color: var(--color-info); --accent-color-light: #60a5fa; }
+.erp-metric-card--warning { --accent-color: var(--color-warning); --accent-color-light: #fbbf24; }
+
+.erp-metric-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.erp-metric-card__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    background: var(--accent-color-light);
+}
+
+.erp-metric-card--success .erp-metric-card__icon { background: var(--color-success-light); }
+.erp-metric-card--danger .erp-metric-card__icon { background: var(--color-danger-light); }
+.erp-metric-card--info .erp-metric-card__icon { background: var(--color-info-light); }
+.erp-metric-card--warning .erp-metric-card__icon { background: var(--color-warning-light); }
+
+.erp-metric-card__trend {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.erp-metric-card__trend--up {
+    background: var(--color-success-light);
+    color: var(--color-success);
+}
+
+.erp-metric-card__trend--down {
+    background: var(--color-danger-light);
+    color: var(--color-danger);
+}
+
+.erp-metric-card__value {
+    font-size: clamp(18px, 2vw, 28px);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.erp-metric-card__label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.erp-metric-card__sparkline {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    opacity: 0.3;
+}
+
+/* Cards de Gráficos */
+.erp-chart-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+}
+
+.erp-chart-card:hover {
+    box-shadow: var(--shadow);
+}
+
+.erp-chart-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.erp-chart-card__title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.erp-chart-card__title::before {
+    content: '';
+    width: 4px;
+    height: 16px;
+    background: var(--accent-color, var(--color-info));
+    border-radius: 2px;
+}
+
+.erp-chart-card__actions {
+    display: flex;
+    gap: 4px;
+}
+
+.erp-chart-card__btn {
+    padding: 4px 8px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.erp-chart-card__btn:hover {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.erp-chart-container {
+    width: 100%;
+    height: 250px;
+}
+
+.erp-chart-container--sm {
+    height: 200px;
+}
+
+/* Cards de Módulos */
+.erp-module-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.erp-module-card:hover {
+    box-shadow: var(--shadow);
+    transform: translateY(-2px);
+}
+
+.erp-module-card__header {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: white;
+}
+
+.erp-module-card__header--blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+.erp-module-card__header--green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+.erp-module-card__header--purple { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+.erp-module-card__header--orange { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+
+.erp-module-card__body {
+    padding: 16px 20px;
+}
+
+.erp-module-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.erp-module-list__item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.erp-module-list__item:last-child {
+    border-bottom: none;
+}
+
+.erp-module-list__label {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.erp-module-list__value {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.erp-module-list__value--success { color: var(--color-success); }
+.erp-module-list__value--danger { color: var(--color-danger); }
+.erp-module-list__value--warning { color: var(--color-warning); }
+
+.erp-module-list__link {
+    color: var(--color-info);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.erp-module-list__link:hover {
+    color: var(--text-primary);
+}
+
+.erp-module-card__footer {
+    padding: 12px 20px;
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border-color);
+}
+
+/* Tabela de Atividades */
+.erp-activity-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+
+.erp-activity-card__header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.erp-activity-card__title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.erp-activity-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.erp-activity-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: var(--bg-primary);
+}
+
+.erp-activity-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.erp-activity-table tr:hover td {
+    background: var(--bg-primary);
+}
+
+.erp-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.erp-badge--success { background: var(--color-success-light); color: var(--color-success); }
+.erp-badge--warning { background: var(--color-warning-light); color: var(--color-warning); }
+.erp-badge--danger { background: var(--color-danger-light); color: var(--color-danger); }
+
+/* Notificações Toast */
+.erp-toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.erp-toast {
+    background: var(--bg-card);
+    border-radius: var(--radius-sm);
+    padding: 16px 20px;
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 300px;
+    animation: slideIn 0.3s ease;
+    border-left: 4px solid var(--color-info);
+}
+
+.erp-toast--success { border-left-color: var(--color-success); }
+.erp-toast--warning { border-left-color: var(--color-warning); }
+.erp-toast--danger { border-left-color: var(--color-danger); }
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Responsividade - CORRIGIDO */
+@media (max-width: 1400px) {
+    .erp-dashboard-grid--4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 1200px) {
+    .erp-dashboard-grid--4,
+    .erp-dashboard-grid--3 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .erp-dashboard-grid--4,
+    .erp-dashboard-grid--3,
+    .erp-dashboard-grid--2 {
+        grid-template-columns: 1fr;
+    }
+    
+    .erp-dashboard-header {
+        flex-direction: column;
+        gap: 16px;
+        text-align: center;
+    }
+    
+    .erp-dashboard-header__datetime {
+        align-items: center;
+    }
+    
+    .erp-dashboard-header__actions {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
+
+/* Modo fullscreen */
+.erp-chart-card.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9998;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.erp-chart-card.fullscreen .erp-chart-container {
+    flex: 1;
+    height: auto !important;
+}
+
+/* Print */
+@media print {
+    .erp-dashboard-header__actions,
+    .erp-chart-card__actions,
+    .erp-module-card__footer {
+        display: none !important;
+    }
+    
+    .erp-metric-card,
+    .erp-chart-card,
+    .erp-module-card {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- TOAST CONTAINER -->
+<div class="erp-toast-container" id="toastContainer"></div>
+
+<!-- HEADER DO DASHBOARD -->
+<div class="erp-dashboard-header">
+    <div class="erp-dashboard-header__left">
+        <h1 class="erp-dashboard-header__title">📊 Dashboard ERP</h1>
+    </div>
+    <div class="erp-dashboard-header__datetime">
+        <span id="currentDate">Carregando...</span>
+        <span class="erp-dashboard-header__time" id="currentTime">00:00:00</span>
+    </div>
+    <div class="erp-dashboard-header__actions">
+        <button class="erp-dashboard-btn" onclick="toggleTheme()" title="Alternar tema" type="button">
+            <span id="themeIcon">🌙</span> 
+            <span id="themeText">Escuro</span>
+        </button>
+        <button class="erp-dashboard-btn" onclick="refreshData()" title="Atualizar dados" type="button">
+            <span>🔄</span> 
+            <span>Atualizar</span>
+        </button>
+        <button class="erp-dashboard-btn" onclick="exportPDF()" title="Exportar PDF" type="button">
+            <span>📄</span> 
+            <span>PDF</span>
+        </button>
+        <button class="erp-dashboard-btn" onclick="toggleFullscreen()" title="Tela cheia" type="button">
+            <span>⛶</span> 
+            <span>Fullscreen</span>
+        </button>
+    </div>
+</div>
+
+<!-- MÉTRICAS PRINCIPAIS -->
+<div class="erp-dashboard-grid erp-dashboard-grid--4">
+    <div class="erp-metric-card erp-metric-card--info" onclick="showDetail('saldo')">
+        <div class="erp-metric-card__header">
+            <div class="erp-metric-card__icon">💰</div>
+            <div class="erp-metric-card__trend erp-metric-card__trend--up">
+                ↗ {{ trend_saldo|default:0|floatformat:1 }}%
+            </div>
+        </div>
+        <div class="erp-metric-card__label">Saldo Total</div>
+        <div class="erp-metric-card__value">{{ saldo_total|default:0|currency_br }}</div>
+        <div class="erp-metric-card__sparkline" id="sparkline1"></div>
+    </div>
+
+    <div class="erp-metric-card erp-metric-card--success" onclick="showDetail('receitas')">
+        <div class="erp-metric-card__header">
+            <div class="erp-metric-card__icon">📈</div>
+            <div class="erp-metric-card__trend erp-metric-card__trend--up">
+                ↗ {{ trend_receitas|default:0|floatformat:1 }}%
+            </div>
+        </div>
+        <div class="erp-metric-card__label">Receitas</div>
+        <div class="erp-metric-card__value" style="color: var(--color-success);">{{ total_receitas|default:0|currency_br }}</div>
+        <div class="erp-metric-card__sparkline" id="sparkline2"></div>
+    </div>
+
+    <div class="erp-metric-card erp-metric-card--danger" onclick="showDetail('despesas')">
+        <div class="erp-metric-card__header">
+            <div class="erp-metric-card__icon">📉</div>
+            <div class="erp-metric-card__trend {% if trend_despesas|default:0 < 0 %}erp-metric-card__trend--down{% else %}erp-metric-card__trend--up{% endif %}">
+                {% if trend_despesas|default:0 < 0 %}↘{% else %}↗{% endif %} {{ trend_despesas|default:0|floatformat:1 }}%
+            </div>
+        </div>
+        <div class="erp-metric-card__label">Despesas</div>
+        <div class="erp-metric-card__value" style="color: var(--color-danger);">{{ total_despesas|default:0|currency_br }}</div>
+        <div class="erp-metric-card__sparkline" id="sparkline3"></div>
+    </div>
+
+    <div class="erp-metric-card erp-metric-card--warning" onclick="showDetail('previsto')">
+        <div class="erp-metric-card__header">
+            <div class="erp-metric-card__icon">🎯</div>
+            <div class="erp-metric-card__trend erp-metric-card__trend--up">
+                ↗ 15.2%
+            </div>
+        </div>
+        <div class="erp-metric-card__label">Saldo Previsto</div>
+        <div class="erp-metric-card__value" style="color: var(--color-warning);">{{ saldo_previsto|default:0|currency_br }}</div>
+        <div class="erp-metric-card__sparkline" id="sparkline4"></div>
+    </div>
+</div>
+
+<!-- GRÁFICO PRINCIPAL - EVOLUÇÃO FINANCEIRA -->
+<div class="erp-dashboard-grid erp-dashboard-grid--1" style="margin-bottom: 20px;">
+    <div class="erp-chart-card">
+        <div class="erp-chart-card__header">
+            <h3 class="erp-chart-card__title" style="--accent-color: var(--color-info);">Evolução Financeira (Últimos 6 Meses)</h3>
+            <div class="erp-chart-card__actions">
+                <button class="erp-chart-card__btn" onclick="toggleChartFullscreen('chartMain')" type="button">⛶</button>
+                <button class="erp-chart-card__btn" onclick="downloadChart('chartMain')" type="button">💾</button>
+            </div>
+        </div>
+        <div id="chartMain" class="erp-chart-container"></div>
+    </div>
+</div>
+
+<!-- GRÁFICOS SECUNDÁRIOS -->
+<div class="erp-dashboard-grid erp-dashboard-grid--2">
+    <div class="erp-chart-card">
+        <div class="erp-chart-card__header">
+            <h3 class="erp-chart-card__title" style="--accent-color: var(--color-success);">Distribuição de Despesas</h3>
+            <div class="erp-chart-card__actions">
+                <button class="erp-chart-card__btn" onclick="toggleChartFullscreen('chartPie')" type="button">⛶</button>
+            </div>
+        </div>
+        <div id="chartPie" class="erp-chart-container--sm"></div>
+    </div>
+
+    <div class="erp-chart-card">
+        <div class="erp-chart-card__header">
+            <h3 class="erp-chart-card__title" style="--accent-color: var(--color-warning);">Top 5 Produtos Vendidos</h3>
+            <div class="erp-chart-card__actions">
+                <button class="erp-chart-card__btn" onclick="toggleChartFullscreen('chartBar')" type="button">⛶</button>
+            </div>
+        </div>
+        <div id="chartBar" class="erp-chart-container--sm"></div>
+    </div>
+</div>
+
+<!-- MÓDULOS RÁPIDOS -->
+<div class="erp-dashboard-grid erp-dashboard-grid--3" style="margin-top: 20px;">
+    <!-- VENDAS -->
+    <div class="erp-module-card">
+        <div class="erp-module-card__header erp-module-card__header--blue">
+            <span>📦</span> VENDAS
+        </div>
+        <div class="erp-module-card__body">
+            <ul class="erp-module-list">
+                <li class="erp-module-list__item">
+                    <span class="erp-module-list__label">Orçamentos pendentes</span>
+                    <span class="erp-module-list__value">{{ total_orcamentos_venda|default:0 }}</span>
+                </li>
+                <li class="erp-module-list__item">
+                    <span class="erp-module-list__label">Pedidos em aberto</span>
+                    <span class="erp-module-list__value erp-module-list__value--success">{{ total_pedidos_venda|default:0 }}</span>
+                </li>
+                <li class="erp-module-list__item">
+                    <span class="erp-module-list__label">Faturamento hoje</span>
+                    <span class="erp-module-list__value">R$ 0,00</span>
+                </li>
+            </ul>
+        </div>
+        <div class="erp-module-card__footer">
+            <a href="{% url 'ERP_ServicesBI:orcamento_list' %}" class="erp-module-list__link">Ver orçamentos →</a>
+        </div>
+    </div>
+
+    <!-- COMPRAS -->
+    <div class="erp-module-card">
+        <div class="erp-module-card__header erp-module-card__header--green">
+            <span>🛒</span> COMPRAS
+        </div>
+        <div class="erp-module-card__body">
+            <ul class="erp-module-list">
+                <li class="erp-module-list__item">
+                    <span class="erp-module-list__label">Cotações pendentes</span>
+                    <span class="erp-module-list__value">{{ total_orcamentos_compra|default:0 }}</span>
+                </li>
+                <li class="erp-module-list__item">
+                    <span class="erp-module-list__label">Pedidos em andamento</span>
+                    <span class="erp-module-list__value erp-module-list__value--warning">{{ total_pedidos_compra|default:0 }}</span>
+                </li>
+                <li class="erp-module-list__item">
+                    <span class="erp-module-list__label">NF's a receber</span>
+                    <span class="erp-module-list__value">0</span>
+                </li>
+            </ul>
+        </div>
+        <div class="erp-module-card__footer">
+            <a href="{% url 'ERP_ServicesBI:pedidocompra_list' %}" class="erp-module-list__link">Ver pedidos de compra →</a>
+        </div>
+    </div>
+
+    <!-- FINANCEIRO -->
+    <div class="erp-module-card">
+        <div class="erp-module-card__header erp-module-card__header--purple">
+            <span>💰</span> FINANCEIRO
+        </div>
+        <div class="erp-module-card__body">
+            <ul class="erp-module-list">
+                <li class="erp-module-list__item">
+                    <span class="erp-module-list__label">Contas a receber</span>
+                    <span class="erp-module-list__value erp-module-list__value--success">{{ contas_receber|default:0 }}</span>
+                </li>
+                <li class="erp-module-list__item">
+                    <span class="erp-module-list__label">Contas a pagar</span>
+                    <span class="erp-module-list__value erp-module-list__value--danger">{{ contas_pagar|default:0 }}</span>
+                </li>
+                <li class="erp-module-list__item">
+                    <span class="erp-module-list__label">Saldo em caixa</span>
+                    <span class="erp-module-list__value">R$ 0,00</span>
+                </li>
+            </ul>
+        </div>
+        <div class="erp-module-card__footer">
+            <a href="{% url 'ERP_ServicesBI:fluxo_caixa' %}" class="erp-module-list__link">Ver fluxo de caixa →</a>
+        </div>
+    </div>
+</div>
+
+<!-- ATIVIDADES RECENTES E ALERTAS -->
+<div class="erp-dashboard-grid erp-dashboard-grid--2" style="margin-top: 20px;">
+    <!-- ÚLTIMAS ATIVIDADES -->
+    <div class="erp-activity-card">
+        <div class="erp-activity-card__header">
+            <h3 class="erp-activity-card__title">
+                <span style="color: var(--color-info);">🕐</span> Últimas Atividades
+            </h3>
+            <span style="font-size: 12px; color: var(--text-secondary);">Hoje</span>
+        </div>
+        <table class="erp-activity-table">
+            <thead>
+                <tr>
+                    <th>Hora</th>
+                    <th>Tipo</th>
+                    <th>Descrição</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>14:30</td>
+                    <td>Venda</td>
+                    <td>Pedido #1234 - Cliente ABC</td>
+                    <td style="color: var(--color-success); font-weight: 600;">R$ 5.000,00</td>
+                    <td><span class="erp-badge erp-badge--success">Concluído</span></td>
+                </tr>
+                <tr>
+                    <td>13:15</td>
+                    <td>Compra</td>
+                    <td>NF #567 - Fornecedor XYZ</td>
+                    <td style="color: var(--color-danger); font-weight: 600;">R$ 2.300,00</td>
+                    <td><span class="erp-badge erp-badge--warning">Pendente</span></td>
+                </tr>
+                <tr>
+                    <td>11:45</td>
+                    <td>Pagamento</td>
+                    <td>Conta de energia</td>
+                    <td style="color: var(--color-danger); font-weight: 600;">R$ 450,00</td>
+                    <td><span class="erp-badge erp-badge--success">Pago</span></td>
+                </tr>
+                <tr>
+                    <td>09:20</td>
+                    <td>Venda</td>
+                    <td>Orçamento #890 - Cliente DEF</td>
+                    <td style="color: var(--color-success); font-weight: 600;">R$ 12.000,00</td>
+                    <td><span class="erp-badge erp-badge--warning">Aguardando</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ALERTAS -->
+    <div class="erp-module-card">
+        <div class="erp-module-card__header erp-module-card__header--orange">
+            <span>⚠️</span> ALERTAS E PENDÊNCIAS
+        </div>
+        <div class="erp-module-card__body">
+            <ul class="erp-module-list">
+                <li class="erp-module-list__item" style="cursor: pointer;" onclick="showAlert('estoque')">
+                    <span class="erp-module-list__label">🔴 Produtos com estoque baixo</span>
+                    <span class="erp-module-list__value erp-module-list__value--danger">{{ estoque_baixo|default:0 }}</span>
+                </li>
+                <li class="erp-module-list__item" style="cursor: pointer;" onclick="showAlert('vencidos')">
+                    <span class="erp-module-list__label">🟡 Orçamentos vencidos</span>
+                    <span class="erp-module-list__value erp-module-list__value--warning">{{ orcamentos_vencidos|default:0 }}</span>
+                </li>
+                <li class="erp-module-list__item" style="cursor: pointer;" onclick="showAlert('atrasados')">
+                    <span class="erp-module-list__label">🔴 Pedidos atrasados</span>
+                    <span class="erp-module-list__value erp-module-list__value--danger">{{ pedidos_atrasados|default:0 }}</span>
+                </li>
+                <li class="erp-module-list__item" style="cursor: pointer;" onclick="showAlert('receber')">
+                    <span class="erp-module-list__label">🔴 Contas a receber atrasadas</span>
+                    <span class="erp-module-list__value erp-module-list__value--danger">{{ contas_receber_atrasadas|default:0 }}</span>
+                </li>
+                <li class="erp-module-list__item" style="cursor: pointer;" onclick="showAlert('pagar')">
+                    <span class="erp-module-list__label">🟠 Contas a pagar hoje</span>
+                    <span class="erp-module-list__value erp-module-list__value--warning">3</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Apache ECharts -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+
+<script>
+// ========== RELÓGIO E DATA ==========
+function updateDateTime() {
+    const now = new Date();
+    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
+    
+    const dateEl = document.getElementById('currentDate');
+    const timeEl = document.getElementById('currentTime');
+    
+    if (dateEl) dateEl.textContent = now.toLocaleDateString('pt-BR', dateOptions);
+    if (timeEl) timeEl.textContent = now.toLocaleTimeString('pt-BR', timeOptions);
+}
+setInterval(updateDateTime, 1000);
+updateDateTime();
+
+// ========== FUNÇÕES DOS BOTÕES DO HEADER ==========
+
+function toggleTheme() {
+    console.log('Toggle theme clicado');
+    const html = document.documentElement;
+    const currentTheme = html.getAttribute('data-theme') || 'light';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    html.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    
+    const icon = document.getElementById('themeIcon');
+    const text = document.getElementById('themeText');
+    
+    if (icon && text) {
+        if (newTheme === 'dark') {
+            icon.textContent = '☀️';
+            text.textContent = 'Claro';
+        } else {
+            icon.textContent = '🌙';
+            text.textContent = 'Escuro';
+        }
+    }
+    
+    showToast('Tema ' + (newTheme === 'dark' ? 'escuro' : 'claro') + ' ativado', 'success');
+    
+    // Recarrega gráficos com novo tema
+    setTimeout(function() {
+        initCharts();
+    }, 100);
+}
+
+function refreshData() {
+    console.log('Refresh clicado');
+    showToast('Atualizando dados...', 'info');
+    setTimeout(function() {
+        window.location.reload();
+    }, 800);
+}
+
+function exportPDF() {
+    console.log('PDF clicado');
+    showToast('Preparando PDF...', 'info');
+    setTimeout(function() {
+        window.print();
+    }, 500);
+}
+
+function toggleFullscreen() {
+    console.log('Fullscreen clicado');
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().then(function() {
+            showToast('Modo tela cheia ativado', 'success');
+        }).catch(function(err) {
+            showToast('Erro ao ativar fullscreen', 'danger');
+        });
+    } else {
+        document.exitFullscreen().then(function() {
+            showToast('Modo tela cheia desativado', 'info');
+        });
+    }
+}
+
+// ========== ECHARTS ==========
+let charts = {};
+
+function initCharts() {
+    console.log('Inicializando gráficos...');
+    
+    // Verifica se ECharts está disponível
+    if (typeof echarts === 'undefined') {
+        console.error('ECharts não está carregado!');
+        return;
+    }
+    
+    // Verifica se os elementos existem
+    const chartMainEl = document.getElementById('chartMain');
+    const chartPieEl = document.getElementById('chartPie');
+    const chartBarEl = document.getElementById('chartBar');
+    
+    if (!chartMainEl || !chartPieEl || !chartBarEl) {
+        console.error('Elementos dos gráficos não encontrados!');
+        return;
+    }
+    
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDark ? '#f1f5f9' : '#1e293b';
+    const gridColor = isDark ? '#334155' : '#e2e8f0';
+    
+    // DADOS COM VALORES PADRÃO SEGUROS - CORREÇÃO PRINCIPAL
+    const mesesLabels = {{ meses_labels|default:"['Jan','Fev','Mar','Abr','Mai','Jun']"|safe }};
+    const receitasMensal = {{ receitas_mensal|default:"[0,0,0,0,0,0]"|safe }};
+    const despesasMensal = {{ despesas_mensal|default:"[0,0,0,0,0,0]"|safe }};
+    const saldoMensal = {{ saldo_mensal|default:"[0,0,0,0,0,0]"|safe }};
+    const topProdutosLabels = {{ top_produtos_labels|default:"['Prod A','Prod B','Prod C','Prod D','Prod E']"|safe }};
+    const topProdutosValores = {{ top_produtos_valores|default:"[0,0,0,0,0]"|safe }};
+    
+    console.log('Dados carregados:', mesesLabels, receitasMensal);
+    
+    // 1. GRÁFICO PRINCIPAL - LINHA
+    try {
+        const chartMain = echarts.init(chartMainEl);
+        charts['chartMain'] = chartMain;
+        
+        chartMain.setOption({
+            tooltip: {
+                trigger: 'axis',
+                backgroundColor: isDark ? '#1e293b' : 'rgba(255,255,255,0.95)',
+                borderColor: gridColor,
+                textStyle: { color: textColor },
+                axisPointer: {
+                    type: 'cross',
+                    crossStyle: { color: '#999' }
+                }
+            },
+            legend: {
+                data: ['Receitas', 'Despesas', 'Saldo'],
+                bottom: 0,
+                textStyle: { color: textColor }
+            },
+            grid: {
+                left: '3%', right: '4%', bottom: '15%', top: '10%', containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                data: mesesLabels,
+                axisLine: { lineStyle: { color: gridColor } },
+                axisLabel: { color: textColor }
+            },
+            yAxis: {
+                type: 'value',
+                axisLine: { show: false },
+                splitLine: { lineStyle: { color: gridColor } },
+                axisLabel: { 
+                    color: textColor,
+                    formatter: function(value) { return 'R$ ' + (value/1000).toFixed(0) + 'k'; }
+                }
+            },
+            series: [
+                {
+                    name: 'Receitas',
+                    type: 'line',
+                    smooth: true,
+                    data: receitasMensal,
+                    itemStyle: { color: '#10b981' },
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0,0,0,1, [
+                            { offset: 0, color: 'rgba(16,185,129,0.3)' },
+                            { offset: 1, color: 'rgba(16,185,129,0.05)' }
+                        ])
+                    },
+                    lineStyle: { width: 3 }
+                },
+                {
+                    name: 'Despesas',
+                    type: 'line',
+                    smooth: true,
+                    data: despesasMensal,
+                    itemStyle: { color: '#ef4444' },
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0,0,0,1, [
+                            { offset: 0, color: 'rgba(239,68,68,0.3)' },
+                            { offset: 1, color: 'rgba(239,68,68,0.05)' }
+                        ])
+                    },
+                    lineStyle: { width: 3 }
+                },
+                {
+                    name: 'Saldo',
+                    type: 'line',
+                    smooth: true,
+                    data: saldoMensal,
+                    itemStyle: { color: '#3b82f6' },
+                    lineStyle: { width: 2, type: 'dashed' }
+                }
+            ]
+        });
+        console.log('Gráfico principal criado com sucesso');
+    } catch (e) {
+        console.error('Erro ao criar gráfico principal:', e);
+    }
+    
+    // 2. GRÁFICO DE PIZZA - DESPESAS
+    try {
+        const chartPie = echarts.init(chartPieEl);
+        charts['chartPie'] = chartPie;
+        
+        // Dados de despesa por categoria com valor padrão seguro
+        const despesasDataRaw = {{ despesas_por_categoria|default:"{}"|safe }};
+        let despesasData = [];
+        
+        // Verifica se é um objeto válido e converte para array
+        if (despesasDataRaw && typeof despesasDataRaw === 'object' && Object.keys(despesasDataRaw).length > 0) {
+            despesasData = Object.keys(despesasDataRaw).map(function(key) {
+                return { value: despesasDataRaw[key], name: key };
+            });
+        } else {
+            // Dados de demonstração padrão
+            despesasData = [
+                { value: 3500, name: 'Fornecedores' },
+                { value: 2800, name: 'Salários' },
+                { value: 1500, name: 'Aluguel' },
+                { value: 1200, name: 'Marketing' },
+                { value: 800, name: 'Outros' }
+            ];
+        }
+        
+        chartPie.setOption({
+            tooltip: {
+                trigger: 'item',
+                backgroundColor: isDark ? '#1e293b' : 'rgba(255,255,255,0.95)',
+                borderColor: gridColor,
+                textStyle: { color: textColor },
+                formatter: '{b}: <strong>R$ {c}</strong> ({d}%)'
+            },
+            legend: {
+                orient: 'vertical',
+                right: '5%',
+                top: 'center',
+                textStyle: { color: textColor, fontSize: 10 },
+                itemWidth: 10,
+                itemHeight: 10
+            },
+            series: [{
+                type: 'pie',
+                radius: ['40%', '70%'],
+                center: ['35%', '50%'],
+                avoidLabelOverlap: false,
+                itemStyle: {
+                    borderRadius: 6,
+                    borderColor: isDark ? '#1e293b' : '#fff',
+                    borderWidth: 2
+                },
+                label: { show: false },
+                emphasis: {
+                    label: {
+                        show: true,
+                        fontSize: 14,
+                        fontWeight: 'bold',
+                        color: textColor
+                    }
+                },
+                data: despesasData,
+                color: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
+            }]
+        });
+        console.log('Gráfico de pizza criado com sucesso');
+    } catch (e) {
+        console.error('Erro ao criar gráfico de pizza:', e);
+    }
+    
+    // 3. GRÁFICO DE BARRAS - TOP PRODUTOS
+    try {
+        const chartBar = echarts.init(chartBarEl);
+        charts['chartBar'] = chartBar;
+        
+        chartBar.setOption({
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: { type: 'shadow' },
+                backgroundColor: isDark ? '#1e293b' : 'rgba(255,255,255,0.95)',
+                borderColor: gridColor,
+                textStyle: { color: textColor }
+            },
+            grid: {
+                left: '3%', right: '15%', bottom: '3%', top: '3%', containLabel: true
+            },
+            xAxis: {
+                type: 'value',
+                axisLine: { show: false },
+                splitLine: { lineStyle: { color: gridColor } },
+                axisLabel: { color: textColor }
+            },
+            yAxis: {
+                type: 'category',
+                data: topProdutosLabels,
+                axisLine: { show: false },
+                axisTick: { show: false },
+                axisLabel: { color: textColor }
+            },
+            series: [{
+                type: 'bar',
+                data: topProdutosValores,
+                barWidth: '60%',
+                itemStyle: {
+                    color: new echarts.graphic.LinearGradient(0,0,1,0, [
+                        { offset: 0, color: '#f59e0b' },
+                        { offset: 1, color: '#d97706' }
+                    ]),
+                    borderRadius: [0, 4, 4, 0]
+                },
+                label: {
+                    show: true,
+                    position: 'right',
+                    color: textColor,
+                    formatter: function(params) { return 'R$ ' + (params.value/1000).toFixed(1) + 'k'; }
+                }
+            }]
+        });
+        console.log('Gráfico de barras criado com sucesso');
+    } catch (e) {
+        console.error('Erro ao criar gráfico de barras:', e);
+    }
+    
+    // SPARKLINES NOS CARDS
+    initSparklines();
+}
+
+function initSparklines() {
+    const sparkData = [
+        [10, 15, 8, 20, 18, 25, 22],
+        [20, 25, 22, 30, 28, 35, 32],
+        [15, 12, 18, 15, 20, 18, 22],
+        [25, 28, 22, 30, 35, 32, 38]
+    ];
+    
+    sparkData.forEach(function(data, index) {
+        const el = document.getElementById('sparkline' + (index+1));
+        if (!el) return;
+        
+        try {
+            const chart = echarts.init(el);
+            chart.setOption({
+                grid: { left: 0, right: 0, top: 0, bottom: 0 },
+                xAxis: { show: false, type: 'category' },
+                yAxis: { show: false, type: 'value' },
+                series: [{
+                    type: 'line',
+                    data: data,
+                    smooth: true,
+                    symbol: 'none',
+                    lineStyle: { width: 2 },
+                    areaStyle: { opacity: 0.3 }
+                }]
+            });
+        } catch (e) {
+            console.error('Erro no sparkline', index, e);
+        }
+    });
+}
+
+// Responsividade
+window.addEventListener('resize', function() {
+    Object.values(charts).forEach(function(chart) {
+        if (chart && chart.resize) chart.resize();
+    });
+});
+
+// ========== FUNÇÕES DE INTERAÇÃO ==========
+
+function showToast(message, type) {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    
+    const toast = document.createElement('div');
+    toast.className = 'erp-toast erp-toast--' + type;
+    
+    const icons = {
+        success: '✅',
+        warning: '⚠️',
+        danger: '❌',
+        info: 'ℹ️'
+    };
+    
+    toast.innerHTML = 
+        '<span style="font-size: 20px;">' + icons[type] + '</span>' +
+        '<div>' +
+            '<div style="font-weight: 600; color: var(--text-primary);">' + message + '</div>' +
+            '<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">' + 
+                new Date().toLocaleTimeString('pt-BR') + 
+            '</div>' +
+        '</div>';
+    
+    container.appendChild(toast);
+    
+    setTimeout(function() {
+        toast.style.animation = 'slideIn 0.3s ease reverse';
+        setTimeout(function() {
+            if (toast.parentNode) toast.remove();
+        }, 300);
+    }, 5000);
+}
+
+function showDetail(type) {
+    const messages = {
+        saldo: 'Saldo atualizado em tempo real',
+        receitas: 'Receitas do mês em andamento',
+        despesas: 'Despesas categorizadas',
+        previsto: 'Projeção baseada no histórico'
+    };
+    showToast(messages[type], 'info');
+}
+
+function showAlert(type) {
+    // Valores com default seguro
+    const estoque = {{ estoque_baixo|default:0 }};
+    const orcamentos = {{ orcamentos_vencidos|default:0 }};
+    const pedidos = {{ pedidos_atrasados|default:0 }};
+    const contas = {{ contas_receber_atrasadas|default:0 }};
+    
+    const messages = {
+        estoque: estoque + ' produtos precisam de reposição!',
+        vencidos: orcamentos + ' orçamentos vencidos',
+        atrasados: pedidos + ' pedidos atrasados',
+        receber: contas + ' contas a receber atrasadas',
+        pagar: '3 contas a pagar hoje'
+    };
+    const isDanger = (type === 'estoque' || type === 'atrasados' || type === 'receber');
+    showToast(messages[type], isDanger ? 'danger' : 'warning');
+}
+
+function toggleChartFullscreen(chartId) {
+    const card = document.getElementById(chartId);
+    if (!card) return;
+    
+    const cardParent = card.closest('.erp-chart-card');
+    if (!cardParent) return;
+    
+    cardParent.classList.toggle('fullscreen');
+    
+    setTimeout(function() {
+        if (charts[chartId] && charts[chartId].resize) {
+            charts[chartId].resize();
+        }
+    }, 100);
+}
+
+function downloadChart(chartId) {
+    if (!charts[chartId]) return;
+    
+    const url = charts[chartId].getDataURL({
+        type: 'png',
+        pixelRatio: 2,
+        backgroundColor: '#fff'
+    });
+    const link = document.createElement('a');
+    link.download = 'grafico_' + chartId + '_' + new Date().toISOString().split('T')[0] + '.png';
+    link.href = url;
+    link.click();
+    showToast('Gráfico baixado!', 'success');
+}
+
+// ========== INICIALIZAÇÃO ==========
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Dashboard carregado - DOMContentLoaded');
+    
+    // Carrega tema salvo
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    
+    const icon = document.getElementById('themeIcon');
+    const text = document.getElementById('themeText');
+    if (savedTheme === 'dark' && icon && text) {
+        icon.textContent = '☀️';
+        text.textContent = 'Claro';
+    }
+    
+    // Inicializa gráficos após um pequeno delay para garantir que tudo carregou
+    setTimeout(function() {
+        initCharts();
+    }, 100);
+    
+    // Notificação de boas-vindas
+    setTimeout(function() {
+        showToast('Bem-vindo ao Dashboard ERP! 🚀', 'success');
+    }, 500);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,12 @@
+<div class="erp-empty">
+    <div class="erp-empty__icon">📭</div>
+    <div class="erp-empty__title">{{ message|default:"Nenhum registro encontrado" }}</div>
+    <p class="erp-page-subtitle">Comece adicionando um novo registro</p>
+    {% if action_url and action_label %}
+        <div class="erp-empty__action">
+            <a href="{{ action_url }}" class="erp-btn erp-btn--primary erp-btn--sm">
+                + {{ action_label }}
+            </a>
+        </div>
+    {% endif %}
+</div>

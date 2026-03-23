@@ -1,0 +1,36 @@
+{% if page_obj.has_other_pages %}
+<nav class="erp-pagination">
+
+    {% comment %}Botão Anterior{% endcomment %}
+    {% if page_obj.has_previous %}
+        <a href="?{{ request.GET.urlencode }}&page={{ page_obj.previous_page_number }}"
+           class="erp-pagination__link">←</a>
+    {% else %}
+        <span class="erp-pagination__link erp-pagination__link--disabled">←</span>
+    {% endif %}
+
+    {% comment %}Números de página com reticências{% endcomment %}
+    {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+            <span class="erp-pagination__link erp-pagination__link--active">{{ num }}</span>
+        {% elif num == 1 or num == page_obj.paginator.num_pages %}
+            <a href="?{{ request.GET.urlencode }}&page={{ num }}"
+               class="erp-pagination__link">{{ num }}</a>
+        {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+            <a href="?{{ request.GET.urlencode }}&page={{ num }}"
+               class="erp-pagination__link">{{ num }}</a>
+        {% elif num == page_obj.number|add:"-3" or num == page_obj.number|add:"3" %}
+            <span class="erp-pagination__ellipsis">…</span>
+        {% endif %}
+    {% endfor %}
+
+    {% comment %}Botão Próximo{% endcomment %}
+    {% if page_obj.has_next %}
+        <a href="?{{ request.GET.urlencode }}&page={{ page_obj.next_page_number }}"
+           class="erp-pagination__link">→</a>
+    {% else %}
+        <span class="erp-pagination__link erp-pagination__link--disabled">→</span>
+    {% endif %}
+
+</nav>
+{% endif %}

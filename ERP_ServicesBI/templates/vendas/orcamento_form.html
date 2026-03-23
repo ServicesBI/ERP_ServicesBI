@@ -1,0 +1,357 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}
+    {% if orcamento %}Editar{% else %}Novo{% endif %} Orçamento - ERP ServicesBI
+{% endblock %}
+
+{% block content %}
+<div class="erp-page-header erp-mb-6">
+    <h1 class="erp-page-title">{% if orcamento %}Editar{% else %}Novo{% endif %} Orçamento</h1>
+    <p class="erp-page-subtitle">Preencha os dados do orçamento de venda</p>
+</div>
+
+<div class="erp-card">
+    {% if messages %}
+        {% for message in messages %}
+            {% if message.tags == 'error' %}
+            <div class="erp-alert erp-alert--error erp-mb-4">
+                {{ message }}
+            </div>
+            {% else %}
+            <div class="erp-alert erp-alert--success erp-mb-4">
+                {{ message }}
+            </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    <!-- CABEÇALHO -->
+    <form method="post" id="form-orcamento" class="erp-form erp-mb-6">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update_header">
+        
+        <h3 class="erp-section-title">Dados do Orçamento</h3>
+        
+        <div class="erp-form-row">
+            <div class="erp-form-group">
+                <label class="erp-label erp-label-required" for="cliente">Cliente</label>
+                <select name="cliente" id="cliente" class="erp-select" required>
+                    <option value="">Selecione...</option>
+                    {% for cliente in clientes %}
+                    <option value="{{ cliente.id }}" {% if orcamento.cliente.id == cliente.id %}selected{% endif %}>
+                        {{ cliente.nome_razao_social }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="erp-form-group">
+                <label class="erp-label" for="vendedor">Vendedor</label>
+                <select name="vendedor" id="vendedor" class="erp-select">
+                    <option value="">Selecione...</option>
+                    {% for vendedor in vendedores %}
+                    <option value="{{ vendedor.id }}" {% if orcamento.vendedor.id == vendedor.id %}selected{% endif %}>
+                        {{ vendedor.username }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        
+        <div class="erp-form-row">
+            <div class="erp-form-group">
+                <label class="erp-label erp-label-required" for="data_orcamento">Data do Orçamento</label>
+                <input type="date" name="data_orcamento" id="data_orcamento" 
+                       value="{% if orcamento %}{{ orcamento.data_orcamento|date:'Y-m-d' }}{% endif %}" 
+                       class="erp-input" required>
+            </div>
+            <div class="erp-form-group">
+                <label class="erp-label erp-label-required" for="data_validade">Data de Validade</label>
+                <input type="date" name="data_validade" id="data_validade" 
+                       value="{% if orcamento %}{{ orcamento.data_validade|date:'Y-m-d' }}{% endif %}" 
+                       class="erp-input" required>
+            </div>
+            <div class="erp-form-group">
+                <label class="erp-label" for="condicao_pagamento">Condição de Pagamento</label>
+                <select name="condicao_pagamento" id="condicao_pagamento" class="erp-select">
+                    <option value="">Selecione...</option>
+                    {% for condicao in condicoes_pagamento %}
+                    <option value="{{ condicao.id }}" {% if orcamento.condicao_pagamento.id == condicao.id %}selected{% endif %}>
+                        {{ condicao.descricao }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="erp-form-group">
+                <label class="erp-label" for="status">Status</label>
+                <select name="status" id="status" class="erp-select">
+                    {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if orcamento.status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        
+        <div class="erp-form-group erp-mb-4">
+            <label class="erp-label" for="observacoes">Observações</label>
+            <textarea name="observacoes" id="observacoes" rows="2" class="erp-textarea" placeholder="Informações adicionais...">{{ orcamento.observacoes|default:'' }}</textarea>
+        </div>
+        
+        <div class="erp-flex erp-gap-2">
+            <button type="submit" class="erp-btn erp-btn--primary">
+                <span>💾</span>
+                <span>Atualizar Cabeçalho</span>
+            </button>
+            <a href="{% url 'ERP_ServicesBI:orcamento_list' %}" class="erp-btn erp-btn--outline" style="color: #fc4564; border-color: #fc4564;">
+                <span>Cancelar</span>
+            </a>
+            
+            {% if orcamento and orcamento.status == 'aprovado' %}
+            <a href="{% url 'ERP_ServicesBI:orcamento_gerar_pedido' orcamento.pk %}" class="erp-btn erp-btn--success" onclick="return confirm('Converter orçamento {{ orcamento.numero }} em pedido de venda?')">
+                <span>🛒</span>
+                <span>Gerar Pedido</span>
+            </a>
+            {% endif %}
+        </div>
+    </form>
+
+    {% if orcamento %}
+    <!-- ITENS -->
+    <div class="erp-section-divider">
+        <h3 class="erp-section-title">Itens do Orçamento</h3>
+        
+        <!-- FORMULÁRIO ADICIONAR ITEM -->
+        <form method="post" id="form-add-item" class="erp-form erp-bg-gray-50 erp-p-4 erp-rounded erp-mb-4">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_item">
+            
+            <div class="erp-form-row erp-items-end">
+                <div class="erp-form-group" style="flex: 3;">
+                    <label class="erp-label erp-label-required" for="produto">Produto</label>
+                    <select name="produto" id="produto" class="erp-select" required>
+                        <option value="">Selecione...</option>
+                        {% for produto in produtos %}
+                        <option value="{{ produto.id }}" data-preco="{{ produto.preco_venda|default:produto.preco_custo }}">
+                            {{ produto.codigo }} - {{ produto.descricao }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="erp-form-group">
+                    <label class="erp-label erp-label-required" for="quantidade">Qtd</label>
+                    <input type="number" name="quantidade" id="quantidade" step="0.01" value="1" class="erp-input" required>
+                </div>
+                <div class="erp-form-group">
+                    <label class="erp-label erp-label-required" for="preco_unitario">Preço Unit.</label>
+                    <input type="text" name="preco_unitario" id="preco_unitario" class="erp-input moeda" placeholder="0,00" required>
+                </div>
+                <button type="submit" class="erp-btn erp-btn--success">
+                    <span>+</span>
+                    <span>Adicionar</span>
+                </button>
+            </div>
+        </form>
+        
+        <!-- TABELA DE ITENS -->
+        {% if itens %}
+        <form method="post" id="form-itens-acoes">
+            {% csrf_token %}
+            <div class="erp-flex erp-gap-2 erp-items-center erp-mb-3">
+                <button type="button" onclick="selecionarTodos()" class="erp-btn erp-btn--sm erp-btn--secondary">Selecionar Todos</button>
+                <button type="button" onclick="desselecionarTodos()" class="erp-btn erp-btn--sm erp-btn--secondary">Desselecionar Todos</button>
+                <span id="contador-selecionados" class="erp-text-muted erp-text-sm">0 item(s) selecionado(s)</span>
+            </div>
+            
+            <div class="erp-table-container">
+                <table class="erp-table">
+                    <thead>
+                        <tr>
+                            <th class="erp-text-center" style="width: 40px;">
+                                <input type="checkbox" id="checkbox-todos" onclick="toggleTodos()" class="erp-checkbox">
+                            </th>
+                            <th>Produto</th>
+                            <th class="erp-text-center">Qtd</th>
+                            <th class="erp-text-right">Preço Unit.</th>
+                            <th class="erp-text-right">Total</th>
+                            <th class="erp-text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in itens %}
+                        <tr id="item-row-{{ item.id }}">
+                            <!-- CHECKBOX -->
+                            <td class="erp-text-center view-mode-{{ item.id }}">
+                                <input type="checkbox" name="itens_selecionados" value="{{ item.id }}" class="erp-checkbox checkbox-item" onchange="atualizarContador()">
+                            </td>
+                            
+                            <!-- MODO VISUALIZAÇÃO -->
+                            <td class="view-mode-{{ item.id }}">{{ item.produto.descricao }}</td>
+                            <td class="erp-text-center view-mode-{{ item.id }}">{{ item.quantidade|number_br }}</td>
+                            <td class="erp-text-right view-mode-{{ item.id }}">{{ item.preco_unitario|currency_br }}</td>
+                            <td class="erp-text-right erp-font-semibold view-mode-{{ item.id }}">{{ item.preco_total|currency_br }}</td>
+                            <td class="erp-text-center view-mode-{{ item.id }}">
+                                <div class="erp-flex erp-gap-1 erp-justify-center">
+                                    <button type="button" data-item-id="{{ item.id }}" class="erp-btn erp-btn--sm erp-btn--secondary btn-editar" title="Editar">✏️</button>
+                                    <form method="post" style="display: inline;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="remove_item">
+                                        <input type="hidden" name="item_id" value="{{ item.id }}">
+                                        <button type="submit" onclick="return confirm('Remover este item?')" class="erp-btn erp-btn--sm erp-btn--danger" title="Excluir">🗑️</button>
+                                    </form>
+                                </div>
+                            </td>
+                            
+                            <!-- MODO EDIÇÃO (inicialmente oculto) -->
+                            <td class="edit-mode-{{ item.id }}" style="display: none; background: var(--primary);" colspan="6">
+                                <form method="post" class="erp-flex erp-gap-2 erp-items-end erp-flex-wrap">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="update_item">
+                                    <input type="hidden" name="item_id" value="{{ item.id }}">
+                                    
+                                    <div style="flex: 2; min-width: 200px;">
+                                        <label class="erp-label" style="color: white;">Produto</label>
+                                        <div class="erp-input" style="background: rgba(255,255,255,0.2); color: white;">{{ item.produto.descricao }}</div>
+                                    </div>
+                                    <div style="flex: 1; min-width: 100px;">
+                                        <label class="erp-label erp-label-required" style="color: white;">Qtd</label>
+                                        <input type="number" name="quantidade" step="0.01" value="{{ item.quantidade }}" class="erp-input" required>
+                                    </div>
+                                    <div style="flex: 1; min-width: 100px;">
+                                        <label class="erp-label erp-label-required" style="color: white;">Preço Unit.</label>
+                                        <input type="text" name="preco_unitario" class="erp-input moeda" value="{{ item.preco_unitario|number_br }}" required>
+                                    </div>
+                                    <div class="erp-flex erp-gap-1">
+                                        <button type="submit" class="erp-btn erp-btn--light" title="Salvar">💾</button>
+                                        <button type="button" data-item-id="{{ item.id }}" class="erp-btn btn-cancelar" style="background: rgba(255,255,255,0.3); color: white;" title="Cancelar">❌</button>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="erp-bg-gray-50">
+                            <td colspan="4" class="erp-text-right erp-font-semibold erp-text-lg">TOTAL DO ORÇAMENTO:</td>
+                            <td class="erp-text-right erp-font-bold erp-text-xl erp-text-primary">{{ orcamento.valor_total|currency_br }}</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </form>
+        
+        <!-- BOTÕES SALVAR E CANCELAR -->
+        <div class="erp-flex erp-gap-2 erp-justify-end erp-mt-4 erp-pt-4 erp-border-top">
+            <button type="submit" form="form-orcamento" class="erp-btn erp-btn--primary">
+                <span>💾</span>
+                <span>Salvar Orçamento</span>
+            </button>
+            <a href="{% url 'ERP_ServicesBI:orcamento_list' %}" class="erp-btn erp-btn--outline" style="color: #fc4564; border-color: #fc4564;">
+                <span>Cancelar</span>
+            </a>
+        </div>
+        {% else %}
+        <div class="erp-empty-state">
+            {% include 'components/_empty_state.html' with message="Nenhum item adicionado. Use o formulário acima para adicionar produtos." %}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Máscara para campos de moeda
+function aplicarMascaraMoeda(input) {
+    input.addEventListener('input', function(e) {
+        var valor = e.target.value.replace(/\D/g, '');
+        valor = (valor / 100).toFixed(2);
+        valor = valor.replace('.', ',');
+        valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+        e.target.value = valor;
+    });
+}
+
+document.querySelectorAll('.moeda').forEach(function(input) {
+    aplicarMascaraMoeda(input);
+});
+
+// Auto-preenche preço do produto
+document.querySelector('select[name="produto"]').addEventListener('change', function() {
+    var selected = this.options[this.selectedIndex];
+    var preco = selected.getAttribute('data-preco');
+    if (preco) {
+        var precoFormatado = parseFloat(preco).toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+        document.querySelector('input[name="preco_unitario"]').value = precoFormatado;
+    }
+});
+
+// Delegação de eventos para botões
+document.addEventListener('click', function(e) {
+    if (e.target && e.target.classList.contains('btn-editar')) {
+        var itemId = e.target.getAttribute('data-item-id');
+        editarItem(itemId);
+    }
+    if (e.target && e.target.classList.contains('btn-cancelar')) {
+        var itemId = e.target.getAttribute('data-item-id');
+        cancelarEdicao(itemId);
+    }
+});
+
+function editarItem(itemId) {
+    var viewModes = document.querySelectorAll('.view-mode-' + itemId);
+    var editMode = document.querySelector('.edit-mode-' + itemId);
+    
+    viewModes.forEach(function(el) {
+        el.style.display = 'none';
+    });
+    if (editMode) {
+        editMode.style.display = 'table-cell';
+    }
+}
+
+function cancelarEdicao(itemId) {
+    var viewModes = document.querySelectorAll('.view-mode-' + itemId);
+    var editMode = document.querySelector('.edit-mode-' + itemId);
+    
+    viewModes.forEach(function(el) {
+        el.style.display = '';
+    });
+    if (editMode) {
+        editMode.style.display = 'none';
+    }
+}
+
+// Funções para checkbox
+function toggleTodos() {
+    var checkboxTodos = document.getElementById('checkbox-todos');
+    var checkboxes = document.querySelectorAll('.checkbox-item');
+    checkboxes.forEach(function(cb) {
+        cb.checked = checkboxTodos.checked;
+    });
+    atualizarContador();
+}
+
+function selecionarTodos() {
+    var checkboxes = document.querySelectorAll('.checkbox-item');
+    checkboxes.forEach(function(cb) {
+        cb.checked = true;
+    });
+    document.getElementById('checkbox-todos').checked = true;
+    atualizarContador();
+}
+
+function desselecionarTodos() {
+    var checkboxes = document.querySelectorAll('.checkbox-item');
+    checkboxes.forEach(function(cb) {
+        cb.checked = false;
+    });
+    document.getElementById('checkbox-todos').checked = false;
+    atualizarContador();
+}
+
+function atualizarContador() {
+    var checkboxes = document.querySelectorAll('.checkbox-item:checked');
+    document.getElementById('contador-selecionados').textContent = checkboxes.length + ' item(s) selecionado(s)';
+}
+</script>
+{% endblock %}

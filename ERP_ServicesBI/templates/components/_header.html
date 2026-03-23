@@ -1,0 +1,20 @@
+<header class="erp-header">
+    <div class="erp-flex erp-items-center erp-gap-2">
+        <!-- Botão hambúrguer — só aparece no mobile -->
+        <button onclick="toggleSidebar()"
+                style="display:none; background:none; border:none; color:white;
+                       font-size:22px; cursor:pointer; padding:4px 8px;"
+                class="erp-mobile-menu-btn"
+                title="Abrir menu">☰</button>
+        <h1 class="erp-header__title">
+            {% block header_title %}ERP - ServicesBI{% endblock %}
+        </h1>
+    </div>
+    <div class="erp-header__user">
+        <span class="erp-header__user-name">
+            {{ request.user.first_name|default:request.user.username }}
+        </span>
+        <span style="opacity:0.5">|</span>
+        <a href="{% url 'ERP_ServicesBI:logout' %}" class="erp-header__logout">Sair</a>
+    </div>
+</header>

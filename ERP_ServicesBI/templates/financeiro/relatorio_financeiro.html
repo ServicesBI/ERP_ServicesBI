@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Relatório Financeiro - ERP ServicesBI{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 20px;">
+    <h2 style="margin: 0; font-size: 24px; color: #1f2937;">FINANCEIRO</h2>
+    <p style="margin: 5px 0 0 0; color: #6b7280;">Relatórios e análises financeiras</p>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'error' %}
+        <div style="margin-bottom: 15px; padding: 12px; border-radius: 6px; background: #fee2e2; color: #dc2626; border: 1px solid #fecaca;">
+            {{ message }}
+        </div>
+        {% else %}
+        <div style="margin-bottom: 15px; padding: 12px; border-radius: 6px; background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0;">
+            {{ message }}
+        </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<!-- Cards de Resumo -->
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px;">
+    <div style="background: white; border-radius: 8px; padding: 20px; border-left: 4px solid #22c55e; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <div style="color: #6b7280; font-size: 12px; margin-bottom: 8px; text-transform: uppercase; font-weight: 600;">Entradas</div>
+        <div style="font-size: 24px; font-weight: 700; color: #22c55e;">{{ entradas|currency_br }}</div>
+    </div>
+    
+    <div style="background: white; border-radius: 8px; padding: 20px; border-left: 4px solid #ef4444; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <div style="color: #6b7280; font-size: 12px; margin-bottom: 8px; text-transform: uppercase; font-weight: 600;">Saídas</div>
+        <div style="font-size: 24px; font-weight: 700; color: #ef4444;">{{ saidas|currency_br }}</div>
+    </div>
+    
+    <div style="background: white; border-radius: 8px; padding: 20px; border-left: 4px solid {% if saldo >= 0 %}#22c55e{% else %}#ef4444{% endif %}; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <div style="color: #6b7280; font-size: 12px; margin-bottom: 8px; text-transform: uppercase; font-weight: 600;">Saldo</div>
+        <div style="font-size: 24px; font-weight: 700; color: {% if saldo >= 0 %}#22c55e{% else %}#ef4444{% endif %};">{{ saldo|currency_br }}</div>
+    </div>
+    
+    <div style="background: white; border-radius: 8px; padding: 20px; border-left: 4px solid #f59e0b; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <div style="color: #6b7280; font-size: 12px; margin-bottom: 8px; text-transform: uppercase; font-weight: 600;">Contas em Aberto</div>
+        <div style="font-size: 24px; font-weight: 700; color: #f59e0b;">{{ contas_receber_aberto|currency_br }}</div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 20px;">
+    <div style="padding: 20px; border-bottom: 1px solid #e5e7eb; background: #f3f4f6;">
+        <h3 style="margin: 0; font-size: 16px; color: #1f2937;">FILTROS</h3>
+    </div>
+    <div style="padding: 20px;">
+        <form method="get" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <label style="font-size: 12px; color: #6b7280; font-weight: 600;">Data Inicial</label>
+                <input type="date" name="data_inicial" value="{{ data_inicial|default:'' }}" style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; width: 150px;">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <label style="font-size: 12px; color: #6b7280; font-weight: 600;">Data Final</label>
+                <input type="date" name="data_final" value="{{ data_final|default:'' }}" style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; width: 150px;">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <label style="font-size: 12px; color: #6b7280; font-weight: 600;">Tipo</label>
+                <select name="tipo_relatorio" style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; width: 180px;">
+                    <option value="geral" {% if tipo_relatorio == 'geral' %}selected{% endif %}>Geral</option>
+                    <option value="receitas" {% if tipo_relatorio == 'receitas' %}selected{% endif %}>Apenas Receitas</option>
+                    <option value="despesas" {% if tipo_relatorio == 'despesas' %}selected{% endif %}>Apenas Despesas</option>
+                </select>
+            </div>
+            <button type="submit" style="padding: 8px 16px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">📊 Gerar Relatório</button>
+            <a href="{% url 'relatorio_financeiro_pdf' %}" style="padding: 8px 16px; background: #8b5cf6; color: white; border: none; border-radius: 6px; text-decoration: none; font-size: 14px;">📄 PDF</a>
+        </form>
+    </div>
+</div>
+
+<!-- Gráficos -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+    <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px;">
+        <div style="padding: 20px; border-bottom: 1px solid #e5e7eb; background: #f3f4f6;">
+            <h3 style="margin: 0; font-size: 16px; color: #1f2937;">EVOLUÇÃO DIÁRIA</h3>
+        </div>
+        <div style="padding: 20px;">
+            <canvas id="graficoDiario" height="250"></canvas>
+        </div>
+    </div>
+    
+    <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px;">
+        <div style="padding: 20px; border-bottom: 1px solid #e5e7eb; background: #f3f4f6;">
+            <h3 style="margin: 0; font-size: 16px; color: #1f2937;">EVOLUÇÃO MENSAL</h3>
+        </div>
+        <div style="padding: 20px;">
+            <canvas id="graficoMensal" height="250"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Contas em Aberto -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+    <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; border-top: 4px solid #f59e0b;">
+        <div style="padding: 20px; border-bottom: 1px solid #e5e7eb; background: #fffbeb;">
+            <h3 style="margin: 0; font-size: 16px; color: #92400e;">CONTAS A RECEBER EM ABERTO</h3>
+        </div>
+        <div style="padding: 20px;">
+            <div style="font-size: 32px; font-weight: 700; color: #f59e0b; margin-bottom: 10px;">{{ contas_receber_aberto|currency_br }}</div>
+            <div style="color: #ef4444; font-size: 14px; font-weight: 500;">⚠️ Vencidas: {{ contas_receber_vencidas|currency_br }}</div>
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+                <a href="{% url 'contareceber_list' %}" style="color: #2563eb; text-decoration: none; font-size: 14px;">Ver detalhes →</a>
+            </div>
+        </div>
+    </div>
+    
+    <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; border-top: 4px solid #ef4444;">
+        <div style="padding: 20px; border-bottom: 1px solid #e5e7eb; background: #fef2f2;">
+            <h3 style="margin: 0; font-size: 16px; color: #991b1b;">CONTAS A PAGAR EM ABERTO</h3>
+        </div>
+        <div style="padding: 20px;">
+            <div style="font-size: 32px; font-weight: 700; color: #ef4444; margin-bottom: 10px;">{{ contas_pagar_aberto|currency_br }}</div>
+            <div style="color: #ef4444; font-size: 14px; font-weight: 500;">⚠️ Vencidas: {{ contas_pagar_vencidas|currency_br }}</div>
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+                <a href="{% url 'contapagar_list' %}" style="color: #2563eb; text-decoration: none; font-size: 14px;">Ver detalhes →</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabela de Movimentações -->
+<div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px;">
+    <div style="padding: 20px; border-bottom: 1px solid #e5e7eb;">
+        <h3 style="margin: 0; font-size: 18px; color: #1f2937;">MOVIMENTAÇÕES DO PERÍODO</h3>
+    </div>
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #2563eb; color: white;">
+                    <th style="padding: 12px; text-align: left;">Data</th>
+                    <th style="padding: 12px; text-align: left;">Descrição</th>
+                    <th style="padding: 12px; text-align: left;">Categoria</th>
+                    <th style="padding: 12px; text-align: center;">Tipo</th>
+                    <th style="padding: 12px; text-align: right;">Valor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for mov in movimentacoes|slice:":10" %}
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 12px; font-size: 14px;">{{ mov.data|date:"d/m/Y" }}</td>
+                    <td style="padding: 12px; font-size: 14px;">{{ mov.descricao|truncatechars:40 }}</td>
+                    <td style="padding: 12px; font-size: 14px; color: #6b7280;">{{ mov.categoria|default:"-" }}</td>
+                    <td style="padding: 12px; text-align: center;">
+                        {% if mov.tipo == 'entrada' %}
+                            <span style="padding: 4px 12px; background: #22c55e; color: white; border-radius: 12px; font-size: 12px; font-weight: 500;">Entrada</span>
+                        {% else %}
+                            <span style="padding: 4px 12px; background: #ef4444; color: white; border-radius: 12px; font-size: 12px; font-weight: 500;">Saída</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 12px; text-align: right; font-weight: 600; color: {% if mov.tipo == 'entrada' %}#22c55e{% else %}#ef4444{% endif %};">
+                        {% if mov.tipo == 'entrada' %}+{% else %}-{% endif %} {{ mov.valor|currency_br }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="padding: 40px; text-align: center; color: #6b7280;">
+                        Nenhuma movimentação no período selecionado.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if movimentacoes|length > 10 %}
+    <div style="padding: 15px; text-align: center; border-top: 1px solid #e5e7eb;">
+        <a href="{% url 'fluxo_caixa' %}" style="color: #2563eb; text-decoration: none; font-size: 14px;">Ver todas as movimentações →</a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Gráfico Diário
+const ctxDiario = document.getElementById('graficoDiario').getContext('2d');
+new Chart(ctxDiario, {
+    type: 'line',
+    data: {
+        labels: {{ datas_labels|safe|default:'[]' }},
+        datasets: [{
+            label: 'Entradas',
+            data: {{ entradas_diarias|safe|default:'[]' }},
+            borderColor: '#22c55e',
+            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+            fill: true,
+            tension: 0.4
+        }, {
+            label: 'Saídas',
+            data: {{ saidas_diarias|safe|default:'[]' }},
+            borderColor: '#ef4444',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'bottom' }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return 'R$ ' + value.toLocaleString('pt-BR');
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Gráfico Mensal
+const ctxMensal = document.getElementById('graficoMensal').getContext('2d');
+new Chart(ctxMensal, {
+    type: 'bar',
+    data: {
+        labels: {{ meses_labels|safe|default:'[]' }},
+        datasets: [{
+            label: 'Entradas',
+            data: {{ entradas_mensais|safe|default:'[]' }},
+            backgroundColor: '#22c55e'
+        }, {
+            label: 'Saídas',
+            data: {{ saidas_mensais|safe|default:'[]' }},
+            backgroundColor: '#ef4444'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'bottom' }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return 'R$ ' + value.toLocaleString('pt-BR');
+                    }
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

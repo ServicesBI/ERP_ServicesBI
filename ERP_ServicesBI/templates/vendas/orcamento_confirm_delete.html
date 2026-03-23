@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}Excluir Orçamento - ERP ServicesBI{% endblock %}
+
+{% block content %}
+<div class="erp-page-header erp-mb-6">
+    <h1 class="erp-page-title">Confirmar Exclusão</h1>
+    <p class="erp-page-subtitle">Excluir orçamento</p>
+</div>
+
+<div class="erp-card erp-text-center erp-p-6" style="max-width: 500px; margin: 0 auto;">
+    {% if messages %}
+        {% for message in messages %}
+            {% if message.tags == 'error' %}
+            <div class="erp-alert erp-alert--error erp-mb-4">
+                {{ message }}
+            </div>
+            {% else %}
+            <div class="erp-alert erp-alert--success erp-mb-4">
+                {{ message }}
+            </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    <div class="erp-mb-4">
+        <span style="font-size: 48px;">⚠️</span>
+    </div>
+    
+    <h3 class="erp-font-bold erp-text-danger erp-mb-4">Confirmar Exclusão</h3>
+    
+    <p class="erp-mb-2">
+        Tem certeza que deseja excluir o orçamento 
+        <strong>{{ orcamento.numero }}</strong>?
+    </p>
+    
+    <p class="erp-text-muted erp-mb-1">
+        Cliente: <strong>{{ orcamento.cliente.nome_razao_social }}</strong>
+    </p>
+    
+    <p class="erp-text-muted erp-mb-4">
+        Valor Total: <strong>{{ orcamento.valor_total|currency_br }}</strong>
+    </p>
+    
+    <div class="erp-alert erp-alert--error erp-mb-4 erp-justify-center">
+        <span>🗑️</span>
+        <span>Esta ação não pode ser desfeita</span>
+    </div>
+    
+    <form method="post" class="erp-flex erp-gap-2 erp-justify-center">
+        {% csrf_token %}
+        <button type="submit" class="erp-btn erp-btn--danger">
+            <span>🗑️</span>
+            <span>Sim, Excluir</span>
+        </button>
+        <a href="{% url 'ERP_ServicesBI:orcamento_list' %}" class="erp-btn erp-btn--secondary">
+            <span>Cancelar</span>
+        </a>
+    </form>
+</div>
+{% endblock %}

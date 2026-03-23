@@ -1,0 +1,364 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if empresa %}Editar{% else %}Nova{% endif %} Empresa - ERP ServicesBI
+{% endblock %}
+
+{% block content %}
+<div class="erp-page-header erp-mb-6">
+    <h1 class="erp-page-title">CADASTRO</h1>
+    <p class="erp-page-subtitle">{% if empresa %}Editar{% else %}Nova{% endif %} Empresa</p>
+</div>
+
+<div class="erp-card" style="max-width: 900px;">
+    {% if messages %}
+        {% for message in messages %}
+            {% if message.tags == 'error' %}
+            <div class="erp-alert erp-alert--error erp-mb-4">
+                {{ message }}
+            </div>
+            {% else %}
+            <div class="erp-alert erp-alert--success erp-mb-4">
+                {{ message }}
+            </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" id="empresaForm" class="erp-form">
+        {% csrf_token %}
+        
+        <!-- CHECKBOX ATIVO - ACIMA DOS DADOS BÁSICOS -->
+        <div class="erp-form-group erp-mb-4">
+            <label class="erp-checkbox" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: var(--gray-700);">
+                <input type="hidden" name="ativo" value="False">
+                <input type="checkbox" 
+                       name="ativo" 
+                       value="True"
+                       {% if empresa.ativo or not empresa %}checked{% endif %}
+                       style="width: 16px; height: 16px; cursor: pointer;">
+                <span><strong>Empresa Ativa</strong></span>
+            </label>
+        </div>
+        
+        <!-- MOSTRA ERROS DO FORMULÁRIO -->
+        {% if form.errors %}
+        <div class="erp-alert erp-alert--error erp-mb-4">
+            <strong>❌ Corrija os erros abaixo:</strong>
+            <ul style="margin-top: 8px; margin-bottom: 0; padding-left: 20px;">
+                {% for field in form %}
+                    {% for error in field.errors %}
+                    <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        <h3 class="erp-section-title">Dados Básicos</h3>
+        
+        <div class="erp-form-row">
+            <!-- Código -->
+            <div class="erp-form-group">
+                <label class="erp-label" for="codigo">Código</label>
+                <input type="text" name="codigo" id="codigo" 
+                       value="{{ empresa.codigo|default:'' }}" 
+                       class="erp-input"
+                       placeholder="Gerado automaticamente se vazio">
+            </div>
+            
+            <!-- CNPJ - SEMPRE JURÍDICA -->
+            <div class="erp-form-group">
+                <label class="erp-label erp-label-required" for="cnpj">CNPJ</label>
+                <input type="text" name="cnpj" id="cnpj" 
+                       value="{{ empresa.cnpj|default:'' }}" 
+                       class="erp-input"
+                       placeholder="00.000.000/0000-00"
+                       maxlength="18"
+                       required>
+            </div>
+        </div>
+        
+        <!-- Razão Social -->
+        <div class="erp-form-group">
+            <label class="erp-label erp-label-required" for="razao_social">Razão Social</label>
+            <input type="text" name="razao_social" id="razao_social" 
+                   value="{{ empresa.razao_social|default:'' }}" 
+                   class="erp-input"
+                   placeholder="Digite a razão social"
+                   required>
+        </div>
+        
+        <!-- Nome Fantasia -->
+        <div class="erp-form-group">
+            <label class="erp-label" for="nome_fantasia">Nome Fantasia</label>
+            <input type="text" name="nome_fantasia" id="nome_fantasia" 
+                   value="{{ empresa.nome_fantasia|default:'' }}" 
+                   class="erp-input"
+                   placeholder="Nome fantasia (opcional)">
+        </div>
+        
+        <!-- Inscrição Estadual -->
+        <div class="erp-form-group">
+            <label class="erp-label" for="inscricao_estadual">Inscrição Estadual</label>
+            <input type="text" name="inscricao_estadual" id="inscricao_estadual" 
+                   value="{{ empresa.inscricao_estadual|default:'' }}" 
+                   class="erp-input"
+                   placeholder="Inscrição Estadual (opcional)">
+        </div>
+        
+        <!-- Inscrição Municipal -->
+        <div class="erp-form-group">
+            <label class="erp-label" for="inscricao_municipal">Inscrição Municipal</label>
+            <input type="text" name="inscricao_municipal" id="inscricao_municipal" 
+                   value="{{ empresa.inscricao_municipal|default:'' }}" 
+                   class="erp-input"
+                   placeholder="Inscrição Municipal (opcional)">
+        </div>
+        
+        <h3 class="erp-section-title erp-mt-6">Contato</h3>
+        
+        <div class="erp-form-row">
+            <!-- Telefone - COM MÁSCARA -->
+            <div class="erp-form-group">
+                <label class="erp-label" for="telefone">Telefone</label>
+                <input type="text" name="telefone" id="telefone" 
+                       value="{{ empresa.telefone|default:'' }}" 
+                       class="erp-input"
+                       placeholder="(00) 00000-0000"
+                       maxlength="15">
+            </div>
+            
+            <!-- Email -->
+            <div class="erp-form-group">
+                <label class="erp-label" for="email">Email</label>
+                <input type="email" name="email" id="email" 
+                       value="{{ empresa.email|default:'' }}" 
+                       class="erp-input"
+                       placeholder="email@exemplo.com">
+            </div>
+        </div>
+        
+        <h3 class="erp-section-title erp-mt-6">Endereço</h3>
+        
+        <!-- CEP - COM MÁSCARA -->
+        <div class="erp-form-row">
+            <div class="erp-form-group" style="flex: 0 0 150px;">
+                <label class="erp-label" for="cep">CEP</label>
+                <input type="text" name="cep" id="cep" 
+                       value="{{ empresa.cep|default:'' }}" 
+                       class="erp-input"
+                       placeholder="00000-000"
+                       maxlength="9">
+            </div>
+        </div>
+        
+        <!-- Endereço (Rua) -->
+        <div class="erp-form-group">
+            <label class="erp-label" for="endereco">Endereço</label>
+            <input type="text" name="endereco" id="endereco" 
+                   value="{{ empresa.endereco|default:'' }}" 
+                   class="erp-input"
+                   placeholder="Rua, Avenida, etc.">
+        </div>
+        
+        <div class="erp-form-row">
+            <!-- Número -->
+            <div class="erp-form-group" style="flex: 0 0 120px;">
+                <label class="erp-label" for="numero">Número</label>
+                <input type="text" name="numero" id="numero" 
+                       value="{{ empresa.numero|default:'' }}" 
+                       class="erp-input"
+                       placeholder="Nº">
+            </div>
+            
+            <!-- Bairro -->
+            <div class="erp-form-group">
+                <label class="erp-label" for="bairro">Bairro</label>
+                <input type="text" name="bairro" id="bairro" 
+                       value="{{ empresa.bairro|default:'' }}" 
+                       class="erp-input"
+                       placeholder="Bairro">
+            </div>
+        </div>
+        
+        <div class="erp-form-row">
+            <!-- Cidade -->
+            <div class="erp-form-group">
+                <label class="erp-label" for="cidade">Cidade</label>
+                <input type="text" name="cidade" id="cidade" 
+                       value="{{ empresa.cidade|default:'' }}" 
+                       class="erp-input"
+                       placeholder="Cidade">
+            </div>
+            
+            <!-- Estado -->
+            <div class="erp-form-group" style="flex: 0 0 100px;">
+                <label class="erp-label" for="estado">UF</label>
+                <select name="estado" id="estado" class="erp-select">
+                    <option value="">UF</option>
+                    <option value="AC" {% if empresa.estado == 'AC' %}selected{% endif %}>AC</option>
+                    <option value="AL" {% if empresa.estado == 'AL' %}selected{% endif %}>AL</option>
+                    <option value="AP" {% if empresa.estado == 'AP' %}selected{% endif %}>AP</option>
+                    <option value="AM" {% if empresa.estado == 'AM' %}selected{% endif %}>AM</option>
+                    <option value="BA" {% if empresa.estado == 'BA' %}selected{% endif %}>BA</option>
+                    <option value="CE" {% if empresa.estado == 'CE' %}selected{% endif %}>CE</option>
+                    <option value="DF" {% if empresa.estado == 'DF' %}selected{% endif %}>DF</option>
+                    <option value="ES" {% if empresa.estado == 'ES' %}selected{% endif %}>ES</option>
+                    <option value="GO" {% if empresa.estado == 'GO' %}selected{% endif %}>GO</option>
+                    <option value="MA" {% if empresa.estado == 'MA' %}selected{% endif %}>MA</option>
+                    <option value="MT" {% if empresa.estado == 'MT' %}selected{% endif %}>MT</option>
+                    <option value="MS" {% if empresa.estado == 'MS' %}selected{% endif %}>MS</option>
+                    <option value="MG" {% if empresa.estado == 'MG' %}selected{% endif %}>MG</option>
+                    <option value="PA" {% if empresa.estado == 'PA' %}selected{% endif %}>PA</option>
+                    <option value="PB" {% if empresa.estado == 'PB' %}selected{% endif %}>PB</option>
+                    <option value="PR" {% if empresa.estado == 'PR' %}selected{% endif %}>PR</option>
+                    <option value="PE" {% if empresa.estado == 'PE' %}selected{% endif %}>PE</option>
+                    <option value="PI" {% if empresa.estado == 'PI' %}selected{% endif %}>PI</option>
+                    <option value="RJ" {% if empresa.estado == 'RJ' %}selected{% endif %}>RJ</option>
+                    <option value="RN" {% if empresa.estado == 'RN' %}selected{% endif %}>RN</option>
+                    <option value="RS" {% if empresa.estado == 'RS' %}selected{% endif %}>RS</option>
+                    <option value="RO" {% if empresa.estado == 'RO' %}selected{% endif %}>RO</option>
+                    <option value="RR" {% if empresa.estado == 'RR' %}selected{% endif %}>RR</option>
+                    <option value="SC" {% if empresa.estado == 'SC' %}selected{% endif %}>SC</option>
+                    <option value="SP" {% if empresa.estado == 'SP' %}selected{% endif %}>SP</option>
+                    <option value="SE" {% if empresa.estado == 'SE' %}selected{% endif %}>SE</option>
+                    <option value="TO" {% if empresa.estado == 'TO' %}selected{% endif %}>TO</option>
+                </select>
+            </div>
+        </div>
+        
+        <h3 class="erp-section-title erp-mt-6">Configurações Fiscais</h3>
+        
+        <div class="erp-form-row">
+            <!-- Regime Tributário -->
+            <div class="erp-form-group">
+                <label class="erp-label" for="regime_tributario">Regime Tributário</label>
+                <select name="regime_tributario" id="regime_tributario" class="erp-select">
+                    <option value="">Selecione...</option>
+                    <option value="SN" {% if empresa.regime_tributario == 'SN' %}selected{% endif %}>Simples Nacional</option>
+                    <option value="LP" {% if empresa.regime_tributario == 'LP' %}selected{% endif %}>Lucro Presumido</option>
+                    <option value="LR" {% if empresa.regime_tributario == 'LR' %}selected{% endif %}>Lucro Real</option>
+                </select>
+            </div>
+            
+            <!-- CNAE -->
+            <div class="erp-form-group">
+                <label class="erp-label" for="cnae">CNAE</label>
+                <input type="text" name="cnae" id="cnae" 
+                       value="{{ empresa.cnae|default:'' }}" 
+                       class="erp-input"
+                       placeholder="Código CNAE">
+            </div>
+        </div>
+        
+        <!-- Observações -->
+        <div class="erp-form-group">
+            <label class="erp-label" for="observacoes">Observações</label>
+            <textarea name="observacoes" id="observacoes" rows="3" class="erp-textarea"
+                      placeholder="Informações adicionais sobre a empresa...">{{ empresa.observacoes|default:'' }}</textarea>
+        </div>
+        
+        <!-- BOTÕES DE AÇÃO -->
+        <div class="erp-flex erp-gap-2 erp-mt-6">
+            <button type="submit" class="erp-btn erp-btn--primary">
+                <span>💾</span>
+                <span>Salvar</span>
+            </button>
+            <a href="{% url 'ERP_ServicesBI:empresa_list' %}" class="erp-btn erp-btn--outline" style="color: #fc4564; border-color: #fc4564;">
+                <span>Cancelar</span>
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+// Máscara CNPJ: 00.000.000/0000-00
+function mascaraCnpj(input) {
+    let valor = input.value.replace(/\D/g, '');
+    valor = valor.substring(0, 14);
+    valor = valor.replace(/^(\d{2})(\d)/, '$1.$2');
+    valor = valor.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+    valor = valor.replace(/\.(\d{3})(\d)/, '.$1/$2');
+    valor = valor.replace(/(\d{4})(\d)/, '$1-$2');
+    input.value = valor;
+}
+
+// Máscara Telefone: (00) 00000-0000 ou (00) 0000-0000
+function mascaraTelefone(input) {
+    let valor = input.value.replace(/\D/g, '');
+    
+    if (valor.length > 10) {
+        valor = valor.replace(/^(\d{2})(\d)/g, '($1) $2');
+        valor = valor.replace(/(\d{5})(\d)/, '$1-$2');
+    } else {
+        valor = valor.replace(/^(\d{2})(\d)/g, '($1) $2');
+        valor = valor.replace(/(\d{4})(\d)/, '$1-$2');
+    }
+    
+    input.value = valor;
+}
+
+// Máscara CEP: 00000-000
+function mascaraCep(input) {
+    let valor = input.value.replace(/\D/g, '');
+    valor = valor.replace(/^(\d{5})(\d)/, '$1-$2');
+    input.value = valor;
+}
+
+// Limpar máscaras antes de enviar o formulário
+document.getElementById('empresaForm').addEventListener('submit', function(e) {
+    const cnpjInput = document.getElementById('cnpj');
+    if (cnpjInput) {
+        cnpjInput.value = cnpjInput.value.replace(/\D/g, '');
+    }
+    
+    const telefoneInput = document.getElementById('telefone');
+    if (telefoneInput) {
+        telefoneInput.value = telefoneInput.value.replace(/\D/g, '');
+    }
+    
+    const cepInput = document.getElementById('cep');
+    if (cepInput) {
+        cepInput.value = cepInput.value.replace(/\D/g, '');
+    }
+});
+
+// Aplicar máscaras aos campos
+document.addEventListener('DOMContentLoaded', function() {
+    const cnpjInput = document.getElementById('cnpj');
+    if (cnpjInput) {
+        cnpjInput.addEventListener('input', function() {
+            mascaraCnpj(this);
+        });
+        if (cnpjInput.value) {
+            mascaraCnpj(cnpjInput);
+        }
+    }
+    
+    const telefoneInput = document.getElementById('telefone');
+    if (telefoneInput) {
+        telefoneInput.addEventListener('input', function() {
+            mascaraTelefone(this);
+        });
+        if (telefoneInput.value) {
+            mascaraTelefone(telefoneInput);
+        }
+    }
+    
+    const cepInput = document.getElementById('cep');
+    if (cepInput) {
+        cepInput.addEventListener('input', function() {
+            mascaraCep(this);
+        });
+        if (cepInput.value) {
+            mascaraCep(cepInput);
+        }
+    }
+});
+</script>
+{% endblock %}

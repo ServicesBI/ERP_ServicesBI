@@ -1,0 +1,46 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google" content="notranslate">
+    <title>{% block title %}ERP - ServicesBI{% endblock %}</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS Principal -->
+    <link rel="stylesheet" href="{% static 'css/erp-theme.css' %}">
+    <link rel="stylesheet" href="{% static 'css/erp-responsive.css' %}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="erp-layout">
+    <!-- Overlay mobile -->
+    <div class="erp-sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    
+    <!-- Sidebar -->
+    {% include 'components/_sidebar.html' %}
+    
+    <!-- Main Content -->
+    <main class="erp-main">
+        <!-- Header -->
+        {% include 'components/_header.html' %}
+        
+        <!-- Messages -->
+        {% include 'components/_messages.html' %}
+        
+        <!-- Page Content -->
+        <div class="erp-content">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+    
+    <!-- JavaScript -->
+    <script src="{% static 'js/erp-core.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

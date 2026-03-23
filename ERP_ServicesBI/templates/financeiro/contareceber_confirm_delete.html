@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Excluir Conta a Receber - ERP ServicesBI{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 20px;">
+    <h2 style="margin: 0; font-size: 24px; color: #1f2937;">FINANCEIRO</h2>
+    <p style="margin: 5px 0 0 0; color: #6b7280;">Excluir conta a receber</p>
+</div>
+
+<div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; text-align: center;">
+    <div style="margin-bottom: 20px;">
+        <div style="font-size: 48px; margin-bottom: 15px;">⚠️</div>
+        <h3 style="margin: 0 0 10px 0; color: #dc2626; font-size: 20px;">Confirmar Exclusão</h3>
+        <p style="color: #6b7280; margin: 0;">
+            Tem certeza que deseja excluir a conta <strong style="color: #1f2937;">#{{ conta.id }}</strong>?
+        </p>
+        <p style="color: #6b7280; font-size: 14px; margin-top: 5px;">
+            Descrição: {{ conta.descricao }}<br>
+            Cliente: {{ conta.cliente.nome_razao_social|default:"-" }}<br>
+            Vencimento: {{ conta.data_vencimento|date:"d/m/Y" }}<br>
+            Valor: {{ conta.valor_original|currency_br }}<br>
+            Status: {{ conta.get_status_display|default:conta.status }}
+        </p>
+        <p style="color: #dc2626; font-size: 14px; margin-top: 10px;">
+            Esta ação não pode ser desfeita.
+        </p>
+    </div>
+    
+    <form method="post" style="display: flex; gap: 10px; justify-content: center;">
+        {% csrf_token %}
+        <button type="submit" style="padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 5px;">🗑️ Sim, Excluir</button>
+        <a href="{% url 'contareceber_list' %}" style="padding: 10px 20px; background: #6b7280; color: white; border: none; border-radius: 6px; text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 5px;">❌ Cancelar</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Novo Inventário - ERP ServicesBI{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 20px;">
+    <h2 style="margin: 0; font-size: 24px; color: #1f2937;">ESTOQUE</h2>
+    <p style="margin: 5px 0 0 0; color: #6b7280;">Criar novo inventário de estoque</p>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'error' %}
+        <div style="margin-bottom: 15px; padding: 12px; border-radius: 6px; background: #fee2e2; color: #dc2626; border: 1px solid #fecaca;">
+            {{ message }}
+        </div>
+        {% else %}
+        <div style="margin-bottom: 15px; padding: 12px; border-radius: 6px; background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0;">
+            {{ message }}
+        </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px;">
+    <form method="post">
+        {% csrf_token %}
+        
+        <div style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 15px;">
+            <label style="font-weight: 500; color: #374151;">Descrição *</label>
+            <input type="text" name="descricao" required 
+                   placeholder="Ex: Inventário de Janeiro/2024"
+                   value="{{ inventario.descricao|default:'' }}"
+                   style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 20px;">
+            <label style="font-weight: 500; color: #374151;">Observações</label>
+            <textarea name="observacoes" rows="3" 
+                      placeholder="Informações adicionais sobre o inventário..."
+                      style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; resize: vertical;">{{ inventario.observacoes|default:'' }}</textarea>
+        </div>
+        
+        <div style="background: #dbeafe; border: 1px solid #3b82f6; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <strong style="color: #1e40af;">ℹ️ Informação:</strong>
+            <p style="color: #1e40af; margin: 5px 0 0 0; font-size: 14px;">
+                Ao criar o inventário, todos os produtos ativos serão incluídos automaticamente. 
+                Você poderá contar e ajustar as quantidades na tela seguinte.
+            </p>
+        </div>
+        
+        <div style="display: flex; gap: 10px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <button type="submit" style="padding: 10px 20px; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 5px;">💾 Criar Inventário</button>
+            <a href="{% url 'inventario_list' %}" style="padding: 10px 20px; background: #6b7280; color: white; border: none; border-radius: 6px; text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 5px;">❌ Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Movimentações de Estoque - ERP ServicesBI{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 20px;">
+    <h2 style="margin: 0; font-size: 24px; color: #1f2937;">ESTOQUE</h2>
+    <p style="margin: 5px 0 0 0; color: #6b7280;">Histórico de movimentações</p>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'error' %}
+        <div style="margin-bottom: 15px; padding: 12px; border-radius: 6px; background: #fee2e2; color: #dc2626; border: 1px solid #fecaca;">
+            {{ message }}
+        </div>
+        {% else %}
+        <div style="margin-bottom: 15px; padding: 12px; border-radius: 6px; background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0;">
+            {{ message }}
+        </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #e5e7eb; flex-wrap: wrap; gap: 15px;">
+        <h3 style="margin: 0; font-size: 18px; color: #1f2937;">Movimentações ({{ total|default:page_obj.paginator.count }})</h3>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <form method="get" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <input type="text" name="search" placeholder="Buscar produto..." value="{{ search|default:'' }}" style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; min-width: 200px;">
+                
+                <select name="tipo" onchange="this.form.submit()" style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
+                    <option value="">Todos os tipos</option>
+                    {% for value, label in tipos %}
+                        <option value="{{ value }}" {% if tipo == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                
+                <input type="date" name="data_inicial" value="{{ data_inicial|default:'' }}" style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
+                <input type="date" name="data_final" value="{{ data_final|default:'' }}" style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
+                
+                <select name="per_page" onchange="this.form.submit()" style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
+                    <option value="10" {% if per_page == '10' %}selected{% endif %}>10</option>
+                    <option value="25" {% if per_page == '25' %}selected{% endif %}>25</option>
+                    <option value="50" {% if per_page == '50' %}selected{% endif %}>50</option>
+                    <option value="100" {% if per_page == '100' %}selected{% endif %}>100</option>
+                </select>
+                
+                <button type="submit" style="padding: 8px 16px; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">🔍 Filtrar</button>
+            </form>
+            <a href="{% url 'movimentacaoestoque_add' %}" style="padding: 8px 16px; background: #f59e0b; color: white; border: none; border-radius: 6px; text-decoration: none; font-size: 14px;">+ Nova Movimentação</a>
+        </div>
+    </div>
+    
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #f59e0b; color: white;">
+                    <th style="padding: 12px; text-align: left;">ID</th>
+                    <th style="padding: 12px; text-align: left;">Data</th>
+                    <th style="padding: 12px; text-align: center;">Tipo</th>
+                    <th style="padding: 12px; text-align: left;">Produto</th>
+                    <th style="padding: 12px; text-align: center;">Quantidade</th>
+                    <th style="padding: 12px; text-align: left;">Referência</th>
+                    <th style="padding: 12px; text-align: left;">Usuário</th>
+                    <th style="padding: 12px; text-align: left;">Observações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for mov in page_obj %}
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 12px; font-weight: 600;">{{ mov.id }}</td>
+                    <td style="padding: 12px;">{{ mov.data|date:"d/m/Y H:i" }}</td>
+                    <td style="padding: 12px; text-align: center;">
+                        {% if mov.tipo == 'entrada' %}
+                            <span style="padding: 4px 12px; background: #22c55e; color: white; border-radius: 12px; font-size: 12px; font-weight: 500; text-transform: uppercase;">Entrada</span>
+                        {% else %}
+                            <span style="padding: 4px 12px; background: #ef4444; color: white; border-radius: 12px; font-size: 12px; font-weight: 500; text-transform: uppercase;">Saída</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 12px;">{{ mov.produto.descricao }}</td>
+                    <td style="padding: 12px; text-align: center; font-weight: 600; color: {% if mov.tipo == 'entrada' %}#22c55e{% else %}#ef4444{% endif %};">
+                        {% if mov.tipo == 'entrada' %}+{% else %}-{% endif %} {{ mov.quantidade|floatformat:3 }}
+                    </td>
+                    <td style="padding: 12px; font-size: 12px;">
+                        {% if mov.nota_fiscal_entrada %}
+                            NF Entrada #{{ mov.nota_fiscal_entrada.numero_nf|default:mov.nota_fiscal_entrada.id }}
+                        {% elif mov.nota_fiscal_saida %}
+                            NF Saída #{{ mov.nota_fiscal_saida.numero_nf|default:mov.nota_fiscal_saida.id }}
+                        {% elif mov.transferencia %}
+                            Transferência #{{ mov.transferencia.numero|default:mov.transferencia.id }}
+                        {% else %}
+                            <span style="color: #6b7280;">Ajuste Manual</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 12px;">{{ mov.usuario.username|default:mov.usuario }}</td>
+                    <td style="padding: 12px; font-size: 12px; color: #6b7280;">{{ mov.observacoes|default:"-"|truncatechars:30 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" style="padding: 40px; text-align: center; color: #6b7280;">
+                        Nenhuma movimentação encontrada.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% if page_obj.has_other_pages %}
+    <div style="display: flex; justify-content: center; align-items: center; gap: 10px; padding: 20px;">
+        {% if page_obj.has_previous %}
+            <a href="?page=1{% if search %}&search={{ search }}{% endif %}{% if tipo %}&tipo={{ tipo }}{% endif %}{% if data_inicial %}&data_inicial={{ data_inicial }}{% endif %}{% if data_final %}&data_final={{ data_final }}{% endif %}{% if per_page %}&per_page={{ per_page }}{% endif %}" style="padding: 8px 16px; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; text-decoration: none; color: #374151;">Primeira</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if tipo %}&tipo={{ tipo }}{% endif %}{% if data_inicial %}&data_inicial={{ data_inicial }}{% endif %}{% if data_final %}&data_final={{ data_final }}{% endif %}{% if per_page %}&per_page={{ per_page }}{% endif %}" style="padding: 8px 16px; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; text-decoration: none; color: #374151;">← Anterior</a>
+        {% endif %}
+        
+        <span style="padding: 8px 16px;">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+        
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if tipo %}&tipo={{ tipo }}{% endif %}{% if data_inicial %}&data_inicial={{ data_inicial }}{% endif %}{% if data_final %}&data_final={{ data_final }}{% endif %}{% if per_page %}&per_page={{ per_page }}{% endif %}" style="padding: 8px 16px; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; text-decoration: none; color: #374151;">Próxima →</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}{% if tipo %}&tipo={{ tipo }}{% endif %}{% if data_inicial %}&data_inicial={{ data_inicial }}{% endif %}{% if data_final %}&data_final={{ data_final }}{% endif %}{% if per_page %}&per_page={{ per_page }}{% endif %}" style="padding: 8px 16px; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px; text-decoration: none; color: #374151;">Última</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

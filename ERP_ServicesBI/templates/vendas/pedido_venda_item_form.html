@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Adicionar Item - Pedido {{ pedido.numero }} - ERP ServicesBI{% endblock %}
+
+{% block extra_css %}
+<style>
+.erp-item-form {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.erp-item-form__grid {
+    display: grid;
+    grid-template-columns: 3fr 1fr 1fr 1fr;
+    gap: 20px;
+    align-items: end;
+    margin-bottom: 24px;
+}
+
+.erp-item-form__totals {
+    background: var(--gray-50);
+    padding: 20px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 24px;
+    border: 1px solid var(--gray-200);
+}
+
+.erp-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+}
+
+.erp-total-row:not(:last-child) {
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.erp-total-row__label {
+    color: var(--gray-500);
+    font-size: 14px;
+}
+
+.erp-total-row__value {
+    font-weight: 500;
+    color: var(--gray-700);
+    font-variant-numeric: tabular-nums;
+}
+
+.erp-total-row--final {
+    padding-top: 12px;
+    margin-top: 8px;
+    border-top: 2px solid var(--gray-300);
+}
+
+.erp-total-row--final .erp-total-row__label {
+    color: var(--gray-800);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.erp-total-row--final .erp-total-row__value {
+    color: var(--primary-600);
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.erp-item-form__actions {
+    display: flex;
+    gap: 12px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .erp-item-form__grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="erp-page-header erp-mb-4">
+    <h2 class="erp-page-header__title">VENDAS</h2>
+    <p class="erp-page-header__subtitle">
+        Adicionar item ao pedido <strong>{{ pedido.numero }}</strong>
+    </p>
+</div>
+
+{% include "partials/messages.html" %}
+
+<div class="erp-card erp-item-form">
+    <form method="post" id="form-item">
+        {% csrf_token %}
+        
+        <div class="erp-item-form__grid">
+            <div class="erp-form-group">
+                <label class="erp-label erp-label-required">Produto</label>
+                <select name="produto" id="produtoSelect" class="erp-select" required>
+                    <option value="">Selecione...</option>
+                    {% for produto in produtos %}
+                    <option value="{{ produto.id }}" data-preco="{{ produto.preco_venda }}" data-custo="{{ produto.preco_custo }}">
+                        {{ produto.codigo }} - {{ produto.descricao }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="erp-form-group">
+                <label class="erp-label erp-label-required">Quantidade</label>
+                <input type="number" name="quantidade" id="quantidade" step="0.01" value="1" min="0.01" class="erp-input" required>
+            </div>
+            <div class="erp-form-group">
+                <label class="erp-label erp-label-required">Preço Unitário (R$)</label>
+                <input type="number" name="preco_unitario" id="precoUnitario" step="0.01" min="0" class="erp-input" required>
+            </div>
+            <div class="erp-form-group">
+                <label class="erp-label">Desconto (R$)</label>
+                <input type="number" name="desconto" id="desconto" step="0.01" min="0" value="0" class="erp-input">
+            </div>
+        </div>
+        
+        <div class="erp-item-form__totals">
+            <div class="erp-total-row">
+                <span class="erp-total-row__label">Preço de Custo:</span>
+                <span id="precoCustoDisplay" class="erp-total-row__value">R$ 0,00</span>
+            </div>
+            <div class="erp-total-row">
+                <span class="erp-total-row__label">Subtotal:</span>
+                <span id="subtotalDisplay" class="erp-total-row__value">R$ 0,00</span>
+            </div>
+            <div class="erp-total-row erp-total-row--final">
+                <span class="erp-total-row__label">Total do Item:</span>
+                <span id="totalDisplay" class="erp-total-row__value">R$ 0,00</span>
+            </div>
+        </div>
+        
+        <div class="erp-item-form__actions">
+            <button type="submit" class="erp-btn erp-btn--primary erp-btn--lg">
+                <span>💾</span> Adicionar Item
+            </button>
+            <a href="{% url 'pedidovenda_edit' pedido.pk %}" class="erp-btn erp-btn--secondary erp-btn--lg">
+                <span>❌</span> Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+document.getElementById('produtoSelect').addEventListener('change', function() {
+    var selected = this.options[this.selectedIndex];
+    var preco = selected.getAttribute('data-preco');
+    var custo = selected.getAttribute('data-custo');
+    
+    if (preco) {
+        document.getElementById('precoUnitario').value = preco;
+    }
+    if (custo) {
+        document.getElementById('precoCustoDisplay').textContent = formatarMoeda(custo);
+    }
+    calcularTotais();
+});
+
+document.getElementById('quantidade').addEventListener('input', calcularTotais);
+document.getElementById('precoUnitario').addEventListener('input', calcularTotais);
+document.getElementById('desconto').addEventListener('input', calcularTotais);
+
+function formatarMoeda(valor) {
+    return 'R$ ' + parseFloat(valor).toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+}
+
+function calcularTotais() {
+    var quantidade = parseFloat(document.getElementById('quantidade').value) || 0;
+    var precoUnitario = parseFloat(document.getElementById('precoUnitario').value) || 0;
+    var desconto = parseFloat(document.getElementById('desconto').value) || 0;
+    
+    var subtotal = quantidade * precoUnitario;
+    var total = subtotal - desconto;
+    
+    document.getElementById('subtotalDisplay').textContent = formatarMoeda(subtotal);
+    document.getElementById('totalDisplay').textContent = formatarMoeda(total);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,373 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Fluxo de Caixa - ERP ServicesBI{% endblock %}
+
+{% block extra_css %}
+<style>
+.erp-page-header {
+    margin-bottom: 24px;
+}
+
+.erp-page-header__title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--gray-800);
+}
+
+.erp-page-header__subtitle {
+    margin: 4px 0 0 0;
+    color: var(--gray-500);
+    font-size: 14px;
+}
+
+/* Cards de resumo */
+.erp-summary-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.erp-summary-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    border-left: 4px solid;
+}
+
+.erp-summary-card--success {
+    border-left-color: var(--success);
+}
+
+.erp-summary-card--danger {
+    border-left-color: var(--danger);
+}
+
+.erp-summary-card--primary {
+    border-left-color: var(--primary-600);
+}
+
+.erp-summary-card__label {
+    margin: 0 0 8px 0;
+    font-size: 12px;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.erp-summary-card__value {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.erp-summary-card--success .erp-summary-card__value {
+    color: var(--success);
+}
+
+.erp-summary-card--danger .erp-summary-card__value {
+    color: var(--danger);
+}
+
+.erp-summary-card--primary .erp-summary-card__value {
+    color: var(--primary-600);
+}
+
+/* Filtros */
+.erp-filters-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+}
+
+.erp-filters-card__form {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.erp-filters-card__form .erp-form-group {
+    margin: 0;
+}
+
+.erp-filters-card__form .erp-label {
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.erp-filters-card__form .erp-input,
+.erp-filters-card__form .erp-select {
+    padding: 6px 10px;
+    font-size: 13px;
+    min-width: 150px;
+}
+
+/* Tabela */
+.erp-table-card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.erp-table-card__header {
+    padding: 16px;
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.erp-table-card__title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+/* Badges */
+.erp-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.erp-badge--success {
+    background: var(--success-light);
+    color: var(--success);
+}
+
+.erp-badge--danger {
+    background: var(--danger-light);
+    color: var(--danger);
+}
+
+/* Valores monetários */
+.erp-currency--positive {
+    color: var(--success);
+    font-weight: 600;
+}
+
+.erp-currency--negative {
+    color: var(--danger);
+    font-weight: 600;
+}
+
+/* Paginação */
+.erp-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 16px;
+    border-top: 1px solid var(--gray-200);
+}
+
+.erp-pagination__link {
+    padding: 8px 12px;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    text-decoration: none;
+    color: var(--gray-600);
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.erp-pagination__link:hover {
+    background: var(--gray-100);
+    color: var(--gray-800);
+}
+
+.erp-pagination__info {
+    padding: 8px 12px;
+    color: var(--gray-600);
+    font-size: 13px;
+}
+
+/* Empty state */
+.erp-empty {
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--gray-500);
+}
+
+.erp-empty__icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.erp-empty__title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 8px;
+}
+
+/* Responsividade */
+@media (max-width: 1200px) {
+    .erp-summary-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .erp-summary-cards {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="erp-page-header">
+    <h2 class="erp-page-header__title">FLUXO DE CAIXA</h2>
+    <p class="erp-page-header__subtitle">Movimentações e saldo de caixa</p>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'error' %}
+        <div class="erp-alert erp-alert--error erp-mb-4">
+            {{ message }}
+        </div>
+        {% else %}
+        <div class="erp-alert erp-alert--success erp-mb-4">
+            {{ message }}
+        </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<!-- CARDS DE RESUMO -->
+<div class="erp-summary-cards">
+    <div class="erp-summary-card erp-summary-card--success">
+        <p class="erp-summary-card__label">Entradas do Período</p>
+        <p class="erp-summary-card__value">{{ entradas|currency_br }}</p>
+    </div>
+    <div class="erp-summary-card erp-summary-card--danger">
+        <p class="erp-summary-card__label">Saídas do Período</p>
+        <p class="erp-summary-card__value">{{ saidas|currency_br }}</p>
+    </div>
+    <div class="erp-summary-card {% if saldo >= 0 %}erp-summary-card--success{% else %}erp-summary-card--danger{% endif %}">
+        <p class="erp-summary-card__label">Saldo do Período</p>
+        <p class="erp-summary-card__value">{{ saldo|currency_br }}</p>
+    </div>
+    <div class="erp-summary-card erp-summary-card--primary">
+        <p class="erp-summary-card__label">Saldo Acumulado</p>
+        <p class="erp-summary-card__value">{{ saldo_acumulado|currency_br }}</p>
+    </div>
+</div>
+
+<!-- FILTROS -->
+<div class="erp-filters-card">
+    <form method="get" class="erp-filters-card__form">
+        <div class="erp-form-group">
+            <label class="erp-label">Data Inicial</label>
+            <input type="date" name="data_inicial" value="{{ data_inicial|default:'' }}" class="erp-input">
+        </div>
+        <div class="erp-form-group">
+            <label class="erp-label">Data Final</label>
+            <input type="date" name="data_final" value="{{ data_final|default:'' }}" class="erp-input">
+        </div>
+        <div class="erp-form-group">
+            <label class="erp-label">Tipo</label>
+            <select name="tipo" onchange="this.form.submit()" class="erp-select">
+                <option value="">Todos</option>
+                <option value="entrada" {% if tipo == 'entrada' %}selected{% endif %}>Entrada</option>
+                <option value="saida" {% if tipo == 'saida' %}selected{% endif %}>Saída</option>
+            </select>
+        </div>
+        <button type="submit" class="erp-btn erp-btn--primary">
+            <span>🔍</span> Filtrar
+        </button>
+        <a href="{% url 'ERP_ServicesBI:fluxo_caixa' %}" class="erp-btn erp-btn--secondary">
+            <span>❌</span> Limpar
+        </a>
+        <a href="{% url 'ERP_ServicesBI:movimentocaixa_add' %}" class="erp-btn erp-btn--primary">
+            <span>+</span> Lançamento
+        </a>
+    </form>
+</div>
+
+<!-- TABELA -->
+<div class="erp-table-card">
+    <div class="erp-table-card__header">
+        <h3 class="erp-table-card__title">📋 Movimentações de Caixa</h3>
+    </div>
+    <div class="erp-table-container">
+        <table class="erp-table">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th class="erp-text-center">Tipo</th>
+                    <th>Descrição</th>
+                    <th>Referência</th>
+                    <th>Usuário</th>
+                    <th class="erp-text-right">Valor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for mov in page_obj %}
+                <tr>
+                    <td>{{ mov.data|date:"d/m/Y" }}</td>
+                    <td class="erp-text-center">
+                        {% if mov.tipo == 'entrada' %}
+                            <span class="erp-badge erp-badge--success">Entrada</span>
+                        {% else %}
+                            <span class="erp-badge erp-badge--danger">Saída</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ mov.descricao }}</td>
+                    <td style="color: var(--gray-500); font-size: 12px;">
+                        {% if mov.conta_receber %}
+                            Conta a Receber #{{ mov.conta_receber.id }}
+                        {% elif mov.conta_pagar %}
+                            Conta a Pagar #{{ mov.conta_pagar.id }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td style="color: var(--gray-500); font-size: 12px;">{{ mov.usuario.username|default:"-" }}</td>
+                    <td class="erp-text-right erp-font-semibold {% if mov.tipo == 'entrada' %}erp-currency--positive{% else %}erp-currency--negative{% endif %}">
+                        {% if mov.tipo == 'entrada' %}+{% else %}-{% endif %} {{ mov.valor|currency_br }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">
+                        <div class="erp-empty">
+                            <div class="erp-empty__icon">💰</div>
+                            <div class="erp-empty__title">Nenhuma movimentação encontrada</div>
+                            <p style="color: var(--gray-500);">No período selecionado</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% if page_obj.has_other_pages %}
+    <div class="erp-pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if data_inicial %}&data_inicial={{ data_inicial }}{% endif %}{% if data_final %}&data_final={{ data_final }}{% endif %}{% if tipo %}&tipo={{ tipo }}{% endif %}" class="erp-pagination__link">← Anterior</a>
+        {% endif %}
+        
+        <span class="erp-pagination__info">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+        
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if data_inicial %}&data_inicial={{ data_inicial }}{% endif %}{% if data_final %}&data_final={{ data_final }}{% endif %}{% if tipo %}&tipo={{ tipo }}{% endif %}" class="erp-pagination__link">Próxima →</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

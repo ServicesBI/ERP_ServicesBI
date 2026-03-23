@@ -1,0 +1,11 @@
+{% if messages %}
+    {% for message in messages %}
+        <div class="erp-alert erp-alert--{{ message.tags|default:'info' }}">
+            <span>{{ message }}</span>
+            <button onclick="this.parentElement.remove()"
+                    style="margin-left:auto; background:none; border:none;
+                           cursor:pointer; font-size:18px; opacity:0.6; padding:0 4px;"
+                    title="Fechar">×</button>
+        </div>
+    {% endfor %}
+{% endif %}

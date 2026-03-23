@@ -1,0 +1,412 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Conciliação Bancária - ERP ServicesBI{% endblock %}
+
+{% block extra_css %}
+<style>
+.erp-page-header {
+    margin-bottom: 24px;
+}
+
+.erp-page-header__title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--gray-800);
+}
+
+.erp-page-header__subtitle {
+    margin: 4px 0 0 0;
+    color: var(--gray-500);
+    font-size: 14px;
+}
+
+/* Cards de resumo */
+.erp-summary-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.erp-summary-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    border-left: 4px solid;
+}
+
+.erp-summary-card--primary {
+    border-left-color: var(--primary-600);
+}
+
+.erp-summary-card--success {
+    border-left-color: var(--success);
+}
+
+.erp-summary-card--warning {
+    border-left-color: var(--warning);
+}
+
+.erp-summary-card--danger {
+    border-left-color: var(--danger);
+}
+
+.erp-summary-card__label {
+    margin: 0 0 8px 0;
+    font-size: 12px;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.erp-summary-card__value {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.erp-summary-card--primary .erp-summary-card__value {
+    color: var(--primary-600);
+}
+
+.erp-summary-card--success .erp-summary-card__value {
+    color: var(--success);
+}
+
+.erp-summary-card--warning .erp-summary-card__value {
+    color: var(--warning);
+}
+
+.erp-summary-card--danger .erp-summary-card__value {
+    color: var(--danger);
+}
+
+/* Filtros */
+.erp-filters-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+}
+
+.erp-filters-card__form {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.erp-filters-card__form .erp-form-group {
+    margin: 0;
+}
+
+.erp-filters-card__form .erp-label {
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.erp-filters-card__form .erp-input,
+.erp-filters-card__form .erp-select {
+    padding: 6px 10px;
+    font-size: 13px;
+    min-width: 150px;
+}
+
+/* Tabela */
+.erp-table-card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.erp-table-card__header {
+    padding: 16px;
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.erp-table-card__title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+/* Badges */
+.erp-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.erp-badge--success {
+    background: var(--success-light);
+    color: var(--success);
+}
+
+.erp-badge--primary {
+    background: var(--primary-100);
+    color: var(--primary-600);
+}
+
+.erp-badge--warning {
+    background: var(--warning-light);
+    color: var(--warning);
+}
+
+.erp-badge--danger {
+    background: var(--danger-light);
+    color: var(--danger);
+}
+
+/* Paginação */
+.erp-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 16px;
+    border-top: 1px solid var(--gray-200);
+}
+
+.erp-pagination__link {
+    padding: 8px 12px;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    text-decoration: none;
+    color: var(--gray-600);
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.erp-pagination__link:hover {
+    background: var(--gray-100);
+    color: var(--gray-800);
+}
+
+.erp-pagination__info {
+    padding: 8px 12px;
+    color: var(--gray-600);
+    font-size: 13px;
+}
+
+/* Empty state */
+.erp-empty {
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--gray-500);
+}
+
+.erp-empty__icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.erp-empty__title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 8px;
+}
+
+.erp-empty__action {
+    color: var(--primary-600);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.erp-empty__action:hover {
+    text-decoration: underline;
+}
+
+/* Responsividade */
+@media (max-width: 1200px) {
+    .erp-summary-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .erp-summary-cards {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="erp-page-header">
+    <h2 class="erp-page-header__title">CONCILIAÇÃO BANCÁRIA</h2>
+    <p class="erp-page-header__subtitle">Conciliação de extratos bancários</p>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'error' %}
+        <div class="erp-alert erp-alert--error erp-mb-4">
+            {{ message }}
+        </div>
+        {% else %}
+        <div class="erp-alert erp-alert--success erp-mb-4">
+            {{ message }}
+        </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<!-- CARDS DE RESUMO -->
+<div class="erp-summary-cards">
+    <div class="erp-summary-card erp-summary-card--primary">
+        <p class="erp-summary-card__label">Extratos Importados</p>
+        <p class="erp-summary-card__value">{{ total_extratos|default:0 }}</p>
+    </div>
+    <div class="erp-summary-card erp-summary-card--success">
+        <p class="erp-summary-card__label">Lançamentos Conciliados</p>
+        <p class="erp-summary-card__value">{{ conciliados|default:0 }}</p>
+    </div>
+    <div class="erp-summary-card erp-summary-card--warning">
+        <p class="erp-summary-card__label">Pendentes</p>
+        <p class="erp-summary-card__value">{{ pendentes|default:0 }}</p>
+    </div>
+    <div class="erp-summary-card erp-summary-card--danger">
+        <p class="erp-summary-card__label">Divergentes</p>
+        <p class="erp-summary-card__value">{{ divergentes|default:0 }}</p>
+    </div>
+</div>
+
+<!-- FILTROS -->
+<div class="erp-filters-card">
+    <form method="get" class="erp-filters-card__form">
+        <div class="erp-form-group">
+            <label class="erp-label">Mês</label>
+            <input type="month" name="mes" value="{{ mes|default:'' }}" class="erp-input">
+        </div>
+        <div class="erp-form-group">
+            <label class="erp-label">Status</label>
+            <select name="status" onchange="this.form.submit()" class="erp-select">
+                <option value="">Todos</option>
+                <option value="pendente" {% if status == 'pendente' %}selected{% endif %}>Pendente</option>
+                <option value="processando" {% if status == 'processando' %}selected{% endif %}>Processando</option>
+                <option value="conciliado" {% if status == 'conciliado' %}selected{% endif %}>Conciliado</option>
+                <option value="divergente" {% if status == 'divergente' %}selected{% endif %}>Divergente</option>
+            </select>
+        </div>
+        <button type="submit" class="erp-btn erp-btn--primary">
+            <span>🔍</span> Filtrar
+        </button>
+        <a href="{% url 'ERP_ServicesBI:conciliacao_list' %}" class="erp-btn erp-btn--secondary">
+            <span>❌</span> Limpar
+        </a>
+        <a href="{% url 'ERP_ServicesBI:conciliacao_importar' %}" class="erp-btn erp-btn--primary">
+            <span>📁</span> Importar OFX
+        </a>
+    </form>
+</div>
+
+<!-- TABELA -->
+<div class="erp-table-card">
+    <div class="erp-table-card__header">
+        <h3 class="erp-table-card__title">📋 Extratos Bancários ({{ total|default:page_obj.paginator.count }})</h3>
+    </div>
+    <div class="erp-table-container">
+        <table class="erp-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Conta Bancária</th>
+                    <th class="erp-text-center">Período</th>
+                    <th class="erp-text-right">Saldo Inicial</th>
+                    <th class="erp-text-right">Saldo Final</th>
+                    <th class="erp-text-center">Lançamentos</th>
+                    <th class="erp-text-center">Status</th>
+                    <th class="erp-text-center">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for extrato in page_obj %}
+                <tr>
+                    <td class="erp-font-semibold">#{{ extrato.id }}</td>
+                    <td>
+                        <div class="erp-font-medium">{{ extrato.conta_bancaria|default:"Conta Principal" }}</div>
+                        <div style="color: var(--gray-500); font-size: 12px;">{{ extrato.banco|default:"-" }}</div>
+                    </td>
+                    <td class="erp-text-center">
+                        {{ extrato.data_inicial|date:"d/m/Y" }}<br>
+                        <span style="color: var(--gray-500); font-size: 12px;">até</span><br>
+                        {{ extrato.data_final|date:"d/m/Y" }}
+                    </td>
+                    <td class="erp-text-right" style="color: var(--gray-500);">{{ extrato.saldo_inicial|currency_br }}</td>
+                    <td class="erp-text-right erp-font-semibold" style="color: var(--primary-600);">{{ extrato.saldo_final|currency_br }}</td>
+                    <td class="erp-text-center">
+                        <span style="background: var(--gray-100); padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                            {{ extrato.total_lancamentos|default:0 }} lanç.
+                        </span>
+                    </td>
+                    <td class="erp-text-center">
+                        {% if extrato.status == 'conciliado' %}
+                            <span class="erp-badge erp-badge--success">Conciliado</span>
+                        {% elif extrato.status == 'processando' %}
+                            <span class="erp-badge erp-badge--primary">Processando</span>
+                        {% elif extrato.status == 'divergente' %}
+                            <span class="erp-badge erp-badge--danger">Divergente</span>
+                        {% else %}
+                            <span class="erp-badge erp-badge--warning">Pendente</span>
+                        {% endif %}
+                    </td>
+                    <td class="erp-text-center">
+                        <div class="erp-actions">
+                            <a href="{% url 'ERP_ServicesBI:conciliacao_processar' extrato.id %}" class="erp-btn-icon erp-btn-icon--purple" title="Processar">
+                                ⚙️
+                            </a>
+                            <a href="{% url 'ERP_ServicesBI:conciliacao_vincular' extrato.id %}" class="erp-btn-icon erp-btn-icon--success" title="Vincular">
+                                🔗
+                            </a>
+                            <a href="{% url 'ERP_ServicesBI:conciliacao_delete' extrato.id %}" class="erp-btn-icon erp-btn-icon--delete" title="Excluir" data-confirm="Tem certeza que deseja excluir este extrato?">
+                                🗑️
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8">
+                        <div class="erp-empty">
+                            <div class="erp-empty__icon">📁</div>
+                            <div class="erp-empty__title">Nenhum extrato importado</div>
+                            <p style="color: var(--gray-500); margin-bottom: 16px;">Importe seu primeiro extrato OFX</p>
+                            <a href="{% url 'ERP_ServicesBI:conciliacao_importar' %}" class="erp-btn erp-btn--primary">
+                                <span>📁</span> Importar OFX
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    {% if page_obj.has_other_pages %}
+    <div class="erp-pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if mes %}&mes={{ mes }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="erp-pagination__link">← Anterior</a>
+        {% endif %}
+        
+        <span class="erp-pagination__info">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+        
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if mes %}&mes={{ mes }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="erp-pagination__link">Próxima →</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
