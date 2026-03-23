@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+
+{% block title %}Cotação {{ cotacao.numero }} - ERP ServicesBI{% endblock %}
+
+{% block content %}
+<div class="erp-page-header erp-mb-6">
+    <h1 class="erp-page-title">COTAÇÃO MÃE</h1>
+    <p class="erp-page-subtitle">{{ cotacao.numero }} - {{ cotacao.titulo }}</p>
+</div>
+
+<div class="erp-card erp-mb-6">
+    <div class="erp-flex erp-justify-between erp-align-start erp-mb-4">
+        <div>
+            <h3 class="erp-section-title">Dados da Solicitação</h3>
+            <table style="font-size: 14px; line-height: 2;">
+                <tr>
+                    <td style="color: #64748b; padding-right: 20px;"><strong>Solicitante:</strong></td>
+                    <td>{{ cotacao.solicitante.get_full_name|default:cotacao.solicitante.username }}</td>
+                </tr>
+                <tr>
+                    <td style="color: #64748b; padding-right: 20px;"><strong>Setor:</strong></td>
+                    <td>{{ cotacao.setor }}</td>
+                </tr>
+                <tr>
+                    <td style="color: #64748b; padding-right: 20px;"><strong>Data:</strong></td>
+                    <td>{{ cotacao.data_solicitacao|date:"d/m/Y" }}</td>
+                </tr>
+                <tr>
+                    <td style="color: #64748b; padding-right: 20px;"><strong>Status:</strong></td>
+                    <td>
+                        <span class="erp-badge erp-badge--{{ cotacao.status }}">
+                            {{ cotacao.get_status_display }}
+                        </span>
+                    </td>
+                </tr>
+                {% if cotacao.observacoes %}
+                <tr>
+                    <td style="color: #64748b; padding-right: 20px; vertical-align: top;"><strong>Observações:</strong></td>
+                    <td>{{ cotacao.observacoes|linebreaks }}</td>
+                </tr>
+                {% endif %}
+            </table>
+        </div>
+        
+        <div class="erp-flex erp-gap-2">
+            <a href="{% url 'ERP_ServicesBI:cotacao_mae_edit' cotacao.pk %}" class="erp-btn erp-btn--warning">
+                ✏️ Editar
+            </a>
+            <a href="{% url 'ERP_ServicesBI:cotacao_mae_list' %}" class="erp-btn erp-btn--outline">
+                ← Voltar
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- ITENS SOLICITADOS -->
+<div class="erp-card erp-mb-6">
+    <h3 class="erp-section-title">Itens Solicitados</h3>
+    
+    {% if itens %}
+    <table class="erp-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Produto/Descrição</th>
+                <th>Quantidade</th>
+                <th>Unidade</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in itens %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>
+                    {% if item.produto %}
+                        <strong>{{ item.produto.codigo }}</strong> - {{ item.produto.descricao }}
+                    {% else %}
+                        {{ item.descricao_manual }}
+                    {% endif %}
+                </td>
+                <td>{{ item.quantidade|floatformat:3 }}</td>
+                <td>{{ item.unidade_medida }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color: #64748b; text-align: center; padding: 20px;">Nenhum item solicitado</p>
+    {% endif %}
+</div>
+
+<!-- COTAÇÕES DOS FORNECEDORES -->
+<div class="erp-card">
+    <div class="erp-flex erp-justify-between erp-align-center erp-mb-4">
+        <h3 class="erp-section-title" style="margin: 0;">Cotações dos Fornecedores</h3>
+        <button class="erp-btn erp-btn--success" onclick="alert('Importação será implementada!')">
+            + Importar Cotação
+        </button>
+    </div>
+    
+    {% if cotacoes_fornecedor %}
+    <table class="erp-table">
+        <thead>
+            <tr>
+                <th>Fornecedor</th>
+                <th>Valor Total</th>
+                <th>Prazo Entrega</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cot_forn in cotacoes_fornecedor %}
+            <tr>
+                <td>{{ cot_forn.fornecedor.nome_fantasia }}</td>
+                <td>R$ {{ cot_forn.valor_total_liquido|floatformat:2 }}</td>
+                <td>{{ cot_forn.prazo_entrega_dias }} dias</td>
+                <td>{{ cot_forn.get_status_display }}</td>
+                <td>
+                    <button class="erp-btn erp-btn--sm erp-btn--primary">Ver</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div style="text-align: center; padding: 40px; background: #f8fafc; border-radius: 8px;">
+        <div style="font-size: 48px; margin-bottom: 16px;">📨</div>
+        <p style="color: #64748b; margin-bottom: 16px;">Nenhuma cotação de fornecedor importada</p>
+        <p style="font-size: 13px; color: #94a3b8;">
+            Clique em "Importar Cotação" para adicionar respostas dos fornecedores
+        </p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- COMPARATIVO (só aparece quando tiver 2+ cotações) -->
+{% if cotacoes_fornecedor.count >= 2 %}
+<div class="erp-card erp-mt-6">
+    <h3 class="erp-section-title">Comparativo de Preços</h3>
+    <p style="color: #64748b; font-size: 14px; margin-bottom: 16px;">
+        Comparação lado a lado dos preços por item
+    </p>
+    
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+            <thead>
+                <tr style="background: #1e3a5f; color: white;">
+                    <th style="padding: 12px; text-align: left; min-width: 200px;">Item</th>
+                    <th style="padding: 12px; text-align: center;">Qtd</th>
+                    {% for cot_forn in cotacoes_fornecedor %}
+                    <th style="padding: 12px; text-align: center; min-width: 120px;">
+                        {{ cot_forn.fornecedor.nome_fantasia }}
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for item_data in comparativo %}
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 12px;">
+                        {% if item_data.item.produto %}
+                            {{ item_data.item.produto.descricao }}
+                        {% else %}
+                            {{ item_data.item.descricao_manual }}
+                        {% endif %}
+                    </td>
+                    <td style="padding: 12px; text-align: center;">
+                        {{ item_data.item.quantidade|floatformat:0 }}
+                    </td>
+                    {% for cot in item_data.cotacoes %}
+                    <td style="padding: 12px; text-align: center;">
+                        {% if cot.preco %}
+                            <div style="font-weight: 600; color: #059669;">
+                                R$ {{ cot.preco|floatformat:2 }}
+                            </div>
+                            <div style="font-size: 11px; color: #64748b;">
+                                Total: R$ {{ cot.total|floatformat:2 }}
+                            </div>
+                        {% else %}
+                            <span style="color: #94a3b8;">-</span>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+                
+                <!-- TOTAIS -->
+                <tr style="background: #f0fdf4; font-weight: 700;">
+                    <td style="padding: 12px;" colspan="2">TOTAL GERAL</td>
+                    {% for cot_forn in cotacoes_fornecedor %}
+                    <td style="padding: 12px; text-align: center; color: #15803d; font-size: 16px;">
+                        R$ {{ cot_forn.valor_total_liquido|floatformat:2 }}
+                    </td>
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -3486,3 +3486,148 @@ def movimentacaoestoque_edit(request, pk):
         'action': 'Salvar Alterações',
         'movimentacao': movimentacao
     })
+
+
+
+
+
+
+
+
+
+
+
+# ============================================
+# COTAÇÃO COMPARATIVA - VIEWS
+# ============================================
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from .models import CotacaoMae, ItemSolicitado, CotacaoFornecedor, ItemCotacaoFornecedor, Fornecedor
+from .forms import CotacaoMaeForm, ItemSolicitadoFormSet
+
+
+@login_required
+def cotacao_mae_list(request):
+    """Lista todas as Cotações Mãe"""
+    cotacoes = CotacaoMae.objects.all().order_by('-data_solicitacao')
+    
+    # Filtros
+    status = request.GET.get('status')
+    if status:
+        cotacoes = cotacoes.filter(status=status)
+    
+    context = {
+        'cotacoes': cotacoes,
+        'status_choices': CotacaoMae.STATUS_CHOICES,
+    }
+    return render(request, 'compras/cotacao_mae_list.html', context)
+
+
+@login_required
+def cotacao_mae_create(request):
+    """Cria nova Cotação Mãe"""
+    if request.method == 'POST':
+        form = CotacaoMaeForm(request.POST)
+        formset = ItemSolicitadoFormSet(request.POST, prefix='itens')
+        
+        if form.is_valid() and formset.is_valid():
+            cotacao = form.save(commit=False)
+            cotacao.solicitante = request.user
+            cotacao.save()
+            
+            # Salva os itens
+            formset.instance = cotacao
+            formset.save()
+            
+            messages.success(request, f'Cotação {cotacao.numero} criada com sucesso!')
+            return redirect('ERP_ServicesBI:cotacao_mae_detail', pk=cotacao.pk)
+    else:
+        form = CotacaoMaeForm()
+        formset = ItemSolicitadoFormSet(prefix='itens')
+    
+    context = {
+        'form': form,
+        'formset': formset,
+        'titulo': 'Nova Cotação Mãe',
+    }
+    return render(request, 'compras/cotacao_mae_form.html', context)
+
+
+@login_required
+def cotacao_mae_detail(request, pk):
+    """Visualiza detalhes da Cotação Mãe e comparativo"""
+    cotacao = get_object_or_404(CotacaoMae, pk=pk)
+    itens = cotacao.itens_solicitados.all()
+    cotacoes_fornecedor = cotacao.cotacoes_fornecedor.all()
+    
+    # Prepara dados para o comparativo (feito na view, não no template)
+    comparativo = []
+    for item in itens:
+        item_data = {
+            'item': item,
+            'cotacoes': []
+        }
+        for cot_forn in cotacoes_fornecedor:
+            # Busca o preço deste item nesta cotação do fornecedor
+            item_cotacao = cot_forn.itens.filter(item_solicitado=item).first()
+            item_data['cotacoes'].append({
+                'fornecedor': cot_forn.fornecedor,
+                'preco': item_cotacao.preco_unitario if item_cotacao else None,
+                'total': item_cotacao.preco_total if item_cotacao else None,
+                'disponivel': item_cotacao.disponivel if item_cotacao else False,
+            })
+        comparativo.append(item_data)
+    
+    context = {
+        'cotacao': cotacao,
+        'itens': itens,
+        'cotacoes_fornecedor': cotacoes_fornecedor,
+        'comparativo': comparativo,  # <-- dados prontos pro template
+    }
+    return render(request, 'compras/cotacao_mae_detail.html', context)
+
+
+@login_required
+def cotacao_mae_edit(request, pk):
+    """Edita Cotação Mãe existente"""
+    cotacao = get_object_or_404(CotacaoMae, pk=pk)
+    
+    if request.method == 'POST':
+        form = CotacaoMaeForm(request.POST, instance=cotacao)
+        formset = ItemSolicitadoFormSet(request.POST, instance=cotacao, prefix='itens')
+        
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            formset.save()
+            messages.success(request, 'Cotação atualizada com sucesso!')
+            return redirect('ERP_ServicesBI:cotacao_mae_detail', pk=cotacao.pk)
+    else:
+        form = CotacaoMaeForm(instance=cotacao)
+        formset = ItemSolicitadoFormSet(instance=cotacao, prefix='itens')
+    
+    context = {
+        'form': form,
+        'formset': formset,
+        'cotacao': cotacao,
+        'titulo': 'Editar Cotação Mãe',
+    }
+    return render(request, 'compras/cotacao_mae_form.html', context)
+
+
+@login_required
+def cotacao_mae_delete(request, pk):
+    """Exclui Cotação Mãe"""
+    cotacao = get_object_or_404(CotacaoMae, pk=pk)
+    
+    if request.method == 'POST':
+        numero = cotacao.numero
+        cotacao.delete()
+        messages.success(request, f'Cotação {numero} excluída com sucesso!')
+        return redirect('ERP_ServicesBI:cotacao_mae_list')
+    
+    context = {
+        'cotacao': cotacao,
+    }
+    return render(request, 'compras/cotacao_mae_confirm_delete.html', context)

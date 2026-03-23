@@ -435,3 +435,71 @@ class ItemTransferenciaForm(BaseForm):
     class Meta:
         model = ItemTransferencia
         fields = '__all__'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# =============================================================================
+# MÓDULO: COTAÇÃO COMPARATIVA (NOVO)
+# =============================================================================
+
+from .models import CotacaoMae, ItemSolicitado, CotacaoFornecedor, ItemCotacaoFornecedor
+
+
+class CotacaoMaeForm(BaseForm):
+    class Meta:
+        model = CotacaoMae
+        fields = ['titulo', 'setor', 'data_limite_resposta', 'observacoes', 'status', 'ativo']
+        widgets = {
+            'titulo': forms.TextInput(attrs={'class': 'erp-input', 'placeholder': 'Ex: Material de Escritório'}),
+            'setor': forms.TextInput(attrs={'class': 'erp-input', 'placeholder': 'Ex: RH, TI, etc'}),
+            'data_limite_resposta': forms.DateInput(attrs={'type': 'date', 'class': 'erp-input'}),
+            'observacoes': forms.Textarea(attrs={'rows': 3, 'class': 'erp-textarea'}),
+            'status': forms.Select(attrs={'class': 'erp-select'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['data_limite_resposta'].required = False
+        self.fields['observacoes'].required = False
+
+
+class ItemSolicitadoForm(BaseForm):
+    class Meta:
+        model = ItemSolicitado
+        fields = ['produto', 'descricao_manual', 'quantidade', 'unidade_medida']
+        widgets = {
+            'produto': forms.Select(attrs={'class': 'erp-select'}),
+            'descricao_manual': forms.TextInput(attrs={'class': 'erp-input', 'placeholder': 'Se não tiver cadastrado'}),
+            'quantidade': forms.NumberInput(attrs={'class': 'erp-input', 'step': '0.001'}),
+            'unidade_medida': forms.TextInput(attrs={'class': 'erp-input'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['produto'].queryset = Produto.objects.filter(ativo=True).order_by('descricao')
+        self.fields['produto'].empty_label = "Selecione ou digite abaixo..."
+        self.fields['produto'].required = False
+        self.fields['descricao_manual'].required = False
+
+
+# FormSet para múltiplos itens na mesma página
+ItemSolicitadoFormSet = forms.inlineformset_factory(
+    CotacaoMae,
+    ItemSolicitado,
+    form=ItemSolicitadoForm,
+    extra=1,  # Começa com 1 item em branco
+    can_delete=True,
+    min_num=1,
+    validate_min=True,
+)       

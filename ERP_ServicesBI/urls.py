@@ -227,6 +227,14 @@ urlpatterns = [
     path('estoque/relatorio-posicao/', views.relatorio_estoque, name='relatorio_estoque'),
     path('estoque/relatorio-movimentacoes/', views.relatorio_movimentacoes, name='relatorio_movimentacoes'),
 
+# ============================================
+    # COTAÇÃO COMPARATIVA (NOVO)
+    # ============================================
+    path('cotacoes-mae/', views.cotacao_mae_list, name='cotacao_mae_list'),
+    path('cotacoes-mae/nova/', views.cotacao_mae_create, name='cotacao_mae_create'),
+    path('cotacoes-mae/<int:pk>/', views.cotacao_mae_detail, name='cotacao_mae_detail'),
+    path('cotacoes-mae/<int:pk>/editar/', views.cotacao_mae_edit, name='cotacao_mae_edit'),
+    path('cotacoes-mae/<int:pk>/excluir/', views.cotacao_mae_delete, name='cotacao_mae_delete'),
 ]
 
 # =============================================================================

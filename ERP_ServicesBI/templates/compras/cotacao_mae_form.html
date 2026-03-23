@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo }} - ERP ServicesBI{% endblock %}
+
+{% block content %}
+<div class="erp-page-header erp-mb-6">
+    <h1 class="erp-page-title">CADASTRO</h1>
+    <p class="erp-page-subtitle">{{ titulo }}</p>
+</div>
+
+<div class="erp-card" style="max-width: 1000px;">
+    {% if messages %}
+        {% for message in messages %}
+            {% if message.tags == 'error' %}
+            <div class="erp-alert erp-alert--error erp-mb-4">
+                {{ message }}
+            </div>
+            {% else %}
+            <div class="erp-alert erp-alert--success erp-mb-4">
+                {{ message }}
+            </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    {% if form.errors %}
+    <div class="erp-alert erp-alert--error erp-mb-4">
+        <strong>❌ Corrija os erros abaixo:</strong>
+        <ul style="margin-top: 8px; margin-bottom: 0; padding-left: 20px;">
+            {% for field in form %}
+                {% for error in field.errors %}
+                <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <form method="post" class="erp-form">
+        {% csrf_token %}
+        
+        <!-- Checkbox Ativo -->
+        <div class="erp-form-group erp-mb-4">
+            <label class="erp-checkbox" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: var(--gray-700);">
+                <input type="hidden" name="ativo" value="False">
+                <input type="checkbox" 
+                       name="ativo" 
+                       value="True"
+                       {% if form.ativo.value == True or form.ativo.value == 'True' or form.ativo.value == 'on' %}checked{% endif %}
+                       {% if not form.ativo.value and not cotacao %}checked{% endif %}
+                       style="width: 16px; height: 16px; cursor: pointer;">
+                <span><strong>Cotação Ativa</strong></span>
+            </label>
+        </div>
+
+        <h3 class="erp-section-title">Dados da Cotação</h3>
+        
+        <div class="erp-form-row">
+            <div class="erp-form-group">
+                <label class="erp-label erp-label-required" for="id_titulo">Título/Descrição</label>
+                {{ form.titulo }}
+            </div>
+            
+            <div class="erp-form-group">
+                <label class="erp-label erp-label-required" for="id_setor">Setor</label>
+                {{ form.setor }}
+            </div>
+        </div>
+        
+        <div class="erp-form-row">
+            <div class="erp-form-group">
+                <label class="erp-label" for="id_data_limite_resposta">Data Limite Resposta</label>
+                {{ form.data_limite_resposta }}
+            </div>
+            
+            <div class="erp-form-group">
+                <label class="erp-label" for="id_status">Status</label>
+                {{ form.status }}
+            </div>
+        </div>
+        
+        <div class="erp-form-group erp-mb-4">
+            <label class="erp-label" for="id_observacoes">Observações</label>
+            {{ form.observacoes }}
+        </div>
+
+        <!-- Itens Solicitados -->
+        <h3 class="erp-section-title erp-mt-6">Itens Solicitados</h3>
+        
+        <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 24px;">
+            {{ formset.management_form }}
+            
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #e2e8f0; font-weight: 600; color: #475569; font-size: 14px;">
+                        <th style="padding: 12px; text-align: left; width: 40%;">Produto</th>
+                        <th style="padding: 12px; text-align: left; width: 30%;">Descrição (se não cadastrado)</th>
+                        <th style="padding: 12px; text-align: center; width: 15%;">Qtd</th>
+                        <th style="padding: 12px; text-align: center; width: 15%;">Unidade</th>
+                        <th style="padding: 12px; text-align: center; width: 10%;">Excluir</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for form_item in formset %}
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="padding: 12px;">
+                            {{ form_item.produto }}
+                            {% if form_item.produto.errors %}
+                            <div style="color: #dc2626; font-size: 12px;">{{ form_item.produto.errors }}</div>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 12px;">
+                            {{ form_item.descricao_manual }}
+                        </td>
+                        <td style="padding: 12px;">
+                            {{ form_item.quantidade }}
+                        </td>
+                        <td style="padding: 12px;">
+                            {{ form_item.unidade_medida }}
+                        </td>
+                        <td style="padding: 12px; text-align: center;">
+                            {% if form_item.instance.pk %}
+                            {{ form_item.DELETE }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            <button type="button" onclick="addItemRow()" class="erp-btn erp-btn--outline erp-mt-4" style="width: 100%;">
+                + Adicionar Item
+            </button>
+        </div>
+
+        <div class="erp-flex erp-gap-2 erp-mt-6">
+            <button type="submit" class="erp-btn erp-btn--primary">
+                <span>💾</span>
+                <span>Salvar</span>
+            </button>
+            <a href="{% url 'ERP_ServicesBI:cotacao_mae_list' %}" class="erp-btn erp-btn--outline" style="color: #fc4564; border-color: #fc4564;">
+                <span>Cancelar</span>
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+function addItemRow() {
+    // Clona a última linha do formset
+    const table = document.querySelector('tbody');
+    const rows = table.querySelectorAll('tr');
+    const lastRow = rows[rows.length - 1];
+    const newRow = lastRow.cloneNode(true);
+    
+    // Atualiza os índices dos inputs
+    const totalForms = document.querySelector('#id_itens-TOTAL_FORMS');
+    const newIndex = parseInt(totalForms.value);
+    
+    newRow.querySelectorAll('input, select').forEach(input => {
+        input.name = input.name.replace(/itens-\d+-/, `itens-${newIndex}-`);
+        input.id = input.id.replace(/itens-\d+-/, `itens-${newIndex}-`);
+        if (input.type !== 'hidden') {
+            input.value = '';
+        }
+    });
+    
+    table.appendChild(newRow);
+    totalForms.value = newIndex + 1;
+}
+</script>
+{% endblock %}

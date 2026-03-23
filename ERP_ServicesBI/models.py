@@ -1138,3 +1138,280 @@ class ItemTransferencia(models.Model):
     class Meta:
         verbose_name = 'Item da Transferência'
         verbose_name_plural = 'Itens da Transferência'
+
+
+
+
+
+
+
+
+
+# ============================================
+# COTAÇÃO COMPARATIVA - NOVOS MODELS
+# ============================================
+
+class CotacaoMae(models.Model):
+    """
+    Cotação 'Mãe' - Solicitação original do setor (RH, TI, etc)
+    Ex: RH pede compra de materiais de escritório
+    """
+    STATUS_CHOICES = [
+        ('rascunho', 'Rascunho'),
+        ('enviada', 'Enviada aos Fornecedores'),
+        ('respondida', 'Cotações Recebidas'),
+        ('em_analise', 'Em Análise'),
+        ('concluida', 'Concluída'),
+        ('cancelada', 'Cancelada'),
+    ]
+    
+    numero = models.CharField(max_length=20, unique=True, verbose_name='Número')
+    titulo = models.CharField(max_length=200, verbose_name='Título/Descrição')
+    solicitante = models.ForeignKey(
+        User, 
+        on_delete=models.PROTECT,
+        related_name='cotacoes_mae_solicitadas',
+        verbose_name='Solicitante'
+    )
+    setor = models.CharField(max_length=100, verbose_name='Setor')
+    data_solicitacao = models.DateField(auto_now_add=True, verbose_name='Data Solicitação')
+    data_limite_resposta = models.DateField(null=True, blank=True, verbose_name='Data Limite Resposta')
+    observacoes = models.TextField(blank=True, verbose_name='Observações')
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='rascunho',
+        verbose_name='Status'
+    )
+    ativo = models.BooleanField(default=True, verbose_name='Ativo')
+    
+    # Campos de controle
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Cotação Mãe'
+        verbose_name_plural = 'Cotações Mãe'
+        ordering = ['-data_solicitacao']
+    
+    def __str__(self):
+        return f'{self.numero} - {self.titulo}'
+    
+    def save(self, *args, **kwargs):
+        if not self.numero:
+            # Gera número automático: COT-2025-0001
+            from datetime import datetime
+            ano = datetime.now().year
+            ultima = CotacaoMae.objects.filter(numero__startswith=f'COT-{ano}').order_by('-numero').first()
+            if ultima:
+                ultimo_numero = int(ultima.numero.split('-')[-1])
+                self.numero = f'COT-{ano}-{ultimo_numero + 1:04d}'
+            else:
+                self.numero = f'COT-{ano}-0001'
+        super().save(*args, **kwargs)
+
+
+class ItemSolicitado(models.Model):
+    """
+    Itens que o solicitante pediu na Cotação Mãe
+    Ex: 10 canetas, 5 blocos de papel, etc
+    """
+    cotacao_mae = models.ForeignKey(
+        CotacaoMae,
+        on_delete=models.CASCADE,
+        related_name='itens_solicitados',
+        verbose_name='Cotação Mãe'
+    )
+    produto = models.ForeignKey(
+        'Produto',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        verbose_name='Produto (se cadastrado)'
+    )
+    descricao_manual = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name='Descrição (se não cadastrado)'
+    )
+    quantidade = models.DecimalField(
+        max_digits=15,
+        decimal_places=3,
+        verbose_name='Quantidade'
+    )
+    unidade_medida = models.CharField(
+        max_length=20,
+        default='UN',
+        verbose_name='Unidade de Medida'
+    )
+    observacao = models.TextField(blank=True, verbose_name='Observação')
+    
+    class Meta:
+        verbose_name = 'Item Solicitado'
+        verbose_name_plural = 'Itens Solicitados'
+        ordering = ['id']
+    
+    def __str__(self):
+        descricao = self.produto.descricao if self.produto else self.descricao_manual
+        return f'{descricao} ({self.quantidade} {self.unidade_medida})'
+    
+    @property
+    def descricao_display(self):
+        """Retorna a descrição do item (produto ou manual)"""
+        return self.produto.descricao if self.produto else self.descricao_manual
+
+
+class CotacaoFornecedor(models.Model):
+    """
+    Cotação que cada fornecedor respondeu
+    Ex: Fornecedor A respondeu com preços dele
+    """
+    STATUS_CHOICES = [
+        ('pendente', 'Pendente'),
+        ('importada', 'Importada'),
+        ('processada', 'Processada'),
+        ('aprovada', 'Aprovada'),
+        ('rejeitada', 'Rejeitada'),
+    ]
+    
+    cotacao_mae = models.ForeignKey(
+        CotacaoMae,
+        on_delete=models.CASCADE,
+        related_name='cotacoes_fornecedor',
+        verbose_name='Cotação Mãe'
+    )
+    fornecedor = models.ForeignKey(
+        'Fornecedor',
+        on_delete=models.PROTECT,
+        verbose_name='Fornecedor'
+    )
+    contato_nome = models.CharField(max_length=100, blank=True, verbose_name='Nome do Contato')
+    contato_email = models.EmailField(blank=True, verbose_name='Email do Contato')
+    contato_telefone = models.CharField(max_length=20, blank=True, verbose_name='Telefone')
+    
+    # Dados financeiros
+    valor_total_bruto = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        default=0,
+        verbose_name='Valor Total Bruto'
+    )
+    percentual_desconto = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        verbose_name='% Desconto'
+    )
+    valor_frete = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        default=0,
+        verbose_name='Valor Frete'
+    )
+    valor_total_liquido = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        default=0,
+        verbose_name='Valor Total Líquido'
+    )
+    
+    # Condições comerciais
+    condicao_pagamento = models.CharField(max_length=100, blank=True, verbose_name='Condição de Pagamento')
+    prazo_entrega_dias = models.IntegerField(default=0, verbose_name='Prazo Entrega (dias)')
+    disponibilidade_produtos = models.CharField(
+        max_length=50,
+        default='100%',
+        verbose_name='% Disponibilidade Produtos'
+    )
+    
+    # Arquivo importado
+    arquivo_origem = models.FileField(
+        upload_to='cotacoes_fornecedor/%Y/%m/',
+        null=True,
+        blank=True,
+        verbose_name='Arquivo Original'
+    )
+    
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pendente',
+        verbose_name='Status'
+    )
+    observacoes = models.TextField(blank=True, verbose_name='Observações')
+    
+    # Datas
+    data_envio = models.DateField(null=True, blank=True, verbose_name='Data Envio')
+    data_recebimento = models.DateField(null=True, blank=True, verbose_name='Data Recebimento')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Cotação do Fornecedor'
+        verbose_name_plural = 'Cotações dos Fornecedores'
+        unique_together = ['cotacao_mae', 'fornecedor']
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f'{self.fornecedor.nome_fantasia} - {self.cotacao_mae.numero}'
+    
+    def calcular_total(self):
+        """Calcula valor total líquido"""
+        desconto = self.valor_total_bruto * (self.percentual_desconto / 100)
+        self.valor_total_liquido = self.valor_total_bruto - desconto + self.valor_frete
+        return self.valor_total_liquido
+
+
+class ItemCotacaoFornecedor(models.Model):
+    """
+    Cada item que o fornecedor cotou
+    Ex: Fornecedor A cobrou R$ 5,00 na caneta
+    """
+    cotacao_fornecedor = models.ForeignKey(
+        CotacaoFornecedor,
+        on_delete=models.CASCADE,
+        related_name='itens',
+        verbose_name='Cotação do Fornecedor'
+    )
+    item_solicitado = models.ForeignKey(
+        ItemSolicitado,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='cotacoes_recebidas',
+        verbose_name='Item Solicitado (vinculado)'
+    )
+    
+    # Dados como vieram do fornecedor
+    descricao_fornecedor = models.CharField(max_length=255, verbose_name='Descrição no Arquivo')
+    codigo_fornecedor = models.CharField(max_length=50, blank=True, verbose_name='Código do Fornecedor')
+    quantidade = models.DecimalField(max_digits=15, decimal_places=3, verbose_name='Quantidade')
+    unidade_medida = models.CharField(max_length=20, blank=True, verbose_name='Unidade')
+    preco_unitario = models.DecimalField(max_digits=15, decimal_places=2, verbose_name='Preço Unitário')
+    preco_total = models.DecimalField(max_digits=15, decimal_places=2, verbose_name='Preço Total')
+    
+    # Controle
+    disponivel = models.BooleanField(default=True, verbose_name='Disponível')
+    prazo_entrega_item = models.IntegerField(null=True, blank=True, verbose_name='Prazo Específico (dias)')
+    observacao = models.TextField(blank=True, verbose_name='Observação')
+    
+    # Match automático ou manual
+    match_automatico = models.BooleanField(default=False, verbose_name='Match Automático')
+    match_score = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name='Score de Match')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Item da Cotação do Fornecedor'
+        verbose_name_plural = 'Itens das Cotações dos Fornecedores'
+        ordering = ['id']
+    
+    def __str__(self):
+        return f'{self.descricao_fornecedor} - R$ {self.preco_unitario}'
+    
+    def save(self, *args, **kwargs):
+        # Calcula preço total automaticamente
+        if self.preco_unitario and self.quantidade:
+            self.preco_total = self.preco_unitario * self.quantidade
+        super().save(*args, **kwargs)
