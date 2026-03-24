@@ -3631,3 +3631,136 @@ def cotacao_mae_delete(request, pk):
         'cotacao': cotacao,
     }
     return render(request, 'compras/cotacao_mae_confirm_delete.html', context)
+
+
+
+# =============================================================================
+# IMPORTAÇÃO DE COTAÇÕES DE FORNECEDORES
+# =============================================================================
+
+import csv
+import io
+from django import forms
+
+
+class ImportacaoCotacaoForm(forms.Form):
+    """Form para upload do arquivo de cotação do fornecedor"""
+    fornecedor = forms.ModelChoiceField(
+        queryset=Fornecedor.objects.filter(ativo=True),
+        widget=forms.Select(attrs={'class': 'erp-select'}),
+        label='Fornecedor'
+    )
+    arquivo = forms.FileField(
+        widget=forms.FileInput(attrs={'class': 'erp-input'}),
+        label='Arquivo (CSV, Excel ou PDF)',
+        help_text='Formatos aceitos: .csv, .xlsx, .xls, .pdf'
+    )
+    observacoes = forms.CharField(
+        widget=forms.Textarea(attrs={'class': 'erp-textarea', 'rows': 2}),
+        label='Observações',
+        required=False
+    )
+
+
+@login_required
+def cotacao_fornecedor_importar(request, cotacao_mae_pk):
+    """Importa cotação de fornecedor via arquivo"""
+    cotacao_mae = get_object_or_404(CotacaoMae, pk=cotacao_mae_pk)
+    
+    if request.method == 'POST':
+        form = ImportacaoCotacaoForm(request.POST, request.FILES)
+        
+        if form.is_valid():
+            fornecedor = form.cleaned_data['fornecedor']
+            arquivo = request.FILES['arquivo']
+            
+            # Cria a cotação do fornecedor
+            cotacao_fornecedor = CotacaoFornecedor.objects.create(
+                cotacao_mae=cotacao_mae,
+                fornecedor=fornecedor,
+                arquivo_origem=arquivo,
+                observacoes=form.cleaned_data['observacoes'],
+                status='importada',
+                data_recebimento=timezone.now().date()
+            )
+            
+            # Processa o arquivo (CSV por enquanto)
+            if arquivo.name.endswith('.csv'):
+                processar_csv(arquivo, cotacao_fornecedor, cotacao_mae)
+                messages.success(request, f'Cotação de {fornecedor.nome_fantasia} importada com sucesso!')
+                return redirect('ERP_ServicesBI:cotacao_mae_detail', pk=cotacao_mae.pk)
+            else:
+                # PDF e Excel serão implementados depois
+                messages.warning(request, 'Arquivo salvo! Processamento de PDF/Excel será implementado em breve.')
+                return redirect('ERP_ServicesBI:cotacao_mae_detail', pk=cotacao_mae.pk)
+    else:
+        form = ImportacaoCotacaoForm()
+    
+    context = {
+        'form': form,
+        'cotacao_mae': cotacao_mae,
+    }
+    return render(request, 'compras/cotacao_fornecedor_importar.html', context)
+
+
+def processar_csv(arquivo, cotacao_fornecedor, cotacao_mae):
+    """Processa arquivo CSV e cria os itens"""
+    import csv
+    import io
+    
+    # Lê o CSV
+    arquivo.seek(0)  # Volta pro início do arquivo
+    decoded_file = arquivo.read().decode('utf-8')
+    io_string = io.StringIO(decoded_file)
+    reader = csv.DictReader(io_string)
+    
+    total = 0
+    
+    for row in reader:
+        # Espera colunas: descricao, quantidade, preco_unitario
+        descricao = row.get('descricao', row.get('produto', row.get('item', ''))).strip()
+        quantidade_str = row.get('quantidade', row.get('qtd', '1')).strip()
+        preco_str = row.get('preco_unitario', row.get('preco', '0')).strip()
+        
+        # Limpa valores
+        try:
+            quantidade = float(quantidade_str.replace(',', '.'))
+        except (ValueError, AttributeError):
+            quantidade = 1
+            
+        try:
+            # Remove pontos de milhar e troca vírgula decimal por ponto
+            preco_limpo = preco_str.replace('.', '').replace(',', '.')
+            preco_unitario = float(preco_limpo)
+        except (ValueError, AttributeError):
+            preco_unitario = 0
+        
+        preco_total = quantidade * preco_unitario
+        total += preco_total
+        
+        # Tenta fazer match com item solicitado
+        item_solicitado = None
+        for item in cotacao_mae.itens_solicitados.all():
+            descricao_item = item.descricao_display.lower()
+            descricao_csv = descricao.lower()
+            
+            # Match se uma contém a outra
+            if descricao_csv in descricao_item or descricao_item in descricao_csv:
+                item_solicitado = item
+                break
+        
+        # Cria o item da cotação do fornecedor
+        ItemCotacaoFornecedor.objects.create(
+            cotacao_fornecedor=cotacao_fornecedor,
+            item_solicitado=item_solicitado,
+            descricao_fornecedor=descricao,
+            quantidade=quantidade,
+            preco_unitario=preco_unitario,
+            preco_total=preco_total,
+            match_automatico=(item_solicitado is not None)
+        )
+    
+    # Atualiza totais da cotação do fornecedor
+    cotacao_fornecedor.valor_total_bruto = total
+    cotacao_fornecedor.valor_total_liquido = total
+    cotacao_fornecedor.save()

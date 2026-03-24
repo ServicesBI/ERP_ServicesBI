@@ -235,6 +235,18 @@ urlpatterns = [
     path('cotacoes-mae/<int:pk>/', views.cotacao_mae_detail, name='cotacao_mae_detail'),
     path('cotacoes-mae/<int:pk>/editar/', views.cotacao_mae_edit, name='cotacao_mae_edit'),
     path('cotacoes-mae/<int:pk>/excluir/', views.cotacao_mae_delete, name='cotacao_mae_delete'),
+
+    # ============================================
+    # COTAÇÃO COMPARATIVA (NOVO)
+    # ============================================
+    path('cotacoes-mae/', views.cotacao_mae_list, name='cotacao_mae_list'),
+    path('cotacoes-mae/nova/', views.cotacao_mae_create, name='cotacao_mae_create'),
+    path('cotacoes-mae/<int:pk>/', views.cotacao_mae_detail, name='cotacao_mae_detail'),
+    path('cotacoes-mae/<int:pk>/editar/', views.cotacao_mae_edit, name='cotacao_mae_edit'),
+    path('cotacoes-mae/<int:pk>/excluir/', views.cotacao_mae_delete, name='cotacao_mae_delete'),
+    
+    # Importação de cotação de fornecedor
+    path('cotacoes-mae/<int:cotacao_mae_pk>/importar/', views.cotacao_fornecedor_importar, name='cotacao_fornecedor_importar'),
 ]
 
 # =============================================================================

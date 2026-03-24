@@ -93,9 +93,9 @@
 <div class="erp-card">
     <div class="erp-flex erp-justify-between erp-align-center erp-mb-4">
         <h3 class="erp-section-title" style="margin: 0;">Cotações dos Fornecedores</h3>
-        <button class="erp-btn erp-btn--success" onclick="alert('Importação será implementada!')">
+        <a href="{% url 'ERP_ServicesBI:cotacao_fornecedor_importar' cotacao.pk %}" class="erp-btn erp-btn--success">
             + Importar Cotação
-        </button>
+        </a>
     </div>
     
     {% if cotacoes_fornecedor %}
@@ -112,7 +112,7 @@
         <tbody>
             {% for cot_forn in cotacoes_fornecedor %}
             <tr>
-                <td>{{ cot_forn.fornecedor.nome_fantasia }}</td>
+                <td>{{ cot_forn.fornecedor.nome_fantasia|default:cot_forn.fornecedor.nome_razao_social }}</td>
                 <td>R$ {{ cot_forn.valor_total_liquido|floatformat:2 }}</td>
                 <td>{{ cot_forn.prazo_entrega_dias }} dias</td>
                 <td>{{ cot_forn.get_status_display }}</td>
