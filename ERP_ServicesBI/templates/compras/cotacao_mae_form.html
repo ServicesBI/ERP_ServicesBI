@@ -39,6 +39,25 @@
     </div>
     {% endif %}
 
+    {% if formset.errors %}
+    <div class="erp-alert erp-alert--error erp-mb-4">
+        <strong>❌ Erros nos itens:</strong>
+        <ul style="margin-top: 8px; margin-bottom: 0; padding-left: 20px;">
+            {% for form_item in formset %}
+                {% if form_item.errors %}
+                    <li>Item {{ forloop.counter }}:
+                        <ul>
+                            {% for field, errors in form_item.errors.items %}
+                                <li><strong>{{ field }}:</strong> {{ errors|join:", " }}</li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
     <form method="post" class="erp-form">
         {% csrf_token %}
         
