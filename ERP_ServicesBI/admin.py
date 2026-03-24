@@ -1,7 +1,8 @@
+# -*- coding: utf-8 -*-
 from django.contrib import admin
 from .models import (
     Empresa, Cliente, Fornecedor, Produto, Categoria,
-    Cotacao, ItemCotacao, PedidoCompra, ItemPedidoCompra,
+    PedidoCompra, ItemPedidoCompra,
     NotaFiscalEntrada, ItemNotaFiscalEntrada,
     Orcamento, ItemOrcamento, PedidoVenda, ItemPedidoVenda,
     NotaFiscalSaida, ItemNotaFiscalSaida,
@@ -10,12 +11,7 @@ from .models import (
     ExtratoBancario, LancamentoExtrato,
     MovimentacaoEstoque, Inventario, ItemInventario,
     TransferenciaEstoque, ItemTransferencia,
-
-     # NOVOS MODELS - adicionar isso:
-    CotacaoMae,
-    CotacaoFornecedor,
-    ItemSolicitado,
-    ItemCotacaoFornecedor,
+    CotacaoMae, ItemSolicitado, CotacaoFornecedor, ItemCotacaoFornecedor,
 )
 
 
@@ -52,29 +48,15 @@ class CategoriaAdmin(admin.ModelAdmin):
 
 @admin.register(Produto)
 class ProdutoAdmin(admin.ModelAdmin):
-    list_display = ['codigo', 'descricao', 'categoria', 'preco_venda', 'estoque_atual', 'estoque_minimo', 'ativo']  # CORRIGIDO: quantidade_estoque -> estoque_atual
+    list_display = ['codigo', 'descricao', 'categoria', 'preco_venda', 'estoque_atual', 'estoque_minimo', 'ativo']
     search_fields = ['codigo', 'descricao']
     list_filter = ['ativo', 'categoria', 'unidade']
-    # CORRIGIDO: quantidade_estoque -> estoque_atual
     fields = ['codigo', 'descricao', 'categoria', 'unidade', 'preco_custo', 'preco_venda', 'estoque_atual', 'estoque_minimo', 'ativo']
 
 
 # =============================================================================
 # COMPRAS
 # =============================================================================
-
-class ItemCotacaoInline(admin.TabularInline):
-    model = ItemCotacao
-    extra = 1
-
-
-@admin.register(Cotacao)
-class CotacaoAdmin(admin.ModelAdmin):
-    list_display = ['numero', 'fornecedor', 'data_solicitacao', 'status', 'valor_total']
-    search_fields = ['numero', 'fornecedor__nome_razao_social']
-    list_filter = ['status', 'data_solicitacao']
-    inlines = [ItemCotacaoInline]
-
 
 class ItemPedidoCompraInline(admin.TabularInline):
     model = ItemPedidoCompra
@@ -241,21 +223,9 @@ class TransferenciaEstoqueAdmin(admin.ModelAdmin):
     inlines = [ItemTransferenciaInline]
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-# ============================================
-# COTAÇÃO COMPARATIVA - ADMIN
-# ============================================
+# =============================================================================
+# COTAÇÃO COMPARATIVA (NOVO - SEM COTACAO ANTIGO)
+# =============================================================================
 
 class ItemSolicitadoInline(admin.TabularInline):
     model = ItemSolicitado

@@ -10,6 +10,15 @@
             {% block header_title %}ERP - ServicesBI{% endblock %}
         </h1>
     </div>
+    <div class="erp-header__controls">
+        <!-- Botão Dark/Light Mode -->
+        <button class="erp-header__theme-btn" 
+                onclick="toggleTheme()" 
+                title="Alternar tema (dark/light)"
+                id="themeToggleBtn">
+            <span id="themeIcon">🌙</span>
+        </button>
+    </div>
     <div class="erp-header__user">
         <span class="erp-header__user-name">
             {{ request.user.first_name|default:request.user.username }}
@@ -18,3 +27,108 @@
         <a href="{% url 'ERP_ServicesBI:logout' %}" class="erp-header__logout">Sair</a>
     </div>
 </header>
+
+<style>
+/* ========================================================================
+   HEADER STYLES
+   ======================================================================== */
+
+.erp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    height: 56px;
+    background: var(--color-primary);
+    color: white;
+    box-shadow: var(--shadow-md);
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+}
+
+.erp-header__title {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.erp-header__controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.erp-header__theme-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    border-radius: var(--radius-md);
+    font-size: 18px;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    hover-color: white;
+}
+
+.erp-header__theme-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.05);
+}
+
+.erp-header__theme-btn:active {
+    transform: scale(0.95);
+}
+
+.erp-header__user {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.erp-header__user-name {
+    color: white;
+    font-weight: 500;
+}
+
+.erp-header__logout {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    transition: color var(--transition-base);
+}
+
+.erp-header__logout:hover {
+    color: white;
+}
+
+/* ========================================================================
+   RESPONSIVE
+   ======================================================================== */
+
+@media (max-width: 768px) {
+    .erp-header {
+        padding: 0 12px;
+    }
+    
+    .erp-header__title {
+        font-size: 16px;
+    }
+    
+    .erp-mobile-menu-btn {
+        display: block !important;
+    }
+    
+    .erp-header__user {
+        font-size: 12px;
+    }
+}
+</style>

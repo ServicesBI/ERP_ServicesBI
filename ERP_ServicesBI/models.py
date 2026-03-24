@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-ERP ServicesBI - Models Corrigidos
+ERP ServicesBI - Models LIMPOS (sem Cotacao antigo)
 Segurança: Thread-safe sequenciais
 Performance: Otimizado para PostgreSQL
 """
@@ -25,18 +25,10 @@ class SequencialManager:
     def proximo_numero(model, campo_prefixo='numero', prefixo='', padding=5):
         """
         Gera próximo número sequencial com lock no banco de dados
-        
-        Args:
-            model: Classe do modelo Django
-            campo_prefixo: Nome do campo que armazena o número
-            prefixo: String prefixo (ex: 'ORC-', 'PV-')
-            padding: Zeros à esquerda
         """
-        # LOCK: SELECT FOR UPDATE garante sequencial único
         ultimo = model.objects.select_for_update().order_by('-id').first()
         
         if ultimo and getattr(ultimo, campo_prefixo, None):
-            # Extrai número do último código (ex: 'ORC-00001' → 1)
             ultimo_numero = getattr(ultimo, campo_prefixo).replace(prefixo, '')
             try:
                 novo_id = int(ultimo_numero) + 1
@@ -48,7 +40,6 @@ class SequencialManager:
         return f"{prefixo}{novo_id:0{padding}d}"
 
 
-# Mixin para modelos com numeração sequencial
 class SequencialMixin(models.Model):
     """
     Mixin que garante geração thread-safe de códigos sequenciais
@@ -57,7 +48,7 @@ class SequencialMixin(models.Model):
         abstract = True
     
     def save(self, *args, **kwargs):
-        if not self.pk:  # Apenas na criação
+        if not self.pk:
             campo_numero = getattr(self, 'CAMPO_NUMERO', 'numero')
             prefixo = getattr(self, 'PREFIXO_NUMERO', '')
             padding = getattr(self, 'PADDING_NUMERO', 5)
@@ -75,7 +66,6 @@ class SequencialMixin(models.Model):
 
 # =============================================================================
 # MÓDULO: CADASTRO
-# Ordem: Cliente, Empresa, Fornecedor, Categoria, Produto
 # =============================================================================
 
 class Pessoa(models.Model):
@@ -113,11 +103,8 @@ class Pessoa(models.Model):
         return self.nome_razao_social or ""
 
 
-# 1. CLIENTE
 class Cliente(Pessoa):
-    """
-    Cadastro de clientes do sistema
-    """
+    """Cadastro de clientes do sistema"""
     nome_fantasia = models.CharField(max_length=255, blank=True, null=True)
     limite_credito = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True, blank=True)
     observacoes = models.TextField(blank=True, null=True)
@@ -128,11 +115,8 @@ class Cliente(Pessoa):
         ordering = ['nome_razao_social']
 
 
-# 2. EMPRESA
 class Empresa(models.Model):
-    """
-    Cadastro da empresa matriz/filial do sistema
-    """
+    """Cadastro da empresa matriz/filial do sistema"""
     nome_fantasia = models.CharField(max_length=100)
     razao_social = models.CharField(max_length=100)
     cnpj = models.CharField(max_length=20, unique=True)
@@ -157,11 +141,8 @@ class Empresa(models.Model):
         return self.nome_fantasia
 
 
-# 3. FORNECEDOR
 class Fornecedor(Pessoa):
-    """
-    Cadastro de fornecedores do sistema
-    """
+    """Cadastro de fornecedores do sistema"""
     nome_fantasia = models.CharField(max_length=255, blank=True, null=True)
     observacoes = models.TextField(blank=True, null=True)
     
@@ -175,11 +156,8 @@ class Fornecedor(Pessoa):
         return self.cpf_cnpj if self.tipo_pessoa == 'J' else ''
 
 
-# 4. CATEGORIA
 class Categoria(models.Model):
-    """
-    Categorias para classificação de produtos
-    """
+    """Categorias para classificação de produtos"""
     nome = models.CharField(max_length=100, unique=True)
     descricao = models.TextField(blank=True, null=True)
     ativo = models.BooleanField(default=True)
@@ -194,11 +172,8 @@ class Categoria(models.Model):
         return self.nome
 
 
-# 5. PRODUTO
 class Produto(SequencialMixin, models.Model):
-    """
-    Cadastro de produtos/serviços do sistema
-    """
+    """Cadastro de produtos/serviços do sistema"""
     UNIDADE_CHOICES = [
         ('UN', 'Unidade'),
         ('KG', 'Quilograma'),
@@ -219,7 +194,6 @@ class Produto(SequencialMixin, models.Model):
     observacoes = models.TextField(blank=True, null=True)
     ativo = models.BooleanField(default=True)
     
-    # Configuração do sequencial
     CAMPO_NUMERO = 'codigo'
     PREFIXO_NUMERO = ''
     PADDING_NUMERO = 3
@@ -236,68 +210,10 @@ class Produto(SequencialMixin, models.Model):
     def nome(self):
         return self.descricao
 
+
 # =============================================================================
-# MÓDULO: COMPRAS
+# MÓDULO: COMPRAS - SEM COTACAO ANTIGO
 # =============================================================================
-
-class Cotacao(SequencialMixin, models.Model):
-    STATUS_CHOICES = [
-        ('pendente', 'Pendente'),
-        ('respondida', 'Respondida'),
-        ('aprovada', 'Aprovada'),
-        ('convertida', 'Convertida'),
-        ('cancelada', 'Cancelada'),
-    ]
-    
-    numero = models.CharField(max_length=20, unique=True, blank=True)
-    solicitante = models.CharField(max_length=100, verbose_name='Solicitante')
-    fornecedor = models.ForeignKey(Fornecedor, on_delete=models.PROTECT, related_name='cotacoes')
-    data_solicitacao = models.DateField(auto_now_add=True)
-    data_criacao = models.DateTimeField(auto_now_add=True)
-    prazo_entrega = models.DateField()
-    observacoes = models.TextField(blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
-    valor_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    ativo = models.BooleanField(default=True)
-    criado_em = models.DateTimeField(auto_now_add=True)
-    atualizado_em = models.DateTimeField(auto_now=True)
-    
-    # Configuração do sequencial
-    CAMPO_NUMERO = 'numero'
-    PREFIXO_NUMERO = 'COT-'
-    PADDING_NUMERO = 5
-    
-    class Meta:
-        verbose_name = 'Cotação'
-        verbose_name_plural = 'Cotações'
-        ordering = ['-data_solicitacao']
-    
-    def __str__(self):
-        return f"Cotação {self.numero} - {self.fornecedor.nome_razao_social}"
-    
-    def calcular_total(self):
-        total = self.itens.aggregate(total=models.Sum('preco_total'))['total'] or 0
-        self.valor_total = total
-        self.save(update_fields=['valor_total'])
-
-
-class ItemCotacao(models.Model):
-    cotacao = models.ForeignKey(Cotacao, on_delete=models.CASCADE, related_name='itens')
-    produto = models.ForeignKey(Produto, on_delete=models.PROTECT)
-    quantidade = models.DecimalField(max_digits=10, decimal_places=2, default=1)
-    preco_unitario = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    preco_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    
-    class Meta:
-        verbose_name = 'Item da Cotação'
-        verbose_name_plural = 'Itens da Cotação'
-    
-    def save(self, *args, **kwargs):
-        self.preco_total = self.quantidade * self.preco_unitario
-        self.subtotal = self.preco_total
-        super().save(*args, **kwargs)
-
 
 class PedidoCompra(SequencialMixin, models.Model):
     STATUS_CHOICES = [
@@ -311,7 +227,6 @@ class PedidoCompra(SequencialMixin, models.Model):
     
     numero = models.CharField(max_length=20, unique=True, blank=True)
     fornecedor = models.ForeignKey(Fornecedor, on_delete=models.PROTECT, related_name='pedidos_compra')
-    cotacao_origem = models.ForeignKey(Cotacao, on_delete=models.SET_NULL, null=True, blank=True, related_name='pedido_gerado')
     data_pedido = models.DateField(auto_now_add=True)
     data_prevista_entrega = models.DateField()
     observacoes = models.TextField(blank=True)
@@ -321,7 +236,6 @@ class PedidoCompra(SequencialMixin, models.Model):
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
     
-    # Configuração do sequencial
     CAMPO_NUMERO = 'numero'
     PREFIXO_NUMERO = 'PC-'
     PADDING_NUMERO = 5
@@ -370,7 +284,6 @@ class NotaFiscalEntrada(models.Model):
     numero = models.CharField(max_length=20, blank=True)
     fornecedor = models.ForeignKey(Fornecedor, on_delete=models.PROTECT, related_name='notas_entrada')
     pedido_origem = models.ForeignKey(PedidoCompra, on_delete=models.SET_NULL, null=True, blank=True, related_name='notas_fiscais')
-    pedido = models.ForeignKey(PedidoCompra, on_delete=models.SET_NULL, null=True, blank=True, related_name='notas_fiscais_alt')
     data_entrada = models.DateField(auto_now_add=True)
     data_emissao = models.DateField()
     observacoes = models.TextField(blank=True)
@@ -406,7 +319,6 @@ class NotaFiscalEntrada(models.Model):
                 observacoes=f'Entrada via NF {self.numero_nf}',
                 usuario_id=1
             )
-            # Atualiza estoque com F() para evitar race condition
             Produto.objects.filter(pk=item.produto.pk).update(
                 estoque_atual=models.F('estoque_atual') + item.quantidade
             )
@@ -428,6 +340,7 @@ class ItemNotaFiscalEntrada(models.Model):
         self.preco_total = self.quantidade * self.preco_unitario
         self.subtotal = self.preco_total
         super().save(*args, **kwargs)
+
 
 # =============================================================================
 # MÓDULO: VENDAS
@@ -456,7 +369,6 @@ class Orcamento(SequencialMixin, models.Model):
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
     
-    # Configuração do sequencial
     CAMPO_NUMERO = 'numero'
     PREFIXO_NUMERO = 'ORC-'
     PADDING_NUMERO = 5
@@ -517,7 +429,6 @@ class PedidoVenda(SequencialMixin, models.Model):
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
     
-    # Configuração do sequencial
     CAMPO_NUMERO = 'numero'
     PREFIXO_NUMERO = 'PV-'
     PADDING_NUMERO = 5
@@ -567,7 +478,6 @@ class NotaFiscalSaida(models.Model):
     numero = models.CharField(max_length=20, blank=True)
     cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, related_name='notas_saida')
     pedido_origem = models.ForeignKey(PedidoVenda, on_delete=models.SET_NULL, null=True, blank=True, related_name='nota_fiscal')
-    pedido = models.ForeignKey(PedidoVenda, on_delete=models.SET_NULL, null=True, blank=True, related_name='nota_fiscal_alt')
     data_emissao = models.DateField(auto_now_add=True)
     data_saida = models.DateField(default=timezone.now)
     observacoes = models.TextField(blank=True)
@@ -595,7 +505,7 @@ class NotaFiscalSaida(models.Model):
         self.save(update_fields=['valor_total'])
     
     def atualizar_estoque(self):
-        """Método chamado quando NF é confirmada - CORRIGIDO"""
+        """Método chamado quando NF é confirmada"""
         MovimentacaoEstoque = apps.get_model('ERP_ServicesBI', 'MovimentacaoEstoque')
         
         for item in self.itens.select_related('produto').all():
@@ -607,13 +517,12 @@ class NotaFiscalSaida(models.Model):
                 observacoes=f'Saída via NF {self.numero_nf}',
                 usuario_id=1
             )
-            # Atualiza estoque com F() para evitar race condition
             Produto.objects.filter(pk=item.produto.pk).update(
                 estoque_atual=models.F('estoque_atual') - item.quantidade
             )
     
     def gerar_contas_receber(self):
-        """Gera conta a receber quando NF é confirmada - CORRIGIDO"""
+        """Gera conta a receber quando NF é confirmada"""
         ContaReceber = apps.get_model('ERP_ServicesBI', 'ContaReceber')
         
         ContaReceber.objects.create(
@@ -643,6 +552,7 @@ class ItemNotaFiscalSaida(models.Model):
         self.preco_total = self.quantidade * self.preco_unitario
         self.subtotal = self.preco_total
         super().save(*args, **kwargs)
+
 
 # =============================================================================
 # MÓDULO: FINANCEIRO
@@ -979,7 +889,8 @@ class MovimentoCaixa(models.Model):
     
     def __str__(self):
         return f"{self.descricao} - {self.tipo} - R$ {self.valor}"
-    
+
+
 # =============================================================================
 # MÓDULO: ESTOQUE
 # =============================================================================
@@ -1042,7 +953,6 @@ class Inventario(SequencialMixin, models.Model):
     observacoes = models.TextField(blank=True)
     usuario = models.ForeignKey(User, on_delete=models.PROTECT, related_name='inventarios')
     
-    # Configuração do sequencial
     CAMPO_NUMERO = 'numero'
     PREFIXO_NUMERO = 'INV-'
     PADDING_NUMERO = 5
@@ -1109,7 +1019,6 @@ class TransferenciaEstoque(SequencialMixin, models.Model):
     observacoes = models.TextField(blank=True)
     usuario = models.ForeignKey(User, on_delete=models.PROTECT, related_name='transferencias')
     
-    # Configuração do sequencial
     CAMPO_NUMERO = 'numero'
     PREFIXO_NUMERO = 'TRF-'
     PADDING_NUMERO = 5
@@ -1140,20 +1049,13 @@ class ItemTransferencia(models.Model):
         verbose_name_plural = 'Itens da Transferência'
 
 
-
-
-
-
-
-
-
-# ============================================
-# COTAÇÃO COMPARATIVA - NOVOS MODELS
-# ============================================
+# =============================================================================
+# MÓDULO: COTAÇÃO COMPARATIVA (NOVO - SEM COTACAO ANTIGO)
+# =============================================================================
 
 class CotacaoMae(models.Model):
     """
-    Cotação 'Mãe' - Solicitação original do setor (RH, TI, etc)
+    Cotação 'Mãe' - Solicitação original do setor
     Ex: RH pede compra de materiais de escritório
     """
     STATUS_CHOICES = [
@@ -1185,7 +1087,6 @@ class CotacaoMae(models.Model):
     )
     ativo = models.BooleanField(default=True, verbose_name='Ativo')
     
-    # Campos de controle
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -1199,7 +1100,6 @@ class CotacaoMae(models.Model):
     
     def save(self, *args, **kwargs):
         if not self.numero:
-            # Gera número automático: COT-2025-0001
             from datetime import datetime
             ano = datetime.now().year
             ultima = CotacaoMae.objects.filter(numero__startswith=f'COT-{ano}').order_by('-numero').first()
@@ -1289,7 +1189,6 @@ class CotacaoFornecedor(models.Model):
     contato_email = models.EmailField(blank=True, verbose_name='Email do Contato')
     contato_telefone = models.CharField(max_length=20, blank=True, verbose_name='Telefone')
     
-    # Dados financeiros
     valor_total_bruto = models.DecimalField(
         max_digits=15,
         decimal_places=2,
@@ -1315,7 +1214,6 @@ class CotacaoFornecedor(models.Model):
         verbose_name='Valor Total Líquido'
     )
     
-    # Condições comerciais
     condicao_pagamento = models.CharField(max_length=100, blank=True, verbose_name='Condição de Pagamento')
     prazo_entrega_dias = models.IntegerField(default=0, verbose_name='Prazo Entrega (dias)')
     disponibilidade_produtos = models.CharField(
@@ -1324,7 +1222,6 @@ class CotacaoFornecedor(models.Model):
         verbose_name='% Disponibilidade Produtos'
     )
     
-    # Arquivo importado
     arquivo_origem = models.FileField(
         upload_to='cotacoes_fornecedor/%Y/%m/',
         null=True,
@@ -1340,7 +1237,6 @@ class CotacaoFornecedor(models.Model):
     )
     observacoes = models.TextField(blank=True, verbose_name='Observações')
     
-    # Datas
     data_envio = models.DateField(null=True, blank=True, verbose_name='Data Envio')
     data_recebimento = models.DateField(null=True, blank=True, verbose_name='Data Recebimento')
     
@@ -1383,7 +1279,6 @@ class ItemCotacaoFornecedor(models.Model):
         verbose_name='Item Solicitado (vinculado)'
     )
     
-    # Dados como vieram do fornecedor
     descricao_fornecedor = models.CharField(max_length=255, verbose_name='Descrição no Arquivo')
     codigo_fornecedor = models.CharField(max_length=50, blank=True, verbose_name='Código do Fornecedor')
     quantidade = models.DecimalField(max_digits=15, decimal_places=3, verbose_name='Quantidade')
@@ -1391,12 +1286,10 @@ class ItemCotacaoFornecedor(models.Model):
     preco_unitario = models.DecimalField(max_digits=15, decimal_places=2, verbose_name='Preço Unitário')
     preco_total = models.DecimalField(max_digits=15, decimal_places=2, verbose_name='Preço Total')
     
-    # Controle
     disponivel = models.BooleanField(default=True, verbose_name='Disponível')
     prazo_entrega_item = models.IntegerField(null=True, blank=True, verbose_name='Prazo Específico (dias)')
     observacao = models.TextField(blank=True, verbose_name='Observação')
     
-    # Match automático ou manual
     match_automatico = models.BooleanField(default=False, verbose_name='Match Automático')
     match_score = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name='Score de Match')
     
@@ -1411,7 +1304,6 @@ class ItemCotacaoFornecedor(models.Model):
         return f'{self.descricao_fornecedor} - R$ {self.preco_unitario}'
     
     def save(self, *args, **kwargs):
-        # Calcula preço total automaticamente
         if self.preco_unitario and self.quantidade:
             self.preco_total = self.preco_unitario * self.quantidade
         super().save(*args, **kwargs)

@@ -34,14 +34,14 @@
             </li>
 
             <!-- 3. Compras -->
-            <li class="erp-sidebar__item {% if 'compras' in request.path %}open{% endif %}">
-                <a href="#" class="erp-sidebar__link {% if 'compras' in request.path %}active{% endif %}" onclick="toggleSubmenu(this)">
+            <li class="erp-sidebar__item {% if 'compras' in request.path or 'cotacao-mae' in request.path %}open{% endif %}">
+                <a href="#" class="erp-sidebar__link {% if 'compras' in request.path or 'cotacao-mae' in request.path %}active{% endif %}" onclick="toggleSubmenu(this)">
                     <span class="erp-sidebar__icon">🛒</span>
                     <span>Compras</span>
                     <span class="erp-sidebar__arrow">▶</span>
                 </a>
                 <ul class="erp-sidebar__submenu">
-                    <li><a href="{% url 'ERP_ServicesBI:cotacao_list' %}" class="erp-sidebar__submenu-link {% if 'compras/cotacoes' in request.path %}active{% endif %}">Cotações</a></li>
+                    <li><a href="{% url 'ERP_ServicesBI:cotacao_mae_list' %}" class="erp-sidebar__submenu-link {% if 'cotacao-mae' in request.path %}active{% endif %}">Cotações Comparativas</a></li>
                     <li><a href="{% url 'ERP_ServicesBI:pedidocompra_list' %}" class="erp-sidebar__submenu-link {% if 'compras/pedidos' in request.path %}active{% endif %}">Pedidos de Compra</a></li>
                     <li><a href="{% url 'ERP_ServicesBI:notafiscalentrada_list' %}" class="erp-sidebar__submenu-link {% if 'compras/notas-fiscais' in request.path %}active{% endif %}">Notas Fiscais de Entrada</a></li>
                     <li><a href="{% url 'ERP_ServicesBI:relatorio_compras' %}" class="erp-sidebar__submenu-link {% if 'compras/relatorios' in request.path %}active{% endif %}">📊 Relatório de Compras</a></li>
@@ -79,31 +79,40 @@
                 </ul>
             </li>
 
-            <!-- 6. Fluxo de Caixa — link direto -->
-            <li class="erp-sidebar__item">
-                <a href="{% url 'ERP_ServicesBI:fluxo_caixa' %}"
-                   class="erp-sidebar__link {% if 'fluxo-caixa' in request.path %}active{% endif %}">
+            <!-- 6. Fluxo de Caixa (com submenu de 1 item) -->
+            <li class="erp-sidebar__item {% if 'fluxo-caixa' in request.path %}open{% endif %}">
+                <a href="#" class="erp-sidebar__link {% if 'fluxo-caixa' in request.path %}active{% endif %}" onclick="toggleSubmenu(this)">
                     <span class="erp-sidebar__icon">💵</span>
                     <span>Fluxo de Caixa</span>
+                    <span class="erp-sidebar__arrow">▶</span>
                 </a>
+                <ul class="erp-sidebar__submenu">
+                    <li><a href="{% url 'ERP_ServicesBI:fluxo_caixa' %}" class="erp-sidebar__submenu-link {% if 'fluxo-caixa' in request.path %}active{% endif %}">Fluxo de Caixa</a></li>
+                </ul>
             </li>
 
-            <!-- 7. Conciliação Bancária — link direto -->
-            <li class="erp-sidebar__item">
-                <a href="{% url 'ERP_ServicesBI:conciliacao_list' %}"
-                   class="erp-sidebar__link {% if 'conciliacao' in request.path %}active{% endif %}">
+            <!-- 7. Conciliação Bancária (com submenu de 1 item) -->
+            <li class="erp-sidebar__item {% if 'conciliacao' in request.path %}open{% endif %}">
+                <a href="#" class="erp-sidebar__link {% if 'conciliacao' in request.path %}active{% endif %}" onclick="toggleSubmenu(this)">
                     <span class="erp-sidebar__icon">🏦</span>
                     <span>Conciliação Bancária</span>
+                    <span class="erp-sidebar__arrow">▶</span>
                 </a>
+                <ul class="erp-sidebar__submenu">
+                    <li><a href="{% url 'ERP_ServicesBI:conciliacao_list' %}" class="erp-sidebar__submenu-link {% if 'conciliacao' in request.path %}active{% endif %}">Conciliação Bancária</a></li>
+                </ul>
             </li>
 
-            <!-- 8. DRE Gerencial — link direto -->
-            <li class="erp-sidebar__item">
-                <a href="{% url 'ERP_ServicesBI:dre_gerencial' %}"
-                   class="erp-sidebar__link {% if 'dre' in request.path %}active{% endif %}">
+            <!-- 8. DRE Gerencial (com submenu de 1 item) -->
+            <li class="erp-sidebar__item {% if 'dre' in request.path %}open{% endif %}">
+                <a href="#" class="erp-sidebar__link {% if 'dre' in request.path %}active{% endif %}" onclick="toggleSubmenu(this)">
                     <span class="erp-sidebar__icon">📈</span>
                     <span>DRE Gerencial</span>
+                    <span class="erp-sidebar__arrow">▶</span>
                 </a>
+                <ul class="erp-sidebar__submenu">
+                    <li><a href="{% url 'ERP_ServicesBI:dre_gerencial' %}" class="erp-sidebar__submenu-link {% if 'dre' in request.path %}active{% endif %}">DRE Gerencial</a></li>
+                </ul>
             </li>
 
             <!-- 9. Estoque -->
@@ -125,3 +134,192 @@
         </ul>
     </nav>
 </aside>
+
+<style>
+/* ========================================================================
+   SIDEBAR STYLES - COM CORES DINÂMICAS
+   ======================================================================== */
+
+.erp-sidebar {
+    width: 260px;
+    height: 100vh;
+    background: var(--sidebar-bg, var(--bg-primary));
+    color: var(--sidebar-text, var(--text-primary));
+    padding: 20px 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-right: 1px solid var(--sidebar-border, var(--border-color));
+    transition: all var(--transition-base);
+    position: sticky;
+    top: 56px;
+    z-index: var(--z-fixed);
+}
+
+/* ===== BRAND ===== */
+
+.erp-sidebar__brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--sidebar-border, var(--border-light));
+}
+
+.erp-sidebar__brand-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    background: var(--color-primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 18px;
+}
+
+.erp-sidebar__brand-text {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--sidebar-text, var(--text-primary));
+}
+
+/* ===== NAV ===== */
+
+.erp-sidebar__nav {
+    padding: 0;
+}
+
+.erp-sidebar__menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.erp-sidebar__item {
+    margin: 0;
+    padding: 0;
+}
+
+.erp-sidebar__link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    color: var(--sidebar-text, var(--text-secondary));
+    text-decoration: none;
+    transition: all var(--transition-base);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    border-left: 3px solid transparent;
+}
+
+.erp-sidebar__link:hover {
+    background: var(--sidebar-hover, var(--bg-tertiary));
+    color: var(--color-primary);
+    border-left-color: var(--color-primary);
+}
+
+.erp-sidebar__link.active {
+    background: var(--sidebar-active, var(--bg-secondary));
+    color: var(--color-primary);
+    border-left-color: var(--color-primary);
+    font-weight: 600;
+}
+
+.erp-sidebar__icon {
+    width: 20px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.erp-sidebar__arrow {
+    margin-left: auto;
+    font-size: 12px;
+    transition: transform var(--transition-base);
+}
+
+.erp-sidebar__item.open .erp-sidebar__arrow {
+    transform: rotate(90deg);
+}
+
+/* ===== SUBMENU ===== */
+
+.erp-sidebar__submenu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height var(--transition-base);
+    background: var(--sidebar-submenu-bg, rgba(0, 0, 0, 0.02));
+}
+
+.erp-sidebar__item.open .erp-sidebar__submenu {
+    max-height: 500px;
+}
+
+.erp-sidebar__submenu-link {
+    display: block;
+    padding: 10px 20px 10px 52px;
+    color: var(--sidebar-text, var(--text-secondary));
+    text-decoration: none;
+    font-size: 13px;
+    transition: all var(--transition-base);
+    border-left: 3px solid transparent;
+}
+
+.erp-sidebar__submenu-link:hover {
+    background: var(--sidebar-hover, var(--bg-tertiary));
+    color: var(--color-primary);
+    border-left-color: var(--color-primary);
+}
+
+.erp-sidebar__submenu-link.active {
+    color: var(--color-primary);
+    border-left-color: var(--color-primary);
+    font-weight: 600;
+}
+
+/* ===== SCROLLBAR ===== */
+
+.erp-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.erp-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.erp-sidebar::-webkit-scrollbar-thumb {
+    background: var(--sidebar-scrollbar, var(--border-color));
+    border-radius: 3px;
+}
+
+.erp-sidebar::-webkit-scrollbar-thumb:hover {
+    background: var(--sidebar-scrollbar-hover, var(--text-secondary));
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 768px) {
+    .erp-sidebar {
+        position: fixed;
+        left: 0;
+        top: 56px;
+        bottom: 0;
+        z-index: 999;
+        transform: translateX(-100%);
+        transition: transform var(--transition-base);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .erp-sidebar.open {
+        transform: translateX(0);
+    }
+}
+</style>
