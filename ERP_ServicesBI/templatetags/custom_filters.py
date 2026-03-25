@@ -144,7 +144,7 @@ def truncate_word(value, length=10):
 def mask_phone(value):
     """
     Mascara número de telefone
-    Exemplo: 1199999999 -> (11) 99999-999
+    Exemplo: 1199999999 -> (11) 99999-9999
     """
     if not value:
         return ''
@@ -152,11 +152,32 @@ def mask_phone(value):
     value = ''.join(filter(str.isdigit, str(value)))
     
     if len(value) == 10:
-        return f'({value[:2]}) {value[2:7]}-{value[7:]}'
+        return f'({value[:2]}) {value[2:6]}-{value[6:]}'
     elif len(value) == 11:
         return f'({value[:2]}) {value[2:7]}-{value[7:]}'
     else:
         return value
+
+
+@register.filter(name='format_telefone')
+def format_telefone(value):
+    """
+    Alias para mask_phone - Formata telefone brasileiro
+    (00) 0000-0000 ou (00) 00000-0000
+    """
+    if not value:
+        return '-'
+    
+    value = ''.join(filter(str.isdigit, str(value)))
+    
+    if len(value) == 10:
+        # Telefone fixo: (00) 0000-0000
+        return f'({value[:2]}) {value[2:6]}-{value[6:]}'
+    elif len(value) == 11:
+        # Celular: (00) 00000-0000
+        return f'({value[:2]}) {value[2:7]}-{value[7:]}'
+    else:
+        return value if value else '-'
 
 
 @register.filter(name='mask_cpf')
@@ -190,6 +211,31 @@ def mask_cnpj(value):
     if len(value) == 14:
         return f'{value[:2]}.{value[2:5]}.{value[5:8]}/{value[8:12]}-{value[12:]}'
     else:
+        return value
+
+
+@register.filter(name='format_cpf_cnpj')
+def format_cpf_cnpj(value):
+    """
+    Formata CPF ou CNPJ automaticamente
+    Detecta pelo tamanho: 11 dígitos = CPF, 14 dígitos = CNPJ
+    Exemplo CPF: 12345678900 -> 123.456.789-00
+    Exemplo CNPJ: 12345678901234 -> 12.345.678/9012-34
+    """
+    if not value:
+        return '-'
+    
+    # Remove tudo que não é número
+    value = ''.join(filter(str.isdigit, str(value)))
+    
+    if len(value) == 11:
+        # CPF: 000.000.000-00
+        return f'{value[:3]}.{value[3:6]}.{value[6:9]}-{value[9:]}'
+    elif len(value) == 14:
+        # CNPJ: 00.000.000/0000-00
+        return f'{value[:2]}.{value[2:5]}.{value[5:8]}/{value[8:12]}-{value[12:]}'
+    else:
+        # Retorna como está se não for CPF nem CNPJ
         return value
 
 

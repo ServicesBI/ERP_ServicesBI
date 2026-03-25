@@ -1,88 +1,62 @@
 /**
  * ERP ServicesBI - Core JavaScript
- * Gerencia tema, sidebar e interações do sistema
+ * Funções: Sidebar, Submenus, Dark/Light Theme, Alerts
  */
 
-// ========================================================================
-// TEMA (Dark/Light Mode)
-// ========================================================================
+/* ============================================================
+   TEMA DARK / LIGHT
+   ============================================================ */
 
-/**
- * Toggle entre tema escuro e claro
- * Salva preferência no localStorage
- */
 function toggleTheme() {
-    const html = document.documentElement;
-    const currentTheme = html.getAttribute('data-theme') || 'light';
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    
-    // Atualiza atributo
-    html.setAttribute('data-theme', newTheme);
-    
-    // Salva preferência
-    localStorage.setItem('theme', newTheme);
-    
-    // Atualiza ícone do botão
-    updateThemeIcon(newTheme);
-    
-    // Log para debug
-    console.log('Tema alterado para:', newTheme);
+    var html = document.documentElement;
+    var current = html.getAttribute('data-theme');
+    var next = (current === 'dark') ? 'light' : 'dark';
+
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('erp-theme', next);
+    updateThemeIcon(next);
+
+    // Dispara evento para que gráficos possam se reinicializar
+    window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: next } }));
 }
 
-/**
- * Atualiza ícone do botão de tema
- */
 function updateThemeIcon(theme) {
-    const icon = document.getElementById('themeIcon');
+    var icon = document.getElementById('themeIcon');
     if (icon) {
-        icon.textContent = theme === 'dark' ? '☀️' : '🌙';
+        icon.textContent = (theme === 'dark') ? '☀️' : '🌙';
     }
 }
 
-/**
- * Carrega tema salvo ou usa preferência do sistema
- */
-function loadTheme() {
-    let theme = localStorage.getItem('theme');
-    
-    // Se não houver tema salvo, detecta preferência do SO
-    if (!theme) {
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        theme = prefersDark ? 'dark' : 'light';
+function initTheme() {
+    var saved = localStorage.getItem('erp-theme');
+    // Se não tiver salvo, verifica preferência do SO
+    if (!saved) {
+        saved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
-    
-    // Aplica tema
-    document.documentElement.setAttribute('data-theme', theme);
-    updateThemeIcon(theme);
+    document.documentElement.setAttribute('data-theme', saved);
+    updateThemeIcon(saved);
 }
 
-// ========================================================================
-// SIDEBAR
-// ========================================================================
+/* ============================================================
+   SIDEBAR - TOGGLE SUBMENU
+   ============================================================ */
 
-/**
- * Toggle submenu - Alterna entre aberto/fechado
- */
 function toggleSubmenu(element) {
-    event.preventDefault();
-    const item = element.parentElement;
-    
-    // Se já está aberto, fecha. Se está fechado, abre.
+    if (event) event.preventDefault();
+    var item = element.parentElement;
+
     if (item.classList.contains('open')) {
         item.classList.remove('open');
     } else {
         item.classList.add('open');
     }
-    
+
     saveSidebarState();
 }
 
-/**
- * Salvar estado dos submenus abertos
- */
 function saveSidebarState() {
-    const openMenus = [];
-    document.querySelectorAll('.erp-sidebar__item').forEach((item, index) => {
+    var openMenus = [];
+    document.querySelectorAll('.erp-sidebar__item').forEach(function(item, index) {
         if (item.classList.contains('open')) {
             openMenus.push(index);
         }
@@ -90,72 +64,57 @@ function saveSidebarState() {
     localStorage.setItem('sidebarOpenMenus', JSON.stringify(openMenus));
 }
 
-/**
- * Restaurar estado dos submenus
- */
 function restoreSidebarState() {
-    const saved = localStorage.getItem('sidebarOpenMenus');
+    var saved = localStorage.getItem('sidebarOpenMenus');
     if (saved) {
-        const openMenus = JSON.parse(saved);
-        const allItems = document.querySelectorAll('.erp-sidebar__item');
-        
-        // Limpa todos primeiro
-        allItems.forEach(item => {
-            item.classList.remove('open');
-        });
-        
-        // Abre apenas os que estavam salvos
-        openMenus.forEach(index => {
-            if (allItems[index]) {
-                allItems[index].classList.add('open');
-            }
-        });
+        try {
+            var openMenus = JSON.parse(saved);
+            var allItems = document.querySelectorAll('.erp-sidebar__item');
+
+            openMenus.forEach(function(index) {
+                if (allItems[index]) {
+                    allItems[index].classList.add('open');
+                }
+            });
+        } catch (e) {
+            // ignora erro de parse
+        }
     }
 }
 
-/**
- * Toggle sidebar mobile
- */
+/* ============================================================
+   SIDEBAR MOBILE - TOGGLE
+   ============================================================ */
+
 function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-    
-    if (sidebar) {
-        sidebar.classList.toggle('open');
-    }
-    if (overlay) {
-        overlay.classList.toggle('open');
-    }
+    var sidebar = document.getElementById('sidebar');
+    var overlay = document.getElementById('sidebarOverlay');
+    if (sidebar) sidebar.classList.toggle('open');
+    if (overlay) overlay.classList.toggle('open');
 }
 
-// ========================================================================
-// ALERTS
-// ========================================================================
+/* ============================================================
+   ALERTS - FECHAR AUTOMATICAMENTE
+   ============================================================ */
 
-/**
- * Fechar alerts automaticamente
- */
-function setupAlerts() {
-    const alerts = document.querySelectorAll('.erp-alert');
-    alerts.forEach(alert => {
-        setTimeout(() => {
+function initAlerts() {
+    var alerts = document.querySelectorAll('.erp-alert');
+    alerts.forEach(function(alert) {
+        setTimeout(function() {
             alert.style.opacity = '0';
             alert.style.transition = 'opacity 0.5s';
-            setTimeout(() => alert.remove(), 500);
+            setTimeout(function() { alert.remove(); }, 500);
         }, 5000);
     });
 }
 
-// ========================================================================
-// CONFIRMAÇÕES
-// ========================================================================
+/* ============================================================
+   CONFIRMAÇÃO DE EXCLUSÃO
+   ============================================================ */
 
-/**
- * Confirmar exclusões
- */
-function setupDeleteConfirmation() {
-    const deleteButtons = document.querySelectorAll('[data-confirm]');
-    deleteButtons.forEach(button => {
+function initDeleteConfirmations() {
+    var deleteButtons = document.querySelectorAll('[data-confirm]');
+    deleteButtons.forEach(function(button) {
         button.addEventListener('click', function(e) {
             if (!confirm(this.dataset.confirm || 'Tem certeza que deseja excluir?')) {
                 e.preventDefault();
@@ -164,55 +123,13 @@ function setupDeleteConfirmation() {
     });
 }
 
-// ========================================================================
-// INICIALIZAÇÃO
-// ========================================================================
+/* ============================================================
+   INIT - TUDO JUNTO
+   ============================================================ */
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('📦 ERP Core JS - Inicializando...');
-    
-    // Carrega tema salvo
-    loadTheme();
-    
-    // Restaura estado dos submenus
+    initTheme();
     restoreSidebarState();
-    
-    // Setup alerts
-    setupAlerts();
-    
-    // Setup delete confirmation
-    setupDeleteConfirmation();
-    
-    // Fechar sidebar ao clicar em link no mobile
-    const sidebarLinks = document.querySelectorAll('.erp-sidebar__link, .erp-sidebar__submenu-link');
-    sidebarLinks.forEach(link => {
-        link.addEventListener('click', function() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebarOverlay');
-            
-            // Se tiver classe 'href' real (não for preventDefault), fecha sidebar
-            if (this.href && !this.href.includes('#')) {
-                if (sidebar) sidebar.classList.remove('open');
-                if (overlay) overlay.classList.remove('open');
-            }
-        });
-    });
-    
-    console.log('✅ ERP Core JS - Pronto!');
+    initAlerts();
+    initDeleteConfirmations();
 });
-
-// ========================================================================
-// ESCUTA MUDANÇA DE TEMA DO SO
-// ========================================================================
-
-// Escuta mudança de preferência de cor do SO
-if (window.matchMedia) {
-    window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
-        if (!localStorage.getItem('theme')) {
-            // Se não houver preferência salva, usa a do SO
-            const theme = e.matches ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', theme);
-            updateThemeIcon(theme);
-        }
-    });
-}
