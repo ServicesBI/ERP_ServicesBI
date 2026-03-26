@@ -1,207 +1,141 @@
-<!-- templates/compras/cotacao_mae_detail.html -->
-
 {% extends 'base.html' %}
 
 {% block content %}
 <div class="erp-page-header erp-mb-6">
-    <h1 class="erp-page-title">{{ cotacao.numero }}</h1>
-    <p class="erp-page-subtitle">{{ cotacao.titulo }}</p>
+    <h1 class="erp-page-title">COMPARATIVO DE COTAÇÕES</h1>
+    <p class="erp-page-subtitle">{{ cotacao.numero }} - {{ cotacao.titulo }}</p>
 </div>
 
-<div class="erp-card erp-mb-6">
-    <!-- Cabeçalho -->
-    <div class="erp-flex erp-justify-between erp-items-center erp-mb-4" style="flex-wrap: wrap; gap: 16px;">
+<!-- CABEÇALHO COM DADOS DA COTAÇÃO -->
+<div class="erp-card erp-mb-6" style="background: #f8fafc;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
         <div>
-            <p class="erp-text-muted erp-mb-2">
-                <span style="margin-right: 16px;">
-                    <i class="fas fa-user"></i> {{ cotacao.solicitante.get_full_name }}
-                </span>
-                <span style="margin-right: 16px;">
-                    <i class="fas fa-building"></i> {{ cotacao.setor|default:"Sem setor" }}
-                </span>
-                <span>
-                    <i class="fas fa-calendar"></i> {{ cotacao.data_solicitacao|date:"d/m/Y" }}
-                </span>
-            </p>
+            <p class="erp-text-muted" style="font-size: 12px; text-transform: uppercase; margin-bottom: 4px;">Solicitante</p>
+            <p style="font-weight: 600;">{{ cotacao.solicitante.get_full_name }}</p>
         </div>
         <div>
-            <span class="erp-badge erp-badge--{% if cotacao.status == 'aprovada' %}success{% elif cotacao.status == 'rascunho' %}neutral{% else %}primary{% endif %}">
-                {{ cotacao.get_status_display }}
-            </span>
+            <p class="erp-text-muted" style="font-size: 12px; text-transform: uppercase; margin-bottom: 4px;">Setor</p>
+            <p style="font-weight: 600;">{{ cotacao.setor|default:"-" }}</p>
+        </div>
+        <div>
+            <p class="erp-text-muted" style="font-size: 12px; text-transform: uppercase; margin-bottom: 4px;">Data Solicitação</p>
+            <p style="font-weight: 600;">{{ cotacao.data_solicitacao|date:"d/m/Y" }}</p>
+        </div>
+        <div>
+            <p class="erp-text-muted" style="font-size: 12px; text-transform: uppercase; margin-bottom: 4px;">Status</p>
+            <span class="erp-badge erp-badge--primary">{{ cotacao.get_status_display }}</span>
         </div>
     </div>
-
-    <!-- Botões de Ação -->
-    <div class="erp-flex erp-gap-2 erp-mb-4" style="flex-wrap: wrap;">
-        <a href="{% url 'ERP_ServicesBI:cotacao_mae_edit' cotacao.pk %}" class="erp-btn erp-btn--secondary">
-            <i class="fas fa-edit"></i> Editar
-        </a>
-        <a href="{% url 'ERP_ServicesBI:cotacao_fornecedor_importar' cotacao.pk %}" class="erp-btn erp-btn--success">
-            <i class="fas fa-file-import"></i> Importar Cotação de Fornecedor
-        </a>
-        <a href="{% url 'ERP_ServicesBI:cotacao_mae_list' %}" class="erp-btn erp-btn--outline">
-            <i class="fas fa-arrow-left"></i> Voltar
-        </a>
-    </div>
 </div>
 
-<!-- Itens Solicitados -->
-<div class="erp-card erp-mb-6">
-    <h3 class="erp-section-title">Itens Solicitados</h3>
+<!-- FORM PARA GERAR PEDIDOS (DESABILITADO POR ENQUANTO) -->
+<form method="post" action="#" onsubmit="return false;">
+    {% csrf_token %}
     
-    <div class="erp-table-container">
-        <table class="erp-table">
+    <!-- TABELA COMPARATIVA -->
+    <div class="erp-card erp-mb-6" style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; min-width: 800px;">
             <thead>
-                <tr>
-                    <th class="erp-text-center">#</th>
-                    <th>Produto</th>
-                    <th class="erp-text-center">Quantidade</th>
-                    <th class="erp-text-center">Unidade</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in itens %}
-                <tr>
-                    <td class="erp-text-center">{{ forloop.counter }}</td>
-                    <td>{{ item.descricao_display }}</td>
-                    <td class="erp-text-center">{{ item.quantidade }}</td>
-                    <td class="erp-text-center">{{ item.unidade_medida|default:"-" }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="4" class="erp-text-center erp-text-muted">Nenhum item solicitado</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<!-- COMPARATIVO DE COTAÇÕES - O PULO DO GATO! -->
-{% if tem_comparativo %}
-<div class="erp-card erp-mb-6" style="border-left: 4px solid var(--success-600);">
-    <h3 class="erp-section-title" style="color: var(--success-700);">
-        <i class="fas fa-balance-scale"></i> Comparativo de Cotações
-    </h3>
-    
-    <div class="erp-table-container">
-        <table class="erp-table">
-            <thead>
-                <tr style="background: var(--gray-800); color: white;">
-                    <th style="min-width: 250px;">Item Solicitado</th>
-                    {% for cot in cotacoes_fornecedor %}
-                    <th class="erp-text-center" style="min-width: 180px;">
-                        {{ cot.fornecedor.nome_fantasia }}
-                        <br>
-                        <small style="font-weight: normal; opacity: 0.8;">Total: R$ {{ cot.valor_total_liquido|floatformat:2 }}</small>
+                <tr style="background: #1e3a5a; color: white;">
+                    <!-- COLUNA FIXA: ITEM -->
+                    <th style="padding: 12px; text-align: left; min-width: 250px; position: sticky; left: 0; background: #1e3a5a; z-index: 10;">
+                        Item / Fornecedor
+                    </th>
+                    
+                    <!-- COLUNAS DOS FORNECEDORES -->
+                    {% for forn in cotacoes_fornecedor %}
+                    <th style="padding: 12px; text-align: center; min-width: 180px; border-left: 1px solid rgba(255,255,255,0.2);">
+                        <div style="font-weight: 600;">{{ forn.fornecedor.nome_fantasia }}</div>
+                        <div style="font-size: 11px; font-weight: normal; opacity: 0.9; margin-top: 4px;">
+                            Total: R$ {{ forn.valor_total_liquido|floatformat:2 }}
+                        </div>
                     </th>
                     {% endfor %}
                 </tr>
             </thead>
+            
             <tbody>
                 {% for item_data in comparativo %}
-                <tr>
-                    <td>
-                        <strong>{{ item_data.item.descricao_display }}</strong>
-                        <br>
-                        <small class="erp-text-muted">Qtd: {{ item_data.item.quantidade }}</small>
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <!-- COLUNA FIXA: DESCRIÇÃO DO ITEM -->
+                    <td style="padding: 16px 12px; background: #f8fafc; position: sticky; left: 0; z-index: 5; border-right: 2px solid #e5e7eb;">
+                        <div style="font-weight: 600; color: #111827;">{{ item_data.item.descricao_display }}</div>
+                        <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">
+                            Qtd solicitada: {{ item_data.item.quantidade }} {{ item_data.item.unidade_medida }}
+                        </div>
                     </td>
                     
+                    <!-- COLUNAS DOS FORNECEDORES -->
                     {% for cot in item_data.cotacoes %}
-                    <td class="erp-text-center {% if cot.eh_melhor_preco %}erp-bg-gray-50{% endif %}" 
-                        style="{% if cot.eh_melhor_preco %}border: 2px solid var(--success-500); font-weight: 700;{% endif %}">
+                    <td style="padding: 12px; text-align: center; border-left: 1px solid #e5e7eb; vertical-align: top;">
                         {% if cot.preco %}
-                            <span style="{% if cot.eh_melhor_preco %}color: var(--success-600); font-size: 1.1em;{% endif %}">
-                                R$ {{ cot.preco|floatformat:2 }}
-                            </span>
-                            <br>
-                            <small class="erp-text-muted">Total: R$ {{ cot.total|floatformat:2 }}</small>
-                            <br>
-                            <small style="{% if cot.disponivel %}color: var(--success-600);{% else %}color: var(--danger-600);{% endif %}">
-                                <i class="fas fa-{% if cot.disponivel %}check{% else %}times{% endif %}"></i>
-                                {{ cot.prazo|default:"-" }}
-                            </small>
+                            <!-- TEM O ITEM -->
+                            <div style="{% if cot.eh_melhor_preco %}background: #dcfce7; padding: 8px; border-radius: 6px; border: 2px solid #22c55e;{% endif %}">
+                                <div style="font-weight: 700; font-size: 16px; {% if cot.eh_melhor_preco %}color: #15803d;{% else %}color: #111827;{% endif %}">
+                                    R$ {{ cot.preco|floatformat:2 }}
+                                </div>
+                                <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">
+                                    Total: R$ {{ cot.total|floatformat:2 }}
+                                </div>
+                                <div style="font-size: 11px; color: #6b7280; margin-top: 2px;">
+                                    <i class="fas fa-clock"></i> {{ cot.prazo|default:"-" }} dias
+                                </div>
+                                
+                                <!-- INPUT DE QUANTIDADE (DESABILITADO POR ENQUANTO) -->
+                                <div style="margin-top: 8px;">
+                                    <input type="number" 
+                                           name="qtd_{{ item_data.item.id }}_{{ forloop.counter0 }}" 
+                                           value="" 
+                                           min="0" 
+                                           max="{{ item_data.item.quantidade }}"
+                                           placeholder="Qtd"
+                                           disabled
+                                           style="width: 70px; padding: 6px; border: 1px solid #d1d5db; border-radius: 4px; text-align: center; font-size: 13px; background: #f3f4f6; cursor: not-allowed;">
+                                </div>
+                            </div>
                         {% else %}
-                            <span class="erp-text-muted">-</span>
+                            <!-- NÃO TEM O ITEM -->
+                            <div style="color: #9ca3af; font-size: 12px; padding: 20px 0;">
+                                <i class="fas fa-minus"></i>
+                                <div style="margin-top: 4px;">Não cotou</div>
+                            </div>
                         {% endif %}
                     </td>
                     {% endfor %}
                 </tr>
                 {% endfor %}
             </tbody>
-            <tfoot style="background: var(--warning-50); font-weight: 700;">
-                <tr>
-                    <td class="erp-text-right">TOTAL GERAL:</td>
-                    {% for total in totais_fornecedores %}
-                    <td class="erp-text-center">
-                        R$ {{ total.total|floatformat:2 }}
-                        <br>
-                        <small class="erp-text-muted">{{ total.prazo }}</small>
-                    </td>
-                    {% endfor %}
-                </tr>
-            </tfoot>
         </table>
     </div>
     
-    <div class="erp-flex erp-justify-between erp-items-center erp-mt-4" style="padding-top: 16px; border-top: 1px solid var(--gray-200); flex-wrap: wrap; gap: 12px;">
+    <!-- BOTÕES DE AÇÃO -->
+    <div class="erp-flex erp-justify-between erp-items-center" style="flex-wrap: wrap; gap: 12px;">
         <div>
-            <small class="erp-text-muted">
-                <span style="display: inline-block; width: 12px; height: 12px; background: var(--success-500); border-radius: 2px; margin-right: 6px;"></span>
-                Melhor preço por item
-            </small>
+            <a href="{% url 'ERP_ServicesBI:cotacao_mae_list' %}" class="erp-btn erp-btn--outline">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+            <a href="{% url 'ERP_ServicesBI:cotacao_fornecedor_importar' cotacao.pk %}" class="erp-btn erp-btn--success">
+                <i class="fas fa-file-import"></i> Importar Nova Cotação
+            </a>
         </div>
         <div>
-            <button class="erp-btn erp-btn--primary" disabled>
-                <i class="fas fa-magic"></i> Gerar Pedido Otimizado (Em breve)
+            <button type="button" class="erp-btn erp-btn--primary" style="font-size: 16px; padding: 12px 24px; opacity: 0.6; cursor: not-allowed;" disabled>
+                <i class="fas fa-shopping-cart"></i> Gerar Pedidos (Em breve)
             </button>
         </div>
     </div>
-</div>
+</form>
 
-<!-- Lista de Cotações de Fornecedores -->
-<div class="erp-card erp-mb-6">
-    <h3 class="erp-section-title">Cotações Recebidas</h3>
-    
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;">
-        {% for cot in cotacoes_fornecedor %}
-        <div class="erp-card {% if cot.status == 'aprovada' %}erp-border-top{% endif %}" 
-             style="{% if cot.status == 'aprovada' %}border-top: 3px solid var(--success-600);{% endif %}">
-            <h4 style="font-size: var(--text-base); margin-bottom: 8px;">{{ cot.fornecedor.nome_fantasia }}</h4>
-            <p class="erp-text-muted erp-mb-2" style="font-size: var(--text-sm);">
-                Recebido: {{ cot.data_recebimento|date:"d/m/Y"|default:"-" }}
-            </p>
-            <p class="erp-mb-2">
-                Total: <strong>R$ {{ cot.valor_total_liquido|floatformat:2 }}</strong>
-            </p>
-            <p class="erp-mb-3">
-                <span class="erp-badge erp-badge--{% if cot.status == 'aprovada' %}success{% elif cot.status == 'processada' %}info{% else %}neutral{% endif %}">
-                    {{ cot.get_status_display }}
-                </span>
-            </p>
-            <div class="erp-flex erp-gap-2">
-                {% if cot.status != 'aprovada' %}
-                <button class="erp-btn erp-btn--success erp-btn--sm" disabled>
-                    <i class="fas fa-check"></i> Aprovar (Em breve)
-                </button>
-                {% endif %}
-                {% if cot.arquivo_origem %}
-                <a href="{{ cot.arquivo_origem.url }}" target="_blank" class="erp-btn erp-btn--outline erp-btn--sm">
-                    <i class="fas fa-file"></i> Ver Arquivo
-                </a>
-                {% endif %}
-            </div>
+<!-- LEGENDA -->
+<div class="erp-card erp-mt-4" style="background: #f0fdf4; border-left: 4px solid #22c55e;">
+    <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 20px; height: 20px; background: #dcfce7; border: 2px solid #22c55e; border-radius: 4px;"></div>
+            <span style="font-size: 13px; color: #166534;">Melhor preço por item</span>
         </div>
-        {% endfor %}
+        <div style="font-size: 13px; color: #6b7280;">
+            <i class="fas fa-info-circle"></i> Preencha a quantidade na coluna do fornecedor escolhido. Deixe em branco para não comprar.
+        </div>
     </div>
 </div>
-{% else %}
-<div class="erp-alert erp-alert--info">
-    <i class="fas fa-info-circle"></i> 
-    Nenhuma cotação de fornecedor importada ainda. 
-    <a href="{% url 'ERP_ServicesBI:cotacao_fornecedor_importar' cotacao.pk %}" style="color: var(--primary-600); text-decoration: underline;">
-        Clique aqui para importar
-    </a>.
-</div>
-{% endif %}
 {% endblock %}

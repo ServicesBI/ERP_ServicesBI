@@ -34,14 +34,14 @@
             </li>
 
             <!-- 3. Compras -->
-            <li class="erp-sidebar__item {% if 'compras' in request.path or 'cotacao-mae' in request.path %}open{% endif %}">
-                <a href="#" class="erp-sidebar__link {% if 'compras' in request.path or 'cotacao-mae' in request.path %}active{% endif %}" onclick="toggleSubmenu(this)">
+            <li class="erp-sidebar__item {% if 'compras' in request.path or 'compras/cotacoes' in request.path %}open{% endif %}">
+                <a href="#" class="erp-sidebar__link {% if 'compras' in request.path or 'compras/cotacoes' in request.path %}active{% endif %}" onclick="toggleSubmenu(this)">
                     <span class="erp-sidebar__icon">🛒</span>
                     <span>Compras</span>
                     <span class="erp-sidebar__arrow">▶</span>
                 </a>
                 <ul class="erp-sidebar__submenu">
-                    <li><a href="{% url 'ERP_ServicesBI:cotacao_mae_list' %}" class="erp-sidebar__submenu-link {% if 'cotacao-mae' in request.path %}active{% endif %}">Cotações Comparativas</a></li>
+                    <li><a href="{% url 'ERP_ServicesBI:cotacao_lista' %}" class="erp-sidebar__submenu-link {% if 'compras/cotacoes' in request.path %}active{% endif %}">Cotações Comparativas</a></li>
                     <li><a href="{% url 'ERP_ServicesBI:pedidocompra_list' %}" class="erp-sidebar__submenu-link {% if 'compras/pedidos' in request.path %}active{% endif %}">Pedidos de Compra</a></li>
                     <li><a href="{% url 'ERP_ServicesBI:notafiscalentrada_list' %}" class="erp-sidebar__submenu-link {% if 'compras/notas-fiscais' in request.path %}active{% endif %}">Notas Fiscais de Entrada</a></li>
                     <li><a href="{% url 'ERP_ServicesBI:relatorio_compras' %}" class="erp-sidebar__submenu-link {% if 'compras/relatorios' in request.path %}active{% endif %}">📊 Relatório de Compras</a></li>

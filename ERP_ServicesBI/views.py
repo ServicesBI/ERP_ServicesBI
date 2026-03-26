@@ -1,17 +1,20 @@
 # -*- coding: utf-8 -*-
 """
-ERP SERVICES BI - VIEWS LIMPAS (sem Cotacao antigo)
+ERP SERVICES BI - VIEWS COMPLETAS (COM WIZARD DE COTAÇÃO)
 """
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
-from django.db.models import Sum, Q, F
+from django.db.models import Sum, Q, F, Min
+from django.db import transaction
 from django.utils import timezone
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 from datetime import timedelta
+from decimal import Decimal
 import csv
 import io
+import json
 
 from .models import (
     Cliente, Empresa, Fornecedor, Produto, Categoria,
@@ -63,15 +66,12 @@ def dashboard(request):
 
 @login_required
 def cliente_list(request):
-    """Lista de clientes"""
-    clientes = Cliente.objects.all().order_by('nome_razao_social')
+    clientes = Cliente.objects.all().order_by('-id')
     context = {'clientes': clientes}
     return render(request, 'cadastro/cliente_list.html', context)
 
-
 @login_required
 def cliente_add(request):
-    """Adicionar cliente"""
     if request.method == 'POST':
         form = ClienteForm(request.POST)
         if form.is_valid():
@@ -83,10 +83,8 @@ def cliente_add(request):
     context = {'form': form, 'titulo': 'Novo Cliente'}
     return render(request, 'cadastro/cliente_form.html', context)
 
-
 @login_required
 def cliente_edit(request, pk):
-    """Editar cliente"""
     cliente = get_object_or_404(Cliente, pk=pk)
     if request.method == 'POST':
         form = ClienteForm(request.POST, instance=cliente)
@@ -99,17 +97,15 @@ def cliente_edit(request, pk):
     context = {'form': form, 'titulo': 'Editar Cliente', 'cliente': cliente}
     return render(request, 'cadastro/cliente_form.html', context)
 
-
 @login_required
 def cliente_delete(request, pk):
-    """Excluir cliente"""
     cliente = get_object_or_404(Cliente, pk=pk)
     if request.method == 'POST':
         cliente.delete()
         messages.success(request, 'Cliente excluído com sucesso!')
         return redirect('ERP_ServicesBI:cliente_list')
-    context = {'objeto': cliente, 'titulo': 'Excluir Cliente'}
-    return render(request, 'cadastro/confirm_delete.html', context)
+    context = {'cliente': cliente, 'titulo': 'Excluir Cliente'}
+    return render(request, 'cadastro/cliente_confirm_delete.html', context)
 
 
 # =============================================================================
@@ -118,15 +114,12 @@ def cliente_delete(request, pk):
 
 @login_required
 def empresa_list(request):
-    """Lista de empresas"""
-    empresas = Empresa.objects.all().order_by('nome_fantasia')
+    empresas = Empresa.objects.all().order_by('-id')
     context = {'empresas': empresas}
     return render(request, 'cadastro/empresa_list.html', context)
 
-
 @login_required
 def empresa_add(request):
-    """Adicionar empresa"""
     if request.method == 'POST':
         form = EmpresaForm(request.POST)
         if form.is_valid():
@@ -138,10 +131,8 @@ def empresa_add(request):
     context = {'form': form, 'titulo': 'Nova Empresa'}
     return render(request, 'cadastro/empresa_form.html', context)
 
-
 @login_required
 def empresa_edit(request, pk):
-    """Editar empresa"""
     empresa = get_object_or_404(Empresa, pk=pk)
     if request.method == 'POST':
         form = EmpresaForm(request.POST, instance=empresa)
@@ -154,17 +145,15 @@ def empresa_edit(request, pk):
     context = {'form': form, 'titulo': 'Editar Empresa', 'empresa': empresa}
     return render(request, 'cadastro/empresa_form.html', context)
 
-
 @login_required
 def empresa_delete(request, pk):
-    """Excluir empresa"""
     empresa = get_object_or_404(Empresa, pk=pk)
     if request.method == 'POST':
         empresa.delete()
         messages.success(request, 'Empresa excluída com sucesso!')
         return redirect('ERP_ServicesBI:empresa_list')
-    context = {'objeto': empresa, 'titulo': 'Excluir Empresa'}
-    return render(request, 'cadastro/confirm_delete.html', context)
+    context = {'empresa': empresa, 'titulo': 'Excluir Empresa'}
+    return render(request, 'cadastro/empresa_confirm_delete.html', context)
 
 
 # =============================================================================
@@ -173,15 +162,12 @@ def empresa_delete(request, pk):
 
 @login_required
 def fornecedor_list(request):
-    """Lista de fornecedores"""
-    fornecedores = Fornecedor.objects.all().order_by('nome_razao_social')
+    fornecedores = Fornecedor.objects.all().order_by('-id')
     context = {'fornecedores': fornecedores}
     return render(request, 'cadastro/fornecedor_list.html', context)
 
-
 @login_required
 def fornecedor_add(request):
-    """Adicionar fornecedor"""
     if request.method == 'POST':
         form = FornecedorForm(request.POST)
         if form.is_valid():
@@ -193,10 +179,8 @@ def fornecedor_add(request):
     context = {'form': form, 'titulo': 'Novo Fornecedor'}
     return render(request, 'cadastro/fornecedor_form.html', context)
 
-
 @login_required
 def fornecedor_edit(request, pk):
-    """Editar fornecedor"""
     fornecedor = get_object_or_404(Fornecedor, pk=pk)
     if request.method == 'POST':
         form = FornecedorForm(request.POST, instance=fornecedor)
@@ -209,17 +193,15 @@ def fornecedor_edit(request, pk):
     context = {'form': form, 'titulo': 'Editar Fornecedor', 'fornecedor': fornecedor}
     return render(request, 'cadastro/fornecedor_form.html', context)
 
-
 @login_required
 def fornecedor_delete(request, pk):
-    """Excluir fornecedor"""
     fornecedor = get_object_or_404(Fornecedor, pk=pk)
     if request.method == 'POST':
         fornecedor.delete()
         messages.success(request, 'Fornecedor excluído com sucesso!')
         return redirect('ERP_ServicesBI:fornecedor_list')
-    context = {'objeto': fornecedor, 'titulo': 'Excluir Fornecedor'}
-    return render(request, 'cadastro/confirm_delete.html', context)
+    context = {'fornecedor': fornecedor, 'titulo': 'Excluir Fornecedor'}
+    return render(request, 'cadastro/fornecedor_confirm_delete.html', context)
 
 
 # =============================================================================
@@ -228,15 +210,12 @@ def fornecedor_delete(request, pk):
 
 @login_required
 def categoria_list(request):
-    """Lista de categorias"""
-    categorias = Categoria.objects.all().order_by('nome')
+    categorias = Categoria.objects.all().order_by('-id')
     context = {'categorias': categorias}
     return render(request, 'cadastro/categoria_list.html', context)
 
-
 @login_required
 def categoria_add(request):
-    """Adicionar categoria"""
     if request.method == 'POST':
         form = CategoriaForm(request.POST)
         if form.is_valid():
@@ -248,10 +227,8 @@ def categoria_add(request):
     context = {'form': form, 'titulo': 'Nova Categoria'}
     return render(request, 'cadastro/categoria_form.html', context)
 
-
 @login_required
 def categoria_edit(request, pk):
-    """Editar categoria"""
     categoria = get_object_or_404(Categoria, pk=pk)
     if request.method == 'POST':
         form = CategoriaForm(request.POST, instance=categoria)
@@ -264,37 +241,27 @@ def categoria_edit(request, pk):
     context = {'form': form, 'titulo': 'Editar Categoria', 'categoria': categoria}
     return render(request, 'cadastro/categoria_form.html', context)
 
-
 @login_required
 def categoria_delete(request, pk):
-    """Excluir categoria"""
     categoria = get_object_or_404(Categoria, pk=pk)
     if request.method == 'POST':
         categoria.delete()
         messages.success(request, 'Categoria excluída com sucesso!')
         return redirect('ERP_ServicesBI:categoria_list')
-    context = {'objeto': categoria, 'titulo': 'Excluir Categoria'}
-    return render(request, 'cadastro/confirm_delete.html', context)
-
+    context = {'categoria': categoria, 'titulo': 'Excluir Categoria'}
+    return render(request, 'cadastro/categoria_confirm_delete.html', context)
 
 @login_required
 def categoria_create_ajax(request):
-    """Criar categoria via AJAX"""
     if request.method == 'POST':
         nome = request.POST.get('nome', '').strip()
         if nome:
             categoria, created = Categoria.objects.get_or_create(nome=nome)
-            return JsonResponse({
-                'success': True,
-                'id': categoria.id,
-                'nome': categoria.nome
-            })
+            return JsonResponse({'success': True, 'id': categoria.id, 'nome': categoria.nome})
     return JsonResponse({'success': False})
-
 
 @login_required
 def categoria_delete_ajax(request, pk):
-    """Deletar categoria via AJAX"""
     if request.method == 'POST':
         try:
             categoria = Categoria.objects.get(pk=pk)
@@ -311,30 +278,37 @@ def categoria_delete_ajax(request, pk):
 
 @login_required
 def produto_list(request):
-    """Lista de produtos"""
-    produtos = Produto.objects.select_related('categoria', 'fornecedor').all().order_by('descricao')
+    produtos = Produto.objects.select_related('categoria', 'fornecedor').all().order_by('-id')
     context = {'produtos': produtos}
     return render(request, 'cadastro/produto_list.html', context)
 
-
 @login_required
 def produto_add(request):
-    """Adicionar produto"""
     if request.method == 'POST':
-        form = ProdutoForm(request.POST)
+        form = ProdutoForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
+            produto = form.save(commit=False)
+            if not produto.codigo:
+                ultimo = Produto.objects.order_by('-id').first()
+                if ultimo and ultimo.codigo:
+                    try:
+                        num = int(''.join(filter(str.isdigit, ultimo.codigo))) + 1
+                    except ValueError:
+                        num = Produto.objects.count() + 1
+                else:
+                    num = 1
+                produto.codigo = f"PROD-{num:03d}"
+            produto.save()
             messages.success(request, 'Produto adicionado com sucesso!')
             return redirect('ERP_ServicesBI:produto_list')
     else:
         form = ProdutoForm()
-    context = {'form': form, 'titulo': 'Novo Produto'}
+    categorias = Categoria.objects.all().order_by('nome')
+    context = {'form': form, 'titulo': 'Novo Produto', 'categorias': categorias}
     return render(request, 'cadastro/produto_form.html', context)
-
 
 @login_required
 def produto_edit(request, pk):
-    """Editar produto"""
     produto = get_object_or_404(Produto, pk=pk)
     if request.method == 'POST':
         form = ProdutoForm(request.POST, instance=produto)
@@ -344,25 +318,22 @@ def produto_edit(request, pk):
             return redirect('ERP_ServicesBI:produto_list')
     else:
         form = ProdutoForm(instance=produto)
-    context = {'form': form, 'titulo': 'Editar Produto', 'produto': produto}
+    categorias = Categoria.objects.all().order_by('nome')
+    context = {'form': form, 'titulo': 'Editar Produto', 'produto': produto, 'categorias': categorias}
     return render(request, 'cadastro/produto_form.html', context)
-
 
 @login_required
 def produto_delete(request, pk):
-    """Excluir produto"""
     produto = get_object_or_404(Produto, pk=pk)
     if request.method == 'POST':
         produto.delete()
         messages.success(request, 'Produto excluído com sucesso!')
         return redirect('ERP_ServicesBI:produto_list')
-    context = {'objeto': produto, 'titulo': 'Excluir Produto'}
-    return render(request, 'cadastro/confirm_delete.html', context)
-
+    context = {'produto': produto, 'titulo': 'Excluir Produto'}
+    return render(request, 'cadastro/produto_confirm_delete.html', context)
 
 @login_required
 def produto_json(request, pk):
-    """Retorna dados do produto em JSON"""
     produto = get_object_or_404(Produto, pk=pk)
     return JsonResponse({
         'id': produto.id,
@@ -379,59 +350,54 @@ def produto_json(request, pk):
 
 @login_required
 def pedidocompra_list(request):
-    """Lista de pedidos de compra"""
     pedidos = PedidoCompra.objects.select_related('fornecedor').all().order_by('-data_pedido')
     context = {'pedidos': pedidos}
-    return render(request, 'compras/pedidocompra_list.html', context)
+    return render(request, 'compras/pedido_compra_list.html', context)
 
 
 @login_required
 def pedidocompra_add(request):
-    """Adicionar pedido de compra"""
     if request.method == 'POST':
         form = PedidoCompraForm(request.POST)
         if form.is_valid():
             pedido = form.save()
             messages.success(request, f'Pedido {pedido.numero} criado com sucesso!')
-            return redirect('ERP_ServicesBI:pedidocompra_list')
+            return redirect('ERP_ServicesBI:pedido_compra_list')
     else:
         form = PedidoCompraForm()
     context = {'form': form, 'titulo': 'Novo Pedido de Compra'}
-    return render(request, 'compras/pedidocompra_form.html', context)
+    return render(request, 'compras/pedido_compra_form.html', context)
 
 
 @login_required
 def pedidocompra_edit(request, pk):
-    """Editar pedido de compra"""
     pedido = get_object_or_404(PedidoCompra, pk=pk)
     if request.method == 'POST':
         form = PedidoCompraForm(request.POST, instance=pedido)
         if form.is_valid():
             form.save()
             messages.success(request, 'Pedido atualizado com sucesso!')
-            return redirect('ERP_ServicesBI:pedidocompra_list')
+            return redirect('ERP_ServicesBI:pedido_compra_list')
     else:
         form = PedidoCompraForm(instance=pedido)
     context = {'form': form, 'titulo': 'Editar Pedido de Compra', 'pedido': pedido}
-    return render(request, 'compras/pedidocompra_form.html', context)
+    return render(request, 'compras/pedido_compra_form.html', context)
 
 
 @login_required
 def pedidocompra_delete(request, pk):
-    """Excluir pedido de compra"""
     pedido = get_object_or_404(PedidoCompra, pk=pk)
     if request.method == 'POST':
         numero = pedido.numero
         pedido.delete()
         messages.success(request, f'Pedido {numero} excluído com sucesso!')
-        return redirect('ERP_ServicesBI:pedidocompra_list')
+        return redirect('ERP_ServicesBI:pedido_compra_list')
     context = {'objeto': pedido, 'titulo': 'Excluir Pedido de Compra'}
-    return render(request, 'compras/confirm_delete.html', context)
+    return render(request, 'compras/pedido_compra_confirm_delete.html', context)
 
 
 @login_required
 def pedidocompra_item_add(request, pedido_pk):
-    """Adicionar item ao pedido"""
     pedido = get_object_or_404(PedidoCompra, pk=pedido_pk)
     if request.method == 'POST':
         form = ItemPedidoCompraForm(request.POST)
@@ -441,16 +407,15 @@ def pedidocompra_item_add(request, pedido_pk):
             item.save()
             pedido.calcular_total()
             messages.success(request, 'Item adicionado com sucesso!')
-            return redirect('ERP_ServicesBI:pedidocompra_edit', pk=pedido.pk)
+            return redirect('ERP_ServicesBI:pedido_compra_edit', pk=pedido.pk)
     else:
         form = ItemPedidoCompraForm()
     context = {'form': form, 'pedido': pedido, 'titulo': 'Novo Item'}
-    return render(request, 'compras/item_form.html', context)
+    return render(request, 'compras/pedido_compra_item_form.html', context)
 
 
 @login_required
 def pedidocompra_item_edit(request, pedido_pk, item_pk):
-    """Editar item do pedido"""
     pedido = get_object_or_404(PedidoCompra, pk=pedido_pk)
     item = get_object_or_404(ItemPedidoCompra, pk=item_pk, pedido=pedido)
     if request.method == 'POST':
@@ -459,28 +424,26 @@ def pedidocompra_item_edit(request, pedido_pk, item_pk):
             form.save()
             pedido.calcular_total()
             messages.success(request, 'Item atualizado com sucesso!')
-            return redirect('ERP_ServicesBI:pedidocompra_edit', pk=pedido.pk)
+            return redirect('ERP_ServicesBI:pedido_compra_edit', pk=pedido.pk)
     else:
         form = ItemPedidoCompraForm(instance=item)
     context = {'form': form, 'pedido': pedido, 'titulo': 'Editar Item'}
-    return render(request, 'compras/item_form.html', context)
+    return render(request, 'compras/pedido_compra_item_form.html', context)
 
 
 @login_required
 @require_POST
 def pedidocompra_item_delete(request, pk):
-    """Excluir item do pedido"""
     item = get_object_or_404(ItemPedidoCompra, pk=pk)
     pedido = item.pedido
     item.delete()
     pedido.calcular_total()
     messages.success(request, 'Item removido com sucesso!')
-    return redirect('ERP_ServicesBI:pedidocompra_edit', pk=pedido.pk)
+    return redirect('ERP_ServicesBI:pedido_compra_edit', pk=pedido.pk)
 
 
 @login_required
 def pedidocompra_gerar_nfe(request, pk):
-    """Gerar NF de entrada do pedido"""
     pedido = get_object_or_404(PedidoCompra, pk=pk)
     context = {'pedido': pedido}
     return render(request, 'compras/gerar_nfe.html', context)
@@ -492,59 +455,54 @@ def pedidocompra_gerar_nfe(request, pk):
 
 @login_required
 def notafiscalentrada_list(request):
-    """Lista de notas fiscais de entrada"""
     notas = NotaFiscalEntrada.objects.select_related('fornecedor').all().order_by('-data_entrada')
     context = {'notas': notas}
-    return render(request, 'compras/notafiscal_list.html', context)
+    return render(request, 'compras/nota_fiscal_entrada_list.html', context)
 
 
 @login_required
 def notafiscalentrada_add(request):
-    """Adicionar nota fiscal de entrada"""
     if request.method == 'POST':
         form = NotaFiscalEntradaForm(request.POST)
         if form.is_valid():
             nota = form.save()
             messages.success(request, f'NF {nota.numero_nf} criada com sucesso!')
-            return redirect('ERP_ServicesBI:notafiscalentrada_list')
+            return redirect('ERP_ServicesBI:nota_fiscal_entrada_list')
     else:
         form = NotaFiscalEntradaForm()
     context = {'form': form, 'titulo': 'Nova Nota Fiscal de Entrada'}
-    return render(request, 'compras/notafiscal_form.html', context)
+    return render(request, 'compras/nota_fiscal_entrada_form.html', context)
 
 
 @login_required
 def notafiscalentrada_edit(request, pk):
-    """Editar nota fiscal de entrada"""
     nota = get_object_or_404(NotaFiscalEntrada, pk=pk)
     if request.method == 'POST':
         form = NotaFiscalEntradaForm(request.POST, instance=nota)
         if form.is_valid():
             form.save()
             messages.success(request, 'Nota fiscal atualizada com sucesso!')
-            return redirect('ERP_ServicesBI:notafiscalentrada_list')
+            return redirect('ERP_ServicesBI:nota_fiscal_entrada_list')
     else:
         form = NotaFiscalEntradaForm(instance=nota)
     context = {'form': form, 'titulo': 'Editar Nota Fiscal de Entrada', 'nota': nota}
-    return render(request, 'compras/notafiscal_form.html', context)
+    return render(request, 'compras/nota_fiscal_entrada_form.html', context)
 
 
 @login_required
 def notafiscalentrada_delete(request, pk):
-    """Excluir nota fiscal de entrada"""
     nota = get_object_or_404(NotaFiscalEntrada, pk=pk)
     if request.method == 'POST':
         numero = nota.numero_nf
         nota.delete()
         messages.success(request, f'NF {numero} excluída com sucesso!')
-        return redirect('ERP_ServicesBI:notafiscalentrada_list')
+        return redirect('ERP_ServicesBI:nota_fiscal_entrada_list')
     context = {'objeto': nota, 'titulo': 'Excluir Nota Fiscal de Entrada'}
-    return render(request, 'compras/confirm_delete.html', context)
+    return render(request, 'compras/nota_fiscal_entrada_confirm_delete.html', context)
 
 
 @login_required
 def notafiscalentrada_item_add(request, nota_pk):
-    """Adicionar item à nota fiscal"""
     nota = get_object_or_404(NotaFiscalEntrada, pk=nota_pk)
     if request.method == 'POST':
         form = ItemNotaFiscalEntradaForm(request.POST)
@@ -554,30 +512,679 @@ def notafiscalentrada_item_add(request, nota_pk):
             item.save()
             nota.calcular_total()
             messages.success(request, 'Item adicionado com sucesso!')
-            return redirect('ERP_ServicesBI:notafiscalentrada_edit', pk=nota.pk)
+            return redirect('ERP_ServicesBI:nota_fiscal_entrada_edit', pk=nota.pk)
     else:
         form = ItemNotaFiscalEntradaForm()
     context = {'form': form, 'nota': nota, 'titulo': 'Novo Item'}
-    return render(request, 'compras/item_form.html', context)
+    return render(request, 'compras/nota_fiscal_entrada_item_form.html', context)
 
 
 @login_required
 @require_POST
 def notafiscalentrada_item_delete(request, pk):
-    """Excluir item da nota fiscal"""
     item = get_object_or_404(ItemNotaFiscalEntrada, pk=pk)
     nota = item.nota_fiscal
     item.delete()
     nota.calcular_total()
     messages.success(request, 'Item removido com sucesso!')
-    return redirect('ERP_ServicesBI:notafiscalentrada_edit', pk=nota.pk)
+    return redirect('ERP_ServicesBI:nota_fiscal_entrada_edit', pk=nota.pk)
 
 
 @login_required
 def relatorio_compras(request):
-    """Relatório de compras"""
     context = {}
-    return render(request, 'compras/relatorio.html', context)
+    return render(request, 'compras/relatorio_compras.html', context)
+
+
+# =============================================================================
+# COTAÇÃO COMPARATIVA - WIZARD (NOVO)
+# =============================================================================
+
+@login_required
+def cotacao_lista(request):
+    """Lista todas as cotações"""
+    cotacoes = CotacaoMae.objects.select_related('solicitante').prefetch_related(
+        'itens_solicitados', 'cotacoes_fornecedor'
+    ).order_by('-data_solicitacao')
+    
+    context = {
+        'cotacoes': cotacoes,
+        'titulo': 'Cotações Comparativas'
+    }
+    return render(request, 'compras/cotacao_lista.html', context)
+
+
+@login_required
+def cotacao_wizard(request, pk=None):
+    """Wizard de cotação - tela única com 5 etapas"""
+    if pk:
+        cotacao = get_object_or_404(CotacaoMae, pk=pk)
+        itens = cotacao.itens_solicitados.select_related('produto').all()
+        cotacoes_fornecedor = cotacao.cotacoes_fornecedor.select_related('fornecedor').prefetch_related('itens').all()
+    else:
+        cotacao = None
+        itens = []
+        cotacoes_fornecedor = []
+    
+    produtos = Produto.objects.filter(ativo=True).order_by('descricao')
+    fornecedores = Fornecedor.objects.filter(ativo=True).order_by('nome_fantasia', 'nome_razao_social')
+    
+    comparativo = []
+    if cotacao and cotacoes_fornecedor.exists():
+        comparativo = montar_comparativo(cotacao)
+    
+    context = {
+        'cotacao': cotacao,
+        'itens': itens,
+        'cotacoes_fornecedor': cotacoes_fornecedor,
+        'comparativo': comparativo,
+        'produtos': produtos,
+        'fornecedores': fornecedores,
+        'titulo': f'Cotação {cotacao.numero}' if cotacao else 'Nova Cotação'
+    }
+    return render(request, 'compras/cotacao_wizard.html', context)
+
+
+def montar_comparativo(cotacao):
+    """Monta estrutura de dados para o quadro comparativo"""
+    itens_solicitados = cotacao.itens_solicitados.select_related('produto').all()
+    cotacoes_fornecedor = cotacao.cotacoes_fornecedor.select_related('fornecedor').prefetch_related('itens').all()
+    
+    comparativo = []
+    
+    for item in itens_solicitados:
+        linha = {'item': item, 'fornecedores': [], 'menor_preco': None, 'menor_prazo': None}
+        precos = []
+        prazos = []
+        
+        for cot_forn in cotacoes_fornecedor:
+            item_cot = cot_forn.itens.filter(item_solicitado=item).first()
+            
+            dados_fornecedor = {
+                'cotacao_fornecedor': cot_forn,
+                'item_cotacao': item_cot,
+                'preco_unitario': item_cot.preco_unitario if item_cot else None,
+                'preco_total': item_cot.preco_total if item_cot else None,
+                'disponivel': item_cot.disponivel if item_cot else False,
+                'prazo': item_cot.prazo_entrega_item or cot_forn.prazo_entrega_dias if item_cot else None,
+                'selecionado': item_cot.selecionado if item_cot else False,
+                'sugerido': item_cot.sugerido if item_cot else False,
+                'melhor_preco': False,
+                'melhor_prazo': False
+            }
+            
+            if item_cot and item_cot.disponivel and item_cot.preco_unitario:
+                precos.append((cot_forn.id, float(item_cot.preco_unitario)))
+                prazo = item_cot.prazo_entrega_item or cot_forn.prazo_entrega_dias
+                if prazo:
+                    prazos.append((cot_forn.id, prazo))
+            
+            linha['fornecedores'].append(dados_fornecedor)
+        
+        if precos:
+            menor_preco_id = min(precos, key=lambda x: x[1])[0]
+            linha['menor_preco'] = menor_preco_id
+            for f in linha['fornecedores']:
+                if f['cotacao_fornecedor'].id == menor_preco_id:
+                    f['melhor_preco'] = True
+        
+        if prazos:
+            menor_prazo_id = min(prazos, key=lambda x: x[1])[0]
+            linha['menor_prazo'] = menor_prazo_id
+            for f in linha['fornecedores']:
+                if f['cotacao_fornecedor'].id == menor_prazo_id:
+                    f['melhor_prazo'] = True
+        
+        comparativo.append(linha)
+    
+    return comparativo
+
+
+@login_required
+@require_POST
+def cotacao_salvar_dados(request, pk=None):
+    """Salva dados básicos da cotação (título, setor, etc)"""
+    try:
+        data = json.loads(request.body)
+        
+        if pk and pk != 0:
+            cotacao = get_object_or_404(CotacaoMae, pk=pk)
+        else:
+            cotacao = CotacaoMae(solicitante=request.user)
+        
+        cotacao.titulo = data.get('titulo', '')
+        cotacao.setor = data.get('setor', '')
+        cotacao.observacoes = data.get('observacoes', '')
+        
+        if data.get('data_limite_resposta'):
+            cotacao.data_limite_resposta = data['data_limite_resposta']
+        
+        cotacao.save()
+        
+        return JsonResponse({
+            'success': True,
+            'cotacao_id': cotacao.pk,
+            'numero': cotacao.numero,
+            'message': 'Dados salvos com sucesso!'
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+@login_required
+@require_POST
+def cotacao_salvar_itens(request, pk):
+    """Salva itens solicitados da cotação"""
+    try:
+        cotacao = get_object_or_404(CotacaoMae, pk=pk)
+        data = json.loads(request.body)
+        itens = data.get('itens', [])
+        
+        with transaction.atomic():
+            ids_recebidos = [item.get('id') for item in itens if item.get('id')]
+            cotacao.itens_solicitados.exclude(id__in=ids_recebidos).delete()
+            
+            for item_data in itens:
+                item_id = item_data.get('id')
+                
+                if item_id:
+                    item = ItemSolicitado.objects.get(pk=item_id, cotacao_mae=cotacao)
+                else:
+                    item = ItemSolicitado(cotacao_mae=cotacao)
+                
+                produto_id = item_data.get('produto_id')
+                if produto_id:
+                    item.produto_id = produto_id
+                    item.descricao_manual = ''
+                else:
+                    item.produto = None
+                    item.descricao_manual = item_data.get('descricao_manual', '')
+                
+                item.quantidade = Decimal(str(item_data.get('quantidade', 1)))
+                item.unidade_medida = item_data.get('unidade_medida', 'UN')
+                item.observacao = item_data.get('observacao', '')
+                item.save()
+        
+        itens_atualizados = []
+        for item in cotacao.itens_solicitados.select_related('produto').all():
+            itens_atualizados.append({
+                'id': item.id,
+                'produto_id': item.produto_id,
+                'descricao': item.descricao_display,
+                'quantidade': float(item.quantidade),
+                'unidade_medida': item.unidade_medida
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'itens': itens_atualizados,
+            'message': 'Itens salvos com sucesso!'
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+@login_required
+@require_POST
+def cotacao_importar_fornecedor(request, pk):
+    """Importa arquivo de cotação do fornecedor (CSV, Excel, PDF)"""
+    try:
+        cotacao = get_object_or_404(CotacaoMae, pk=pk)
+        
+        fornecedor_id = request.POST.get('fornecedor_id')
+        arquivo = request.FILES.get('arquivo')
+        
+        if not fornecedor_id:
+            return JsonResponse({'success': False, 'error': 'Selecione um fornecedor'}, status=400)
+        
+        fornecedor = get_object_or_404(Fornecedor, pk=fornecedor_id)
+        
+        cotacao_forn, created = CotacaoFornecedor.objects.get_or_create(
+            cotacao_mae=cotacao,
+            fornecedor=fornecedor,
+            defaults={
+                'status': 'importada',
+                'data_recebimento': timezone.now().date()
+            }
+        )
+        
+        if arquivo:
+            cotacao_forn.arquivo_origem = arquivo
+            cotacao_forn.save()
+            processar_arquivo_cotacao(cotacao, cotacao_forn, arquivo)
+            cotacao_forn.calcular_total()
+        
+        cotacao_forn.prazo_entrega_dias = int(request.POST.get('prazo_entrega', 0) or 0)
+        cotacao_forn.condicao_pagamento = request.POST.get('condicao_pagamento', '')
+        cotacao_forn.percentual_desconto = Decimal(request.POST.get('desconto', 0) or 0)
+        cotacao_forn.valor_frete = Decimal(request.POST.get('frete', 0) or 0)
+        cotacao_forn.nota_confiabilidade = int(request.POST.get('confiabilidade', 5) or 5)
+        cotacao_forn.observacoes = request.POST.get('observacoes', '')
+        cotacao_forn.status = 'processada'
+        cotacao_forn.save()
+        cotacao_forn.calcular_total()
+        
+        cotacao.status = 'respondida'
+        cotacao.save()
+        
+        return JsonResponse({
+            'success': True,
+            'cotacao_fornecedor_id': cotacao_forn.pk,
+            'fornecedor_nome': fornecedor.nome_fantasia or fornecedor.nome_razao_social,
+            'total_itens': cotacao_forn.itens.count(),
+            'valor_total': float(cotacao_forn.valor_total_liquido),
+            'message': 'Cotação importada com sucesso!'
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+def processar_arquivo_cotacao(cotacao_mae, cotacao_forn, arquivo):
+    """Processa arquivo de cotação (CSV, Excel)"""
+    nome_arquivo = arquivo.name.lower()
+    cotacao_forn.itens.all().delete()
+    
+    if nome_arquivo.endswith('.csv'):
+        processar_csv(cotacao_mae, cotacao_forn, arquivo)
+    elif nome_arquivo.endswith(('.xlsx', '.xls')):
+        processar_excel(cotacao_mae, cotacao_forn, arquivo)
+    else:
+        processar_csv(cotacao_mae, cotacao_forn, arquivo)
+
+
+def processar_csv(cotacao_mae, cotacao_forn, arquivo):
+    """Processa arquivo CSV"""
+    try:
+        conteudo = arquivo.read().decode('utf-8')
+    except UnicodeDecodeError:
+        arquivo.seek(0)
+        conteudo = arquivo.read().decode('latin-1')
+    
+    primeira_linha = conteudo.split('\n')[0]
+    delimitador = ';' if ';' in primeira_linha else ','
+    
+    leitor = csv.DictReader(io.StringIO(conteudo), delimiter=delimitador)
+    
+    if leitor.fieldnames:
+        leitor.fieldnames = [normalizar_nome_coluna(col) for col in leitor.fieldnames]
+    
+    for row in leitor:
+        criar_item_cotacao(cotacao_mae, cotacao_forn, row)
+
+
+def processar_excel(cotacao_mae, cotacao_forn, arquivo):
+    """Processa arquivo Excel"""
+    try:
+        import openpyxl
+        wb = openpyxl.load_workbook(arquivo, data_only=True)
+        ws = wb.active
+        headers = [normalizar_nome_coluna(str(cell.value or '')) for cell in ws[1]]
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            row_dict = dict(zip(headers, row))
+            criar_item_cotacao(cotacao_mae, cotacao_forn, row_dict)
+    except ImportError:
+        try:
+            import pandas as pd
+            df = pd.read_excel(arquivo)
+            for _, row in df.iterrows():
+                row_dict = {normalizar_nome_coluna(str(k)): v for k, v in row.items()}
+                criar_item_cotacao(cotacao_mae, cotacao_forn, row_dict)
+        except ImportError:
+            pass
+
+
+def normalizar_nome_coluna(nome):
+    """Normaliza nome de coluna"""
+    import unicodedata
+    nome = str(nome).lower().strip()
+    nome = unicodedata.normalize('NFD', nome)
+    nome = ''.join(c for c in nome if not unicodedata.combining(c))
+    return nome
+
+
+def criar_item_cotacao(cotacao_mae, cotacao_forn, row):
+    """Cria item de cotação a partir de uma linha do arquivo"""
+    descricao = (
+        row.get('descricao') or row.get('produto') or row.get('item') or 
+        row.get('material') or row.get('nome') or ''
+    )
+    
+    quantidade_str = str(row.get('quantidade') or row.get('qtd') or row.get('qtde') or 1)
+    preco_str = str(row.get('preco_unitario') or row.get('preco') or row.get('valor_unitario') or row.get('valor') or 0)
+    codigo = str(row.get('codigo') or row.get('cod') or row.get('ref') or '')
+    unidade = str(row.get('unidade') or row.get('un') or row.get('und') or 'UN')
+    
+    descricao = str(descricao).strip() if descricao else ''
+    if not descricao:
+        return None
+    
+    try:
+        quantidade = Decimal(str(quantidade_str).replace(',', '.').replace(' ', ''))
+    except:
+        quantidade = Decimal('1')
+    
+    try:
+        preco = str(preco_str).replace('R$', '').replace(' ', '').replace('.', '').replace(',', '.')
+        preco_unitario = Decimal(preco)
+    except:
+        preco_unitario = Decimal('0')
+    
+    item_solicitado = None
+    match_score = 0
+    
+    for item_sol in cotacao_mae.itens_solicitados.select_related('produto').all():
+        desc_sol = item_sol.descricao_display.lower()
+        desc_forn = descricao.lower()
+        
+        if desc_sol == desc_forn:
+            item_solicitado = item_sol
+            match_score = 100
+            break
+        
+        if desc_sol in desc_forn or desc_forn in desc_sol:
+            if match_score < 80:
+                item_solicitado = item_sol
+                match_score = 80
+        
+        if item_sol.produto and codigo:
+            if item_sol.produto.codigo.lower() == codigo.lower():
+                item_solicitado = item_sol
+                match_score = 95
+                break
+    
+    ItemCotacaoFornecedor.objects.create(
+        cotacao_fornecedor=cotacao_forn,
+        item_solicitado=item_solicitado,
+        descricao_fornecedor=descricao,
+        codigo_fornecedor=codigo,
+        quantidade=quantidade,
+        unidade_medida=unidade,
+        preco_unitario=preco_unitario,
+        preco_total=quantidade * preco_unitario,
+        disponivel=True,
+        match_automatico=(item_solicitado is not None),
+        match_score=match_score
+    )
+
+
+@login_required
+@require_POST
+def cotacao_remover_fornecedor(request, pk, fornecedor_pk):
+    """Remove cotação de um fornecedor"""
+    try:
+        cotacao = get_object_or_404(CotacaoMae, pk=pk)
+        cotacao_forn = get_object_or_404(CotacaoFornecedor, cotacao_mae=cotacao, fornecedor_id=fornecedor_pk)
+        cotacao_forn.delete()
+        return JsonResponse({'success': True, 'message': 'Fornecedor removido com sucesso!'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+@login_required
+@require_POST
+def cotacao_calcular_sugestoes(request, pk):
+    """Calcula sugestões automáticas baseado em preço, prazo e confiabilidade"""
+    try:
+        cotacao = get_object_or_404(CotacaoMae, pk=pk)
+        peso_preco = float(request.POST.get('peso_preco', 50)) / 100
+        peso_prazo = float(request.POST.get('peso_prazo', 30)) / 100
+        peso_confiabilidade = float(request.POST.get('peso_confiabilidade', 20)) / 100
+        
+        with transaction.atomic():
+            ItemCotacaoFornecedor.objects.filter(
+                cotacao_fornecedor__cotacao_mae=cotacao
+            ).update(melhor_preco=False, melhor_prazo=False, sugerido=False)
+            
+            for item_sol in cotacao.itens_solicitados.all():
+                itens_cot = ItemCotacaoFornecedor.objects.filter(
+                    cotacao_fornecedor__cotacao_mae=cotacao,
+                    item_solicitado=item_sol,
+                    disponivel=True
+                ).select_related('cotacao_fornecedor')
+                
+                if not itens_cot.exists():
+                    continue
+                
+                menor_preco = itens_cot.order_by('preco_unitario').first()
+                if menor_preco:
+                    menor_preco.melhor_preco = True
+                    menor_preco.save()
+                
+                itens_com_prazo = []
+                for item in itens_cot:
+                    prazo = item.prazo_entrega_item or item.cotacao_fornecedor.prazo_entrega_dias
+                    if prazo:
+                        itens_com_prazo.append((item, prazo))
+                
+                if itens_com_prazo:
+                    menor_prazo_item = min(itens_com_prazo, key=lambda x: x[1])[0]
+                    menor_prazo_item.melhor_prazo = True
+                    menor_prazo_item.save()
+                
+                scores = []
+                precos = [float(i.preco_unitario) for i in itens_cot]
+                max_preco = max(precos) if precos else 1
+                min_preco = min(precos) if precos else 0
+                range_preco = max_preco - min_preco if max_preco != min_preco else 1
+                
+                for item in itens_cot:
+                    prazo = item.prazo_entrega_item or item.cotacao_fornecedor.prazo_entrega_dias or 30
+                    confiabilidade = item.cotacao_fornecedor.nota_confiabilidade or 5
+                    
+                    score_preco = 1 - ((float(item.preco_unitario) - min_preco) / range_preco)
+                    score_prazo = max(0, 1 - (prazo / 60))
+                    score_conf = confiabilidade / 10
+                    
+                    score_final = (
+                        score_preco * peso_preco +
+                        score_prazo * peso_prazo +
+                        score_conf * peso_confiabilidade
+                    )
+                    scores.append((item, score_final))
+                
+                if scores:
+                    melhor = max(scores, key=lambda x: x[1])[0]
+                    melhor.sugerido = True
+                    melhor.save()
+        
+        cotacao.status = 'em_analise'
+        cotacao.save()
+        
+        return JsonResponse({'success': True, 'message': 'Sugestões calculadas com sucesso!'})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+@login_required
+@require_POST
+def cotacao_salvar_selecao(request, pk):
+    """Salva itens selecionados para compra"""
+    try:
+        cotacao = get_object_or_404(CotacaoMae, pk=pk)
+        data = json.loads(request.body)
+        itens_selecionados = data.get('itens_selecionados', [])
+        
+        with transaction.atomic():
+            ItemCotacaoFornecedor.objects.filter(
+                cotacao_fornecedor__cotacao_mae=cotacao
+            ).update(selecionado=False)
+            
+            ItemCotacaoFornecedor.objects.filter(
+                id__in=itens_selecionados
+            ).update(selecionado=True)
+        
+        return JsonResponse({'success': True, 'message': 'Seleção salva com sucesso!'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+@login_required
+@require_POST
+def cotacao_gerar_pedidos(request, pk):
+    """Gera pedidos de compra a partir dos itens selecionados"""
+    try:
+        cotacao = get_object_or_404(CotacaoMae, pk=pk)
+        
+        itens_selecionados = ItemCotacaoFornecedor.objects.filter(
+            cotacao_fornecedor__cotacao_mae=cotacao,
+            selecionado=True
+        ).select_related('cotacao_fornecedor__fornecedor', 'item_solicitado__produto')
+        
+        if not itens_selecionados.exists():
+            return JsonResponse({'success': False, 'error': 'Nenhum item selecionado'}, status=400)
+        
+        itens_por_fornecedor = {}
+        for item in itens_selecionados:
+            forn_id = item.cotacao_fornecedor.fornecedor_id
+            if forn_id not in itens_por_fornecedor:
+                itens_por_fornecedor[forn_id] = {
+                    'fornecedor': item.cotacao_fornecedor.fornecedor,
+                    'cotacao_fornecedor': item.cotacao_fornecedor,
+                    'itens': []
+                }
+            itens_por_fornecedor[forn_id]['itens'].append(item)
+        
+        pedidos_gerados = []
+        
+        with transaction.atomic():
+            for forn_id, dados in itens_por_fornecedor.items():
+                fornecedor = dados['fornecedor']
+                cot_forn = dados['cotacao_fornecedor']
+                itens = dados['itens']
+                
+                prazo = cot_forn.prazo_entrega_dias or 15
+                data_entrega = timezone.now().date() + timedelta(days=prazo)
+                
+                pedido = PedidoCompra.objects.create(
+                    fornecedor=fornecedor,
+                    cotacao_mae=cotacao,
+                    cotacao_fornecedor=cot_forn,
+                    data_prevista_entrega=data_entrega,
+                    condicao_pagamento=cot_forn.condicao_pagamento,
+                    observacoes=f'Gerado a partir da cotação {cotacao.numero}',
+                    status='pendente'
+                )
+                
+                for item_cot in itens:
+                    produto = None
+                    if item_cot.item_solicitado and item_cot.item_solicitado.produto:
+                        produto = item_cot.item_solicitado.produto
+                    else:
+                        produto, _ = Produto.objects.get_or_create(
+                            descricao=item_cot.descricao_fornecedor[:255],
+                            defaults={'unidade': item_cot.unidade_medida or 'UN', 'ativo': True}
+                        )
+                    
+                    ItemPedidoCompra.objects.create(
+                        pedido=pedido,
+                        produto=produto,
+                        item_cotacao_origem=item_cot,
+                        descricao=item_cot.descricao_fornecedor,
+                        quantidade=item_cot.quantidade,
+                        preco_unitario=item_cot.preco_unitario
+                    )
+                    
+                    item_cot.pedido_compra = pedido
+                    item_cot.save()
+                
+                pedido.calcular_total()
+                
+                pedidos_gerados.append({
+                    'id': pedido.pk,
+                    'numero': pedido.numero,
+                    'fornecedor': fornecedor.nome_fantasia or fornecedor.nome_razao_social,
+                    'total_itens': len(itens),
+                    'valor_total': float(pedido.valor_total)
+                })
+            
+            cotacao.status = 'concluida'
+            cotacao.save()
+        
+        return JsonResponse({
+            'success': True,
+            'pedidos': pedidos_gerados,
+            'message': f'{len(pedidos_gerados)} pedido(s) gerado(s) com sucesso!'
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+@login_required
+@require_POST
+def cotacao_excluir(request, pk):
+    """Exclui cotação"""
+    try:
+        cotacao = get_object_or_404(CotacaoMae, pk=pk)
+        cotacao.delete()
+        return JsonResponse({'success': True, 'message': 'Cotação excluída com sucesso!'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+@login_required
+@require_GET
+def cotacao_copiar_lista_email(request, pk):
+    """Gera texto formatado para email"""
+    cotacao = get_object_or_404(CotacaoMae, pk=pk)
+    
+    linhas = [
+        f"Solicitação de Cotação: {cotacao.numero}",
+        f"Título: {cotacao.titulo}",
+        f"Setor: {cotacao.setor}",
+        f"Data Limite: {cotacao.data_limite_resposta.strftime('%d/%m/%Y') if cotacao.data_limite_resposta else 'Não definida'}",
+        "",
+        "ITENS SOLICITADOS:",
+        "-" * 50,
+    ]
+    
+    for i, item in enumerate(cotacao.itens_solicitados.all(), 1):
+        linhas.append(f"{i}. {item.descricao_display}")
+        linhas.append(f"   Quantidade: {item.quantidade} {item.unidade_medida}")
+        if item.observacao:
+            linhas.append(f"   Obs: {item.observacao}")
+        linhas.append("")
+    
+    linhas.extend([
+        "-" * 50,
+        "Por favor, enviar cotação com preços unitários e prazo de entrega.",
+        "",
+        "Atenciosamente,",
+        cotacao.solicitante.get_full_name() or cotacao.solicitante.username
+    ])
+    
+    return JsonResponse({'success': True, 'texto': '\n'.join(linhas)})
+
+
+@login_required
+@require_GET
+def cotacao_copiar_lista_whatsapp(request, pk):
+    """Gera texto formatado para WhatsApp"""
+    cotacao = get_object_or_404(CotacaoMae, pk=pk)
+    
+    linhas = [
+        f"*Solicitação de Cotação: {cotacao.numero}*",
+        f"📋 {cotacao.titulo}",
+        f"🏢 Setor: {cotacao.setor}",
+        "",
+        "*ITENS:*",
+    ]
+    
+    for i, item in enumerate(cotacao.itens_solicitados.all(), 1):
+        linhas.append(f"{i}. {item.descricao_display} - {item.quantidade} {item.unidade_medida}")
+    
+    linhas.extend([
+        "",
+        "📅 Aguardo cotação com preços e prazo.",
+        "Obrigado!"
+    ])
+    
+    return JsonResponse({'success': True, 'texto': '\n'.join(linhas)})
 
 
 # =============================================================================
@@ -586,15 +1193,12 @@ def relatorio_compras(request):
 
 @login_required
 def orcamento_list(request):
-    """Lista de orçamentos"""
     orcamentos = Orcamento.objects.select_related('cliente', 'vendedor').all().order_by('-data_orcamento')
     context = {'orcamentos': orcamentos}
     return render(request, 'vendas/orcamento_list.html', context)
 
-
 @login_required
 def orcamento_add(request):
-    """Adicionar orçamento"""
     if request.method == 'POST':
         form = OrcamentoForm(request.POST)
         if form.is_valid():
@@ -606,10 +1210,8 @@ def orcamento_add(request):
     context = {'form': form, 'titulo': 'Novo Orçamento'}
     return render(request, 'vendas/orcamento_form.html', context)
 
-
 @login_required
 def orcamento_edit(request, pk):
-    """Editar orçamento"""
     orcamento = get_object_or_404(Orcamento, pk=pk)
     if request.method == 'POST':
         form = OrcamentoForm(request.POST, instance=orcamento)
@@ -622,10 +1224,8 @@ def orcamento_edit(request, pk):
     context = {'form': form, 'titulo': 'Editar Orçamento', 'orcamento': orcamento}
     return render(request, 'vendas/orcamento_form.html', context)
 
-
 @login_required
 def orcamento_delete(request, pk):
-    """Excluir orçamento"""
     orcamento = get_object_or_404(Orcamento, pk=pk)
     if request.method == 'POST':
         numero = orcamento.numero
@@ -635,10 +1235,8 @@ def orcamento_delete(request, pk):
     context = {'objeto': orcamento, 'titulo': 'Excluir Orçamento'}
     return render(request, 'vendas/confirm_delete.html', context)
 
-
 @login_required
 def orcamento_item_add(request, orcamento_pk):
-    """Adicionar item ao orçamento"""
     orcamento = get_object_or_404(Orcamento, pk=orcamento_pk)
     if request.method == 'POST':
         form = ItemOrcamentoForm(request.POST)
@@ -654,11 +1252,9 @@ def orcamento_item_add(request, orcamento_pk):
     context = {'form': form, 'orcamento': orcamento, 'titulo': 'Novo Item'}
     return render(request, 'vendas/item_form.html', context)
 
-
 @login_required
 @require_POST
 def orcamento_item_delete(request, pk):
-    """Excluir item do orçamento"""
     item = get_object_or_404(ItemOrcamento, pk=pk)
     orcamento = item.orcamento
     item.delete()
@@ -666,10 +1262,8 @@ def orcamento_item_delete(request, pk):
     messages.success(request, 'Item removido com sucesso!')
     return redirect('ERP_ServicesBI:orcamento_edit', pk=orcamento.pk)
 
-
 @login_required
 def orcamento_gerar_pedido(request, pk):
-    """Converter orçamento em pedido de venda"""
     orcamento = get_object_or_404(Orcamento, pk=pk)
     context = {'orcamento': orcamento}
     return render(request, 'vendas/gerar_pedido.html', context)
@@ -681,15 +1275,12 @@ def orcamento_gerar_pedido(request, pk):
 
 @login_required
 def pedidovenda_list(request):
-    """Lista de pedidos de venda"""
     pedidos = PedidoVenda.objects.select_related('cliente', 'vendedor').all().order_by('-data_pedido')
     context = {'pedidos': pedidos}
     return render(request, 'vendas/pedidovenda_list.html', context)
 
-
 @login_required
 def pedidovenda_add(request):
-    """Adicionar pedido de venda"""
     if request.method == 'POST':
         form = PedidoVendaForm(request.POST)
         if form.is_valid():
@@ -701,10 +1292,8 @@ def pedidovenda_add(request):
     context = {'form': form, 'titulo': 'Novo Pedido de Venda'}
     return render(request, 'vendas/pedidovenda_form.html', context)
 
-
 @login_required
 def pedidovenda_edit(request, pk):
-    """Editar pedido de venda"""
     pedido = get_object_or_404(PedidoVenda, pk=pk)
     if request.method == 'POST':
         form = PedidoVendaForm(request.POST, instance=pedido)
@@ -717,10 +1306,8 @@ def pedidovenda_edit(request, pk):
     context = {'form': form, 'titulo': 'Editar Pedido de Venda', 'pedido': pedido}
     return render(request, 'vendas/pedidovenda_form.html', context)
 
-
 @login_required
 def pedidovenda_delete(request, pk):
-    """Excluir pedido de venda"""
     pedido = get_object_or_404(PedidoVenda, pk=pk)
     if request.method == 'POST':
         numero = pedido.numero
@@ -730,10 +1317,8 @@ def pedidovenda_delete(request, pk):
     context = {'objeto': pedido, 'titulo': 'Excluir Pedido de Venda'}
     return render(request, 'vendas/confirm_delete.html', context)
 
-
 @login_required
 def pedidovenda_item_add(request, pedido_pk):
-    """Adicionar item ao pedido de venda"""
     pedido = get_object_or_404(PedidoVenda, pk=pedido_pk)
     if request.method == 'POST':
         form = ItemPedidoVendaForm(request.POST)
@@ -749,11 +1334,9 @@ def pedidovenda_item_add(request, pedido_pk):
     context = {'form': form, 'pedido': pedido, 'titulo': 'Novo Item'}
     return render(request, 'vendas/item_form.html', context)
 
-
 @login_required
 @require_POST
 def pedidovenda_item_delete(request, pk):
-    """Excluir item do pedido de venda"""
     item = get_object_or_404(ItemPedidoVenda, pk=pk)
     pedido = item.pedido
     item.delete()
@@ -761,10 +1344,8 @@ def pedidovenda_item_delete(request, pk):
     messages.success(request, 'Item removido com sucesso!')
     return redirect('ERP_ServicesBI:pedidovenda_edit', pk=pedido.pk)
 
-
 @login_required
 def pedidovenda_gerar_nfe(request, pk):
-    """Gerar NF de saída do pedido"""
     pedido = get_object_or_404(PedidoVenda, pk=pk)
     context = {'pedido': pedido}
     return render(request, 'vendas/gerar_nfe.html', context)
@@ -776,15 +1357,12 @@ def pedidovenda_gerar_nfe(request, pk):
 
 @login_required
 def notafiscalsaida_list(request):
-    """Lista de notas fiscais de saída"""
     notas = NotaFiscalSaida.objects.select_related('cliente').all().order_by('-data_emissao')
     context = {'notas': notas}
     return render(request, 'vendas/notafiscal_list.html', context)
 
-
 @login_required
 def notafiscalsaida_add(request):
-    """Adicionar nota fiscal de saída"""
     if request.method == 'POST':
         form = NotaFiscalSaidaForm(request.POST)
         if form.is_valid():
@@ -796,10 +1374,8 @@ def notafiscalsaida_add(request):
     context = {'form': form, 'titulo': 'Nova Nota Fiscal de Saída'}
     return render(request, 'vendas/notafiscal_form.html', context)
 
-
 @login_required
 def notafiscalsaida_edit(request, pk):
-    """Editar nota fiscal de saída"""
     nota = get_object_or_404(NotaFiscalSaida, pk=pk)
     if request.method == 'POST':
         form = NotaFiscalSaidaForm(request.POST, instance=nota)
@@ -812,10 +1388,8 @@ def notafiscalsaida_edit(request, pk):
     context = {'form': form, 'titulo': 'Editar Nota Fiscal de Saída', 'nota': nota}
     return render(request, 'vendas/notafiscal_form.html', context)
 
-
 @login_required
 def notafiscalsaida_delete(request, pk):
-    """Excluir nota fiscal de saída"""
     nota = get_object_or_404(NotaFiscalSaida, pk=pk)
     if request.method == 'POST':
         numero = nota.numero_nf
@@ -825,10 +1399,8 @@ def notafiscalsaida_delete(request, pk):
     context = {'objeto': nota, 'titulo': 'Excluir Nota Fiscal de Saída'}
     return render(request, 'vendas/confirm_delete.html', context)
 
-
 @login_required
 def notafiscalsaida_item_add(request, nota_pk):
-    """Adicionar item à nota fiscal de saída"""
     nota = get_object_or_404(NotaFiscalSaida, pk=nota_pk)
     if request.method == 'POST':
         form = ItemNotaFiscalSaidaForm(request.POST)
@@ -844,11 +1416,9 @@ def notafiscalsaida_item_add(request, nota_pk):
     context = {'form': form, 'nota': nota, 'titulo': 'Novo Item'}
     return render(request, 'vendas/item_form.html', context)
 
-
 @login_required
 @require_POST
 def notafiscalsaida_item_delete(request, pk):
-    """Excluir item da nota fiscal de saída"""
     item = get_object_or_404(ItemNotaFiscalSaida, pk=pk)
     nota = item.nota_fiscal
     item.delete()
@@ -856,29 +1426,24 @@ def notafiscalsaida_item_delete(request, pk):
     messages.success(request, 'Item removido com sucesso!')
     return redirect('ERP_ServicesBI:notafiscalsaida_edit', pk=nota.pk)
 
-
 @login_required
 def relatorio_vendas(request):
-    """Relatório de vendas"""
     context = {}
     return render(request, 'vendas/relatorio.html', context)
 
 
 # =============================================================================
-# FINANCEIRO - CONTAS
+# FINANCEIRO
 # =============================================================================
 
 @login_required
 def contareceber_list(request):
-    """Lista de contas a receber"""
     contas = ContaReceber.objects.select_related('cliente').all().order_by('data_vencimento')
     context = {'contas': contas}
     return render(request, 'financeiro/contareceber_list.html', context)
 
-
 @login_required
 def contareceber_add(request):
-    """Adicionar conta a receber"""
     if request.method == 'POST':
         form = ContaReceberForm(request.POST)
         if form.is_valid():
@@ -890,10 +1455,8 @@ def contareceber_add(request):
     context = {'form': form, 'titulo': 'Nova Conta a Receber'}
     return render(request, 'financeiro/contareceber_form.html', context)
 
-
 @login_required
 def contareceber_edit(request, pk):
-    """Editar conta a receber"""
     conta = get_object_or_404(ContaReceber, pk=pk)
     if request.method == 'POST':
         form = ContaReceberForm(request.POST, instance=conta)
@@ -906,10 +1469,8 @@ def contareceber_edit(request, pk):
     context = {'form': form, 'titulo': 'Editar Conta a Receber', 'conta': conta}
     return render(request, 'financeiro/contareceber_form.html', context)
 
-
 @login_required
 def contareceber_delete(request, pk):
-    """Excluir conta a receber"""
     conta = get_object_or_404(ContaReceber, pk=pk)
     if request.method == 'POST':
         conta.delete()
@@ -918,26 +1479,20 @@ def contareceber_delete(request, pk):
     context = {'objeto': conta, 'titulo': 'Excluir Conta a Receber'}
     return render(request, 'financeiro/confirm_delete.html', context)
 
-
 @login_required
 def contareceber_baixar(request, pk):
-    """Baixar conta a receber"""
     conta = get_object_or_404(ContaReceber, pk=pk)
     context = {'conta': conta}
     return render(request, 'financeiro/contareceber_baixar.html', context)
 
-
 @login_required
 def contapagar_list(request):
-    """Lista de contas a pagar"""
     contas = ContaPagar.objects.select_related('fornecedor').all().order_by('data_vencimento')
     context = {'contas': contas}
     return render(request, 'financeiro/contapagar_list.html', context)
 
-
 @login_required
 def contapagar_add(request):
-    """Adicionar conta a pagar"""
     if request.method == 'POST':
         form = ContaPagarForm(request.POST)
         if form.is_valid():
@@ -949,10 +1504,8 @@ def contapagar_add(request):
     context = {'form': form, 'titulo': 'Nova Conta a Pagar'}
     return render(request, 'financeiro/contapagar_form.html', context)
 
-
 @login_required
 def contapagar_edit(request, pk):
-    """Editar conta a pagar"""
     conta = get_object_or_404(ContaPagar, pk=pk)
     if request.method == 'POST':
         form = ContaPagarForm(request.POST, instance=conta)
@@ -965,10 +1518,8 @@ def contapagar_edit(request, pk):
     context = {'form': form, 'titulo': 'Editar Conta a Pagar', 'conta': conta}
     return render(request, 'financeiro/contapagar_form.html', context)
 
-
 @login_required
 def contapagar_delete(request, pk):
-    """Excluir conta a pagar"""
     conta = get_object_or_404(ContaPagar, pk=pk)
     if request.method == 'POST':
         conta.delete()
@@ -977,18 +1528,14 @@ def contapagar_delete(request, pk):
     context = {'objeto': conta, 'titulo': 'Excluir Conta a Pagar'}
     return render(request, 'financeiro/confirm_delete.html', context)
 
-
 @login_required
 def contapagar_baixar(request, pk):
-    """Baixar conta a pagar"""
     conta = get_object_or_404(ContaPagar, pk=pk)
     context = {'conta': conta}
     return render(request, 'financeiro/contapagar_baixar.html', context)
 
-
 @login_required
 def movimentocaixa_add(request):
-    """Adicionar movimento de caixa"""
     if request.method == 'POST':
         form = MovimentoCaixaForm(request.POST)
         if form.is_valid():
@@ -1002,22 +1549,14 @@ def movimentocaixa_add(request):
     context = {'form': form, 'titulo': 'Novo Movimento de Caixa'}
     return render(request, 'financeiro/movimentocaixa_form.html', context)
 
-
-# =============================================================================
-# FINANCEIRO - CATEGORIAS E CENTROS
-# =============================================================================
-
 @login_required
 def categoriafinanceira_list(request):
-    """Lista de categorias financeiras"""
     categorias = CategoriaFinanceira.objects.all().order_by('codigo')
     context = {'categorias': categorias}
     return render(request, 'financeiro/categoriafinanceira_list.html', context)
 
-
 @login_required
 def categoriafinanceira_add(request):
-    """Adicionar categoria financeira"""
     if request.method == 'POST':
         form = CategoriaFinanceiraForm(request.POST)
         if form.is_valid():
@@ -1029,10 +1568,8 @@ def categoriafinanceira_add(request):
     context = {'form': form, 'titulo': 'Nova Categoria Financeira'}
     return render(request, 'financeiro/categoriafinanceira_form.html', context)
 
-
 @login_required
 def categoriafinanceira_edit(request, pk):
-    """Editar categoria financeira"""
     categoria = get_object_or_404(CategoriaFinanceira, pk=pk)
     if request.method == 'POST':
         form = CategoriaFinanceiraForm(request.POST, instance=categoria)
@@ -1045,10 +1582,8 @@ def categoriafinanceira_edit(request, pk):
     context = {'form': form, 'titulo': 'Editar Categoria Financeira', 'categoria': categoria}
     return render(request, 'financeiro/categoriafinanceira_form.html', context)
 
-
 @login_required
 def categoriafinanceira_delete(request, pk):
-    """Excluir categoria financeira"""
     categoria = get_object_or_404(CategoriaFinanceira, pk=pk)
     if request.method == 'POST':
         categoria.delete()
@@ -1057,18 +1592,14 @@ def categoriafinanceira_delete(request, pk):
     context = {'objeto': categoria, 'titulo': 'Excluir Categoria Financeira'}
     return render(request, 'financeiro/confirm_delete.html', context)
 
-
 @login_required
 def centrocusto_list(request):
-    """Lista de centros de custo"""
     centros = CentroCusto.objects.all().order_by('nome')
     context = {'centros': centros}
     return render(request, 'financeiro/centrocusto_list.html', context)
 
-
 @login_required
 def centrocusto_add(request):
-    """Adicionar centro de custo"""
     if request.method == 'POST':
         form = CentroCustoForm(request.POST)
         if form.is_valid():
@@ -1080,10 +1611,8 @@ def centrocusto_add(request):
     context = {'form': form, 'titulo': 'Novo Centro de Custo'}
     return render(request, 'financeiro/centrocusto_form.html', context)
 
-
 @login_required
 def centrocusto_edit(request, pk):
-    """Editar centro de custo"""
     centro = get_object_or_404(CentroCusto, pk=pk)
     if request.method == 'POST':
         form = CentroCustoForm(request.POST, instance=centro)
@@ -1096,10 +1625,8 @@ def centrocusto_edit(request, pk):
     context = {'form': form, 'titulo': 'Editar Centro de Custo', 'centro': centro}
     return render(request, 'financeiro/centrocusto_form.html', context)
 
-
 @login_required
 def centrocusto_delete(request, pk):
-    """Excluir centro de custo"""
     centro = get_object_or_404(CentroCusto, pk=pk)
     if request.method == 'POST':
         centro.delete()
@@ -1108,25 +1635,19 @@ def centrocusto_delete(request, pk):
     context = {'objeto': centro, 'titulo': 'Excluir Centro de Custo'}
     return render(request, 'financeiro/confirm_delete.html', context)
 
-
 @login_required
 def fluxo_caixa(request):
-    """Fluxo de caixa"""
     context = {}
     return render(request, 'financeiro/fluxo_caixa.html', context)
 
-
 @login_required
 def orcamentofinanceiro_list(request):
-    """Lista de orçamentos financeiros"""
     orcamentos = OrcamentoFinanceiro.objects.select_related('categoria').all().order_by('-ano', '-mes')
     context = {'orcamentos': orcamentos}
     return render(request, 'financeiro/orcamentofinanceiro_list.html', context)
 
-
 @login_required
 def orcamentofinanceiro_add(request):
-    """Adicionar orçamento financeiro"""
     if request.method == 'POST':
         form = OrcamentoFinanceiroForm(request.POST)
         if form.is_valid():
@@ -1140,10 +1661,8 @@ def orcamentofinanceiro_add(request):
     context = {'form': form, 'titulo': 'Novo Orçamento Financeiro'}
     return render(request, 'financeiro/orcamentofinanceiro_form.html', context)
 
-
 @login_required
 def orcamentofinanceiro_edit(request, pk):
-    """Editar orçamento financeiro"""
     orcamento = get_object_or_404(OrcamentoFinanceiro, pk=pk)
     if request.method == 'POST':
         form = OrcamentoFinanceiroForm(request.POST, instance=orcamento)
@@ -1156,10 +1675,8 @@ def orcamentofinanceiro_edit(request, pk):
     context = {'form': form, 'titulo': 'Editar Orçamento Financeiro', 'orcamento': orcamento}
     return render(request, 'financeiro/orcamentofinanceiro_form.html', context)
 
-
 @login_required
 def orcamentofinanceiro_delete(request, pk):
-    """Excluir orçamento financeiro"""
     orcamento = get_object_or_404(OrcamentoFinanceiro, pk=pk)
     if request.method == 'POST':
         orcamento.delete()
@@ -1168,39 +1685,29 @@ def orcamentofinanceiro_delete(request, pk):
     context = {'objeto': orcamento, 'titulo': 'Excluir Orçamento Financeiro'}
     return render(request, 'financeiro/confirm_delete.html', context)
 
-
 @login_required
 def conciliacao_list(request):
-    """Lista de conciliações bancárias"""
     extratos = ExtratoBancario.objects.all().order_by('-data_arquivo')
     context = {'extratos': extratos}
     return render(request, 'financeiro/conciliacao_list.html', context)
 
-
 @login_required
 def conciliacao_add(request):
-    """Adicionar conciliação"""
     context = {}
     return render(request, 'financeiro/conciliacao_form.html', context)
-
 
 @login_required
 def conciliacao_edit(request, pk):
-    """Editar conciliação"""
     context = {}
     return render(request, 'financeiro/conciliacao_form.html', context)
 
-
 @login_required
 def conciliacao_delete(request, pk):
-    """Excluir conciliação"""
     context = {}
     return render(request, 'financeiro/confirm_delete.html', context)
 
-
 @login_required
 def dre_gerencial(request):
-    """DRE Gerencial"""
     context = {}
     return render(request, 'financeiro/dre.html', context)
 
@@ -1211,15 +1718,12 @@ def dre_gerencial(request):
 
 @login_required
 def movimentacaoestoque_list(request):
-    """Lista de movimentações de estoque"""
     movimentacoes = MovimentacaoEstoque.objects.select_related('produto').all().order_by('-data')
     context = {'movimentacoes': movimentacoes}
     return render(request, 'estoque/movimentacao_list.html', context)
 
-
 @login_required
 def movimentacaoestoque_add(request):
-    """Adicionar movimentação de estoque"""
     if request.method == 'POST':
         form = MovimentacaoEstoqueForm(request.POST)
         if form.is_valid():
@@ -1233,10 +1737,8 @@ def movimentacaoestoque_add(request):
     context = {'form': form, 'titulo': 'Nova Movimentação de Estoque'}
     return render(request, 'estoque/movimentacao_form.html', context)
 
-
 @login_required
 def movimentacaoestoque_edit(request, pk):
-    """Editar movimentação de estoque"""
     movimentacao = get_object_or_404(MovimentacaoEstoque, pk=pk)
     if request.method == 'POST':
         form = MovimentacaoEstoqueForm(request.POST, instance=movimentacao)
@@ -1249,10 +1751,8 @@ def movimentacaoestoque_edit(request, pk):
     context = {'form': form, 'titulo': 'Editar Movimentação', 'movimentacao': movimentacao}
     return render(request, 'estoque/movimentacao_form.html', context)
 
-
 @login_required
 def movimentacaoestoque_delete(request, pk):
-    """Excluir movimentação de estoque"""
     movimentacao = get_object_or_404(MovimentacaoEstoque, pk=pk)
     if request.method == 'POST':
         movimentacao.delete()
@@ -1261,18 +1761,14 @@ def movimentacaoestoque_delete(request, pk):
     context = {'objeto': movimentacao, 'titulo': 'Excluir Movimentação'}
     return render(request, 'estoque/confirm_delete.html', context)
 
-
 @login_required
 def inventario_list(request):
-    """Lista de inventários"""
     inventarios = Inventario.objects.select_related('usuario').all().order_by('-data')
     context = {'inventarios': inventarios}
     return render(request, 'estoque/inventario_list.html', context)
 
-
 @login_required
 def inventario_add(request):
-    """Adicionar inventário"""
     if request.method == 'POST':
         form = InventarioForm(request.POST)
         if form.is_valid():
@@ -1286,10 +1782,8 @@ def inventario_add(request):
     context = {'form': form, 'titulo': 'Novo Inventário'}
     return render(request, 'estoque/inventario_form.html', context)
 
-
 @login_required
 def inventario_edit(request, pk):
-    """Editar inventário"""
     inventario = get_object_or_404(Inventario, pk=pk)
     if request.method == 'POST':
         form = InventarioForm(request.POST, instance=inventario)
@@ -1302,10 +1796,8 @@ def inventario_edit(request, pk):
     context = {'form': form, 'titulo': 'Editar Inventário', 'inventario': inventario}
     return render(request, 'estoque/inventario_form.html', context)
 
-
 @login_required
 def inventario_delete(request, pk):
-    """Excluir inventário"""
     inventario = get_object_or_404(Inventario, pk=pk)
     if request.method == 'POST':
         inventario.delete()
@@ -1314,18 +1806,14 @@ def inventario_delete(request, pk):
     context = {'objeto': inventario, 'titulo': 'Excluir Inventário'}
     return render(request, 'estoque/confirm_delete.html', context)
 
-
 @login_required
 def transferencia_list(request):
-    """Lista de transferências de estoque"""
     transferencias = TransferenciaEstoque.objects.select_related('usuario').all().order_by('-data')
     context = {'transferencias': transferencias}
     return render(request, 'estoque/transferencia_list.html', context)
 
-
 @login_required
 def transferencia_add(request):
-    """Adicionar transferência de estoque"""
     if request.method == 'POST':
         form = TransferenciaEstoqueForm(request.POST)
         if form.is_valid():
@@ -1339,10 +1827,8 @@ def transferencia_add(request):
     context = {'form': form, 'titulo': 'Nova Transferência de Estoque'}
     return render(request, 'estoque/transferencia_form.html', context)
 
-
 @login_required
 def transferencia_edit(request, pk):
-    """Editar transferência de estoque"""
     transferencia = get_object_or_404(TransferenciaEstoque, pk=pk)
     if request.method == 'POST':
         form = TransferenciaEstoqueForm(request.POST, instance=transferencia)
@@ -1355,10 +1841,8 @@ def transferencia_edit(request, pk):
     context = {'form': form, 'titulo': 'Editar Transferência', 'transferencia': transferencia}
     return render(request, 'estoque/transferencia_form.html', context)
 
-
 @login_required
 def transferencia_delete(request, pk):
-    """Excluir transferência de estoque"""
     transferencia = get_object_or_404(TransferenciaEstoque, pk=pk)
     if request.method == 'POST':
         transferencia.delete()
@@ -1367,214 +1851,12 @@ def transferencia_delete(request, pk):
     context = {'objeto': transferencia, 'titulo': 'Excluir Transferência'}
     return render(request, 'estoque/confirm_delete.html', context)
 
-
 @login_required
 def relatorio_estoque(request):
-    """Relatório de posição de estoque"""
     context = {}
     return render(request, 'estoque/relatorio_posicao.html', context)
 
-
 @login_required
 def relatorio_movimentacoes(request):
-    """Relatório de movimentações de estoque"""
     context = {}
     return render(request, 'estoque/relatorio_movimentacoes.html', context)
-
-
-# =============================================================================
-# COTAÇÃO COMPARATIVA (NOVO)
-# =============================================================================
-
-@login_required
-def cotacao_mae_list(request):
-    """Lista de cotações mãe"""
-    cotacoes = CotacaoMae.objects.select_related('solicitante').all().order_by('-data_solicitacao')
-    context = {'cotacoes': cotacoes}
-    return render(request, 'compras/cotacao_mae_list.html', context)
-
-
-@login_required
-def cotacao_mae_create(request):
-    """Criar nova cotação mãe"""
-    if request.method == 'POST':
-        form = CotacaoMaeForm(request.POST)
-        formset = ItemSolicitadoFormSet(request.POST, instance=None)
-        
-        if form.is_valid() and formset.is_valid():
-            cotacao = form.save(commit=False)
-            cotacao.solicitante = request.user
-            cotacao.save()
-            
-            formset.instance = cotacao
-            formset.save()
-            
-            messages.success(request, f'Cotação {cotacao.numero} criada com sucesso!')
-            return redirect('ERP_ServicesBI:cotacao_mae_detail', pk=cotacao.pk)
-    else:
-        form = CotacaoMaeForm()
-        formset = ItemSolicitadoFormSet(instance=None)
-    
-    context = {'form': form, 'formset': formset, 'titulo': 'Nova Cotação Mãe'}
-    return render(request, 'compras/cotacao_mae_form.html', context)
-
-
-@login_required
-def cotacao_mae_detail(request, pk):
-    """Detalhe da cotação mãe com comparativo"""
-    cotacao = get_object_or_404(CotacaoMae, pk=pk)
-    itens_solicitados = ItemSolicitado.objects.filter(cotacao_mae=cotacao).select_related('produto')
-    cotacoes_fornecedor = CotacaoFornecedor.objects.filter(cotacao_mae=cotacao).select_related('fornecedor').prefetch_related('itens')
-    
-    # Montar tabela comparativa
-    comparativo = []
-    for item_solicitado in itens_solicitados:
-        linha = {
-            'item': item_solicitado,
-            'fornecedores': []
-        }
-        
-        for cot_fornecedor in cotacoes_fornecedor:
-            item_cot = cot_fornecedor.itens.filter(item_solicitado=item_solicitado).first()
-            linha['fornecedores'].append({
-                'fornecedor': cot_fornecedor,
-                'item': item_cot
-            })
-        
-        comparativo.append(linha)
-    
-    context = {
-        'cotacao': cotacao,
-        'comparativo': comparativo,
-        'cotacoes_fornecedor': cotacoes_fornecedor
-    }
-    return render(request, 'compras/cotacao_mae_detail.html', context)
-
-
-@login_required
-def cotacao_mae_edit(request, pk):
-    """Editar cotação mãe"""
-    cotacao = get_object_or_404(CotacaoMae, pk=pk)
-    
-    if request.method == 'POST':
-        form = CotacaoMaeForm(request.POST, instance=cotacao)
-        formset = ItemSolicitadoFormSet(request.POST, instance=cotacao)
-        
-        if form.is_valid() and formset.is_valid():
-            form.save()
-            formset.save()
-            messages.success(request, 'Cotação atualizada com sucesso!')
-            return redirect('ERP_ServicesBI:cotacao_mae_detail', pk=cotacao.pk)
-    else:
-        form = CotacaoMaeForm(instance=cotacao)
-        formset = ItemSolicitadoFormSet(instance=cotacao)
-    
-    context = {'form': form, 'formset': formset, 'cotacao': cotacao, 'titulo': 'Editar Cotação Mãe'}
-    return render(request, 'compras/cotacao_mae_form.html', context)
-
-
-@login_required
-def cotacao_mae_delete(request, pk):
-    """Excluir cotação mãe"""
-    cotacao = get_object_or_404(CotacaoMae, pk=pk)
-    
-    if request.method == 'POST':
-        numero = cotacao.numero
-        cotacao.delete()
-        messages.success(request, f'Cotação {numero} excluída com sucesso!')
-        return redirect('ERP_ServicesBI:cotacao_mae_list')
-    
-    context = {'objeto': cotacao, 'titulo': 'Excluir Cotação Mãe'}
-    return render(request, 'compras/confirm_delete.html', context)
-
-
-@login_required
-def cotacao_fornecedor_importar(request, cotacao_mae_pk):
-    """Importar cotação de fornecedor via arquivo"""
-    cotacao_mae = get_object_or_404(CotacaoMae, pk=cotacao_mae_pk)
-    
-    if request.method == 'POST':
-        arquivo = request.FILES.get('arquivo')
-        fornecedor_id = request.POST.get('fornecedor_id')
-        
-        if arquivo and fornecedor_id:
-            fornecedor = get_object_or_404(Fornecedor, pk=fornecedor_id)
-            
-            # Processar arquivo CSV/XLSX
-            try:
-                cotacao_fornecedor = processar_arquivo_cotacao(
-                    cotacao_mae, fornecedor, arquivo
-                )
-                messages.success(request, f'Cotação de {fornecedor.nome_fantasia} importada com sucesso!')
-                return redirect('ERP_ServicesBI:cotacao_mae_detail', pk=cotacao_mae.pk)
-            except Exception as e:
-                messages.error(request, f'Erro ao processar arquivo: {str(e)}')
-    
-    fornecedores = Fornecedor.objects.filter(ativo=True).order_by('nome_fantasia')
-    context = {
-        'cotacao_mae': cotacao_mae,
-        'fornecedores': fornecedores,
-        'titulo': 'Importar Cotação de Fornecedor'
-    }
-    return render(request, 'compras/cotacao_fornecedor_importar.html', context)
-
-
-def processar_arquivo_cotacao(cotacao_mae, fornecedor, arquivo):
-    """
-    Processa arquivo CSV/XLSX de cotação
-    Cria/atualiza CotacaoFornecedor e ItemCotacaoFornecedor
-    """
-    # Verificar se já existe cotação deste fornecedor
-    cotacao_fornecedor, created = CotacaoFornecedor.objects.get_or_create(
-        cotacao_mae=cotacao_mae,
-        fornecedor=fornecedor,
-        defaults={
-            'status': 'importada',
-            'data_recebimento': timezone.now().date(),
-            'arquivo_origem': arquivo
-        }
-    )
-    
-    # Limpar itens anteriores se estamos atualizando
-    if not created:
-        cotacao_fornecedor.itens.all().delete()
-    
-    # Ler e processar arquivo
-    conteudo = arquivo.read().decode('utf-8')
-    leitor = csv.DictReader(io.StringIO(conteudo))
-    
-    valor_total = 0
-    for row in leitor:
-        descricao = row.get('descricao', '').strip()
-        quantidade = float(row.get('quantidade', 0))
-        preco_unitario = float(row.get('preco_unitario', 0))
-        
-        if descricao and quantidade and preco_unitario:
-            # Tentar fazer match automático com ItemSolicitado
-            item_solicitado = None
-            match_score = 0
-            
-            for item in cotacao_mae.itens_solicitados.all():
-                descricao_item = item.descricao_display.lower()
-                if descricao.lower() in descricao_item or descricao_item in descricao.lower():
-                    item_solicitado = item
-                    match_score = 95
-                    break
-            
-            ItemCotacaoFornecedor.objects.create(
-                cotacao_fornecedor=cotacao_fornecedor,
-                item_solicitado=item_solicitado,
-                descricao_fornecedor=descricao,
-                quantidade=quantidade,
-                preco_unitario=preco_unitario,
-                preco_total=quantidade * preco_unitario,
-                match_automatico=(item_solicitado is not None),
-                match_score=match_score
-            )
-            valor_total += (quantidade * preco_unitario)
-    
-    # Atualizar valor total da cotação
-    cotacao_fornecedor.valor_total_bruto = valor_total
-    cotacao_fornecedor.save()
-    
-    return cotacao_fornecedor

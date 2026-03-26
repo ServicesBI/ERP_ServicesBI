@@ -1,0 +1,1312 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo }} - ERP ServicesBI{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Header do Wizard */
+.erp-page-header {
+    margin-bottom: 24px;
+}
+
+.erp-page-header__title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.erp-page-header__subtitle {
+    margin: 4px 0 0 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+/* Wizard Steps - CORRIGIDO PARA DARK MODE */
+.wizard-steps {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    position: relative;
+    padding: 0 20px;
+}
+
+.wizard-steps::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: var(--border-color);
+    z-index: 0;
+}
+
+.wizard-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+    cursor: pointer;
+    flex: 1;
+}
+
+.wizard-step .step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg-primary);
+    border: 2px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: var(--text-secondary);
+    transition: all 0.3s;
+}
+
+.wizard-step.active .step-number {
+    background: var(--primary-500);
+    border-color: var(--primary-500);
+    color: white;
+}
+
+.wizard-step.completed .step-number {
+    background: var(--success-500);
+    border-color: var(--success-500);
+    color: white;
+}
+
+.wizard-step .step-label {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-align: center;
+    font-weight: 500;
+}
+
+.wizard-step.active .step-label {
+    color: var(--primary-500);
+    font-weight: 600;
+}
+
+.wizard-step.completed .step-label {
+    color: var(--success-500);
+}
+
+/* Wizard Content */
+.wizard-content {
+    display: none;
+}
+
+.wizard-content.active {
+    display: block;
+}
+
+/* Cards - CORRIGIDO PARA DARK MODE */
+.erp-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--card-shadow);
+    margin-bottom: 24px;
+}
+
+.erp-card__header {
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.erp-card__header h5 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.erp-card__body {
+    padding: 20px;
+}
+
+.erp-card__footer {
+    padding: 15px 20px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Formulários - CORRIGIDO PARA DARK MODE */
+.erp-form-group {
+    margin-bottom: 16px;
+}
+
+.erp-form-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.erp-form-label .required {
+    color: var(--danger-500);
+}
+
+.erp-form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: all var(--transition-fast);
+}
+
+.erp-form-control:focus {
+    outline: none;
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.erp-form-select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+/* Tabelas - CORRIGIDO PARA DARK MODE */
+.erp-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.erp-table th {
+    text-align: left;
+    padding: 12px 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    border-bottom: 2px solid var(--border-color);
+    background: var(--bg-tertiary);
+}
+
+.erp-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.erp-table tr:hover {
+    background: var(--bg-secondary);
+}
+
+/* Status badges - CORRIGIDO PARA DARK MODE */
+.erp-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.erp-badge--secondary {
+    background: var(--gray-100);
+    color: var(--gray-600);
+}
+
+html[data-theme="dark"] .erp-badge--secondary {
+    background: var(--gray-700);
+    color: var(--gray-300);
+}
+
+.erp-badge--info {
+    background: var(--info-100);
+    color: var(--info-800);
+}
+
+html[data-theme="dark"] .erp-badge--info {
+    background: rgba(6, 182, 212, 0.2);
+    color: var(--info-400);
+}
+
+.erp-badge--success {
+    background: var(--success-100);
+    color: var(--success-800);
+}
+
+html[data-theme="dark"] .erp-badge--success {
+    background: rgba(34, 197, 94, 0.2);
+    color: var(--success-400);
+}
+
+/* Botões Copiar */
+.btn-copiar {
+    position: relative;
+}
+
+.btn-copiar.copiado::after {
+    content: '✓ Copiado!';
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--success-500);
+    color: white;
+    padding: 4px 10px;
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    animation: fadeOut 2s forwards;
+}
+
+@keyframes fadeOut {
+    0%, 70% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* Comparativo - CORRIGIDO PARA DARK MODE */
+.table-comparativo {
+    font-size: 13px;
+    width: 100%;
+}
+
+.table-comparativo th {
+    background: var(--bg-tertiary);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    font-weight: 600;
+    padding: 12px 8px;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.table-comparativo td {
+    padding: 10px 8px;
+    vertical-align: middle;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.table-comparativo .melhor-preco {
+    background: var(--success-100) !important;
+    font-weight: 600;
+}
+
+html[data-theme="dark"] .table-comparativo .melhor-preco {
+    background: rgba(34, 197, 94, 0.2) !important;
+}
+
+.table-comparativo .sugerido {
+    background: var(--warning-100) !important;
+}
+
+html[data-theme="dark"] .table-comparativo .sugerido {
+    background: rgba(245, 158, 11, 0.2) !important;
+}
+
+.table-comparativo .selecionado {
+    background: var(--primary-100) !important;
+}
+
+html[data-theme="dark"] .table-comparativo .selecionado {
+    background: rgba(59, 130, 246, 0.2) !important;
+}
+
+.table-comparativo .indisponivel {
+    color: var(--danger-500);
+    text-decoration: line-through;
+}
+
+/* Cards Fornecedor - CORRIGIDO PARA DARK MODE */
+.card-fornecedor {
+    border-left: 4px solid var(--primary-500);
+    margin-bottom: 12px;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+}
+
+.card-fornecedor .card-header {
+    background: transparent;
+    border-bottom: 1px solid var(--border-color);
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-primary);
+}
+
+.card-fornecedor .card-body {
+    padding: 12px 16px;
+    color: var(--text-secondary);
+}
+
+/* Pedidos Gerados - CORRIGIDO PARA DARK MODE */
+.card-pedido {
+    border-left: 4px solid var(--success-500);
+    margin-bottom: 12px;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+}
+
+.card-pedido .card-body {
+    padding: 16px;
+    color: var(--text-secondary);
+}
+
+/* Grid */
+.erp-grid {
+    display: grid;
+    gap: 20px;
+}
+
+.erp-grid--2 {
+    grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 992px) {
+    .erp-grid--2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Alertas - CORRIGIDO PARA DARK MODE */
+.erp-alert {
+    padding: 16px;
+    border-radius: var(--radius-md);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.erp-alert--info {
+    background: var(--info-100);
+    border: 1px solid var(--info-200);
+    color: var(--info-800);
+}
+
+html[data-theme="dark"] .erp-alert--info {
+    background: rgba(6, 182, 212, 0.15);
+    border-color: rgba(6, 182, 212, 0.3);
+    color: var(--info-400);
+}
+
+/* Empty state - CORRIGIDO PARA DARK MODE */
+.erp-empty {
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.erp-empty__icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+/* Texto muted - CORRIGIDO */
+.text-muted {
+    color: var(--text-tertiary) !important;
+}
+
+/* Checkbox - CORRIGIDO */
+.check-item {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--primary-500);
+}
+
+/* Spinner para botões */
+.spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .wizard-steps {
+        padding: 0 10px;
+    }
+    
+    .wizard-step .step-label {
+        font-size: 11px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="erp-page-header">
+    <h2 class="erp-page-header__title">COMPRAS</h2>
+    <p class="erp-page-header__subtitle">Cotação Comparativa - {{ titulo }}</p>
+</div>
+
+<!-- Wizard Steps -->
+<div class="wizard-steps">
+    <div class="wizard-step active" data-step="1" onclick="goToStep(1)">
+        <div class="step-number">1</div>
+        <div class="step-label">Dados</div>
+    </div>
+    <div class="wizard-step" data-step="2" onclick="goToStep(2)">
+        <div class="step-number">2</div>
+        <div class="step-label">Itens</div>
+    </div>
+    <div class="wizard-step" data-step="3" onclick="goToStep(3)">
+        <div class="step-number">3</div>
+        <div class="step-label">Fornecedores</div>
+    </div>
+    <div class="wizard-step" data-step="4" onclick="goToStep(4)">
+        <div class="step-number">4</div>
+        <div class="step-label">Comparar</div>
+    </div>
+    <div class="wizard-step" data-step="5" onclick="goToStep(5)">
+        <div class="step-number">5</div>
+        <div class="step-label">Pedidos</div>
+    </div>
+</div>
+
+<!-- =========================================================================== -->
+<!-- ETAPA 1: DADOS BÁSICOS -->
+<!-- =========================================================================== -->
+<div class="wizard-content active" id="step-1">
+    <div class="erp-card">
+        <div class="erp-card__header">
+            <h5><i class="fas fa-info-circle me-2"></i>Dados da Cotação</h5>
+            <div>
+                {% if cotacao %}
+                <span class="erp-badge erp-badge--{{ cotacao.status }}">
+                    {{ cotacao.get_status_display|default:cotacao.status }}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="erp-card__body">
+            <form id="formDados">
+                <div class="erp-grid erp-grid--2">
+                    <div class="erp-form-group">
+                        <label class="erp-form-label">Título da Cotação <span class="required">*</span></label>
+                        <input type="text" class="erp-form-control" id="titulo" name="titulo" 
+                               value="{{ cotacao.titulo|default:'' }}" required
+                               placeholder="Ex: Materiais de escritório - Março/2026">
+                    </div>
+                    <div class="erp-form-group">
+                        <label class="erp-form-label">Setor Solicitante</label>
+                        <input type="text" class="erp-form-control" id="setor" name="setor" 
+                               value="{{ cotacao.setor|default:'' }}"
+                               placeholder="Ex: Administrativo">
+                    </div>
+                </div>
+                <div class="erp-grid erp-grid--2">
+                    <div class="erp-form-group">
+                        <label class="erp-form-label">Data Limite p/ Resposta</label>
+                        <input type="date" class="erp-form-control" id="data_limite_resposta" name="data_limite_resposta"
+                               value="{{ cotacao.data_limite_resposta|date:'Y-m-d' }}">
+                    </div>
+                    <div class="erp-form-group">
+                        <label class="erp-form-label">Observações</label>
+                        <textarea class="erp-form-control" id="observacoes" name="observacoes" rows="3"
+                                  placeholder="Informações adicionais para os fornecedores...">{{ cotacao.observacoes|default:'' }}</textarea>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="erp-card__footer">
+            <a href="{% url 'ERP_ServicesBI:cotacao_lista' %}" class="erp-btn erp-btn--secondary">
+                <span>←</span> Voltar
+            </a>
+            <button type="button" class="erp-btn erp-btn--primary" onclick="salvarDadosEAvancar()">
+                Salvar e Continuar <span>→</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- =========================================================================== -->
+<!-- ETAPA 2: ITENS SOLICITADOS -->
+<!-- =========================================================================== -->
+<div class="wizard-content" id="step-2">
+    <div class="erp-card">
+        <div class="erp-card__header">
+            <h5><i class="fas fa-list me-2"></i>Itens Solicitados</h5>
+            <div>
+                <button type="button" class="erp-btn erp-btn--secondary btn-copiar me-2" onclick="copiarParaEmail()">
+                    <span>✉️</span> Copiar p/ Email
+                </button>
+                <button type="button" class="erp-btn erp-btn--success btn-copiar" onclick="copiarParaWhatsApp()">
+                    <span>📱</span> Copiar p/ WhatsApp
+                </button>
+            </div>
+        </div>
+        <div class="erp-card__body">
+            <div class="erp-table-container" style="overflow-x: auto;">
+                <table class="erp-table" id="tabelaItens">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">#</th>
+                            <th>Produto / Descrição</th>
+                            <th style="width: 100px;">Qtd</th>
+                            <th style="width: 100px;">Unidade</th>
+                            <th style="width: 200px;">Observação</th>
+                            <th style="width: 80px;" class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyItens">
+                        {% for item in itens %}
+                        <tr data-id="{{ item.id }}">
+                            <td class="num-linha">{{ forloop.counter }}</td>
+                            <td>
+                                <select class="erp-form-select select-produto" onchange="produtoChanged(this)" style="margin-bottom: 8px;">
+                                    <option value="">-- Selecione ou digite manual --</option>
+                                    {% for produto in produtos %}
+                                    <option value="{{ produto.id }}" {% if item.produto_id == produto.id %}selected{% endif %}>
+                                        {{ produto.codigo }} - {{ produto.descricao }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <input type="text" class="erp-form-control input-manual {% if item.produto %}d-none{% endif %}"
+                                       value="{{ item.descricao_manual }}" placeholder="Descrição manual...">
+                            </td>
+                            <td>
+                                <input type="number" class="erp-form-control input-qtd" 
+                                       value="{{ item.quantidade }}" min="0.01" step="0.01">
+                            </td>
+                            <td>
+                                <select class="erp-form-select select-unidade">
+                                    <option value="UN" {% if item.unidade_medida == 'UN' %}selected{% endif %}>UN</option>
+                                    <option value="CX" {% if item.unidade_medida == 'CX' %}selected{% endif %}>CX</option>
+                                    <option value="PC" {% if item.unidade_medida == 'PC' %}selected{% endif %}>PC</option>
+                                    <option value="KG" {% if item.unidade_medida == 'KG' %}selected{% endif %}>KG</option>
+                                    <option value="M" {% if item.unidade_medida == 'M' %}selected{% endif %}>M</option>
+                                    <option value="L" {% if item.unidade_medida == 'L' %}selected{% endif %}>L</option>
+                                    <option value="PAR" {% if item.unidade_medida == 'PAR' %}selected{% endif %}>PAR</option>
+                                    <option value="JG" {% if item.unidade_medida == 'JG' %}selected{% endif %}>JG</option>
+                                    <option value="RL" {% if item.unidade_medida == 'RL' %}selected{% endif %}>RL</option>
+                                    <option value="FD" {% if item.unidade_medida == 'FD' %}selected{% endif %}>FD</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text" class="erp-form-control input-obs" 
+                                       value="{{ item.observacao|default:'' }}" placeholder="Obs...">
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="erp-btn erp-btn--danger erp-btn--sm" onclick="removerItem(this)">
+                                    <span>🗑️</span>
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr data-id="">
+                            <td class="num-linha">1</td>
+                            <td>
+                                <select class="erp-form-select select-produto" onchange="produtoChanged(this)" style="margin-bottom: 8px;">
+                                    <option value="">-- Selecione ou digite manual --</option>
+                                    {% for produto in produtos %}
+                                    <option value="{{ produto.id }}">{{ produto.codigo }} - {{ produto.descricao }}</option>
+                                    {% endfor %}
+                                </select>
+                                <input type="text" class="erp-form-control input-manual" placeholder="Descrição manual...">
+                            </td>
+                            <td>
+                                <input type="number" class="erp-form-control input-qtd" value="1" min="0.01" step="0.01">
+                            </td>
+                            <td>
+                                <select class="erp-form-select select-unidade">
+                                    <option value="UN">UN</option>
+                                    <option value="CX">CX</option>
+                                    <option value="PC">PC</option>
+                                    <option value="KG">KG</option>
+                                    <option value="M">M</option>
+                                    <option value="L">L</option>
+                                    <option value="PAR">PAR</option>
+                                    <option value="JG">JG</option>
+                                    <option value="RL">RL</option>
+                                    <option value="FD">FD</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text" class="erp-form-control input-obs" placeholder="Obs...">
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="erp-btn erp-btn--danger erp-btn--sm" onclick="removerItem(this)">
+                                    <span>🗑️</span>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <button type="button" class="erp-btn erp-btn--primary mt-3" onclick="adicionarItem()">
+                <span>+</span> Adicionar Item
+            </button>
+        </div>
+        <div class="erp-card__footer">
+            <button type="button" class="erp-btn erp-btn--secondary" onclick="goToStep(1)">
+                <span>←</span> Voltar
+            </button>
+            <button type="button" class="erp-btn erp-btn--primary" onclick="salvarItensEAvancar()">
+                Salvar e Continuar <span>→</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- =========================================================================== -->
+<!-- ETAPA 3: IMPORTAR FORNECEDORES -->
+<!-- =========================================================================== -->
+<div class="wizard-content" id="step-3">
+    <div class="erp-grid erp-grid--2">
+        <!-- Formulário Importar -->
+        <div class="erp-card">
+            <div class="erp-card__header">
+                <h5><i class="fas fa-file-import me-2"></i>Importar Cotação</h5>
+            </div>
+            <div class="erp-card__body">
+                <form id="formImportarFornecedor" enctype="multipart/form-data">
+                    <div class="erp-form-group">
+                        <label class="erp-form-label">Fornecedor <span class="required">*</span></label>
+                        <select class="erp-form-select" id="fornecedor_id" name="fornecedor_id" required>
+                            <option value="">Selecione...</option>
+                            {% for fornecedor in fornecedores %}
+                            <option value="{{ fornecedor.id }}">{{ fornecedor.nome_fantasia|default:fornecedor.nome_razao_social }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="erp-form-group">
+                        <label class="erp-form-label">Arquivo (CSV, Excel)</label>
+                        <input type="file" class="erp-form-control" id="arquivo" name="arquivo" 
+                               accept=".csv,.xlsx,.xls">
+                        <small class="text-muted">Colunas: descricao, quantidade, preco_unitario</small>
+                    </div>
+                    <div class="erp-grid erp-grid--2">
+                        <div class="erp-form-group">
+                            <label class="erp-form-label">Prazo Entrega (dias)</label>
+                            <input type="number" class="erp-form-control" id="prazo_entrega" name="prazo_entrega" min="0">
+                        </div>
+                        <div class="erp-form-group">
+                            <label class="erp-form-label">Desconto (%)</label>
+                            <input type="number" class="erp-form-control" id="desconto" name="desconto" min="0" max="100" step="0.01">
+                        </div>
+                    </div>
+                    <div class="erp-grid erp-grid--2">
+                        <div class="erp-form-group">
+                            <label class="erp-form-label">Frete (R$)</label>
+                            <input type="number" class="erp-form-control" id="frete" name="frete" min="0" step="0.01">
+                        </div>
+                        <div class="erp-form-group">
+                            <label class="erp-form-label">Confiabilidade (1-10)</label>
+                            <input type="number" class="erp-form-control" id="confiabilidade" name="confiabilidade" 
+                                   min="1" max="10" value="5">
+                        </div>
+                    </div>
+                    <div class="erp-form-group">
+                        <label class="erp-form-label">Condição de Pagamento</label>
+                        <input type="text" class="erp-form-control" id="condicao_pagamento" name="condicao_pagamento"
+                               placeholder="Ex: 30/60 dias">
+                    </div>
+                    <div class="erp-form-group">
+                        <label class="erp-form-label">Observações</label>
+                        <textarea class="erp-form-control" id="obs_fornecedor" name="observacoes" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="erp-btn erp-btn--primary w-100">
+                        <span>📤</span> Importar Cotação
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Lista Fornecedores Importados -->
+        <div class="erp-card">
+            <div class="erp-card__header">
+                <h5><i class="fas fa-users me-2"></i>Fornecedores Importados</h5>
+            </div>
+            <div class="erp-card__body" id="listaFornecedores">
+                {% for cot_forn in cotacoes_fornecedor %}
+                <div class="card-fornecedor" data-fornecedor-id="{{ cot_forn.fornecedor.id }}">
+                    <div class="card-header">
+                        <strong>{{ cot_forn.fornecedor.nome_fantasia|default:cot_forn.fornecedor.nome_razao_social }}</strong>
+                        <button type="button" class="erp-btn erp-btn--danger erp-btn--sm" 
+                                onclick="removerFornecedor({{ cot_forn.fornecedor.id }})">
+                            <span>🗑️</span>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="erp-grid erp-grid--2" style="font-size: 13px;">
+                            <div><strong>Itens:</strong> {{ cot_forn.itens.count }}</div>
+                            <div><strong>Prazo:</strong> {{ cot_forn.prazo_entrega_dias|default:"-" }} dias</div>
+                            <div><strong>Total:</strong> R$ {{ cot_forn.valor_total_liquido|floatformat:2 }}</div>
+                            <div><strong>Confiança:</strong> {{ cot_forn.nota_confiabilidade|default:"5" }}/10</div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="erp-empty" id="semFornecedores">
+                    <div class="erp-empty__icon">📋</div>
+                    <p>Nenhum fornecedor importado ainda.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="erp-card">
+        <div class="erp-card__footer">
+            <button type="button" class="erp-btn erp-btn--secondary" onclick="goToStep(2)">
+                <span>←</span> Voltar
+            </button>
+            <button type="button" class="erp-btn erp-btn--primary" onclick="goToStep(4)">
+                Continuar para Comparativo <span>→</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- =========================================================================== -->
+<!-- ETAPA 4: COMPARATIVO -->
+<!-- =========================================================================== -->
+<div class="wizard-content" id="step-4">
+    <div class="erp-card">
+        <div class="erp-card__header">
+            <h5><i class="fas fa-columns me-2"></i>Quadro Comparativo</h5>
+            <div>
+                <button type="button" class="erp-btn erp-btn--warning" onclick="calcularSugestoes()">
+                    <span>✨</span> Calcular Sugestões
+                </button>
+                <button type="button" class="erp-btn erp-btn--secondary" onclick="aceitarSugestoes()">
+                    <span>✓</span> Aceitar Sugestões
+                </button>
+                <button type="button" class="erp-btn erp-btn--secondary" onclick="limparSelecao()">
+                    <span>🗑️</span> Limpar
+                </button>
+            </div>
+        </div>
+        <div class="erp-card__body" style="padding: 0; overflow-x: auto;">
+            <table class="table-comparativo">
+                <thead>
+                    <tr>
+                        <th style="width: 50px; position: sticky; left: 0; background: var(--bg-tertiary); z-index: 10;">#</th>
+                        <th style="min-width: 200px; position: sticky; left: 50px; background: var(--bg-tertiary); z-index: 10;">Item</th>
+                        <th style="width: 60px;">Qtd</th>
+                        {% for cot_forn in cotacoes_fornecedor %}
+                        <th style="min-width: 150px; text-align: center;">
+                            {{ cot_forn.fornecedor.nome_fantasia|default:cot_forn.fornecedor.nome_razao_social|truncatechars:20 }}
+                            <br><small style="color: var(--text-tertiary);">{{ cot_forn.prazo_entrega_dias|default:'-' }} dias</small>
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for linha in comparativo %}
+                    <tr>
+                        <td style="position: sticky; left: 0; background: var(--card-bg); z-index: 5;">{{ forloop.counter }}</td>
+                        <td style="position: sticky; left: 50px; background: var(--card-bg); z-index: 5;">
+                            {{ linha.item.descricao_display }}
+                        </td>
+                        <td class="text-center">{{ linha.item.quantidade }}</td>
+                        {% for forn in linha.fornecedores %}
+                        <td class="text-center 
+                            {% if forn.melhor_preco %}melhor-preco{% endif %}
+                            {% if forn.sugerido %}sugerido{% endif %}
+                            {% if forn.selecionado %}selecionado{% endif %}
+                            {% if not forn.disponivel %}indisponivel{% endif %}">
+                            {% if forn.item_cotacao %}
+                                {% if forn.disponivel %}
+                                <div style="display: flex; justify-content: center; margin-bottom: 4px;">
+                                    <input type="checkbox" class="check-item" 
+                                           data-item-id="{{ forn.item_cotacao.id }}"
+                                           {% if forn.selecionado %}checked{% endif %}>
+                                </div>
+                                <strong>R$ {{ forn.preco_unitario|floatformat:2 }}</strong>
+                                {% if forn.melhor_preco %}<br><small style="color: var(--success-500);">Melhor Preço</small>{% endif %}
+                                {% if forn.melhor_prazo %}<br><small style="color: var(--primary-500);">Melhor Prazo</small>{% endif %}
+                                {% else %}
+                                <span>Indisponível</span>
+                                {% endif %}
+                            {% else %}
+                            <span style="color: var(--text-tertiary);">-</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="text-center" style="padding: 48px;">
+                            <div class="erp-empty">
+                                <div class="erp-empty__icon">📊</div>
+                                <p>Importe cotações de fornecedores na etapa anterior para ver o comparativo.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                {% if cotacoes_fornecedor %}
+                <tfoot style="background: var(--bg-tertiary);">
+                    <tr>
+                        <th colspan="3" style="text-align: right; padding: 12px;">TOTAIS:</th>
+                        {% for cot_forn in cotacoes_fornecedor %}
+                        <th style="text-align: center; padding: 12px;">
+                            <strong>R$ {{ cot_forn.valor_total_liquido|floatformat:2 }}</strong>
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </tfoot>
+                {% endif %}
+            </table>
+        </div>
+        <div class="erp-card__footer">
+            <button type="button" class="erp-btn erp-btn--secondary" onclick="goToStep(3)">
+                <span>←</span> Voltar
+            </button>
+            <button type="button" class="erp-btn erp-btn--primary" onclick="salvarSelecaoEAvancar()">
+                Salvar Seleção e Continuar <span>→</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- =========================================================================== -->
+<!-- ETAPA 5: GERAR PEDIDOS -->
+<!-- =========================================================================== -->
+<div class="wizard-content" id="step-5">
+    <div class="erp-card">
+        <div class="erp-card__header">
+            <h5><i class="fas fa-shopping-cart me-2"></i>Gerar Pedidos de Compra</h5>
+        </div>
+        <div class="erp-card__body">
+            <div class="erp-alert erp-alert--info">
+                <span>ℹ️</span>
+                <div>
+                    Ao clicar em "Gerar Pedidos", serão criados pedidos de compra para cada fornecedor com os itens selecionados no comparativo.
+                </div>
+            </div>
+
+            <div id="resumoSelecao" class="mb-4">
+                <h6 style="margin-bottom: 12px; color: var(--text-primary);">Resumo da Seleção:</h6>
+                <p style="color: var(--text-secondary);">Finalize a seleção na etapa anterior para ver o resumo.</p>
+            </div>
+
+            <div id="pedidosGerados" style="display: none;">
+                <h6 style="color: var(--success-500); margin-bottom: 12px;">
+                    <span>✓</span> Pedidos Gerados:
+                </h6>
+                <div id="listaPedidos"></div>
+            </div>
+        </div>
+        <div class="erp-card__footer">
+            <button type="button" class="erp-btn erp-btn--secondary" onclick="goToStep(4)">
+                <span>←</span> Voltar
+            </button>
+            <button type="button" class="erp-btn erp-btn--success" id="btnGerarPedidos" onclick="gerarPedidos()">
+                <span>🛒</span> Gerar Pedidos de Compra
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Estado global
+let cotacaoId = {{ cotacao.pk|default:'null' }};
+let currentStep = 1;
+
+// Navegação do Wizard
+function goToStep(step) {
+    if (step > 1 && !cotacaoId) {
+        alert('Salve os dados básicos primeiro.');
+        return;
+    }
+    
+    document.querySelectorAll('.wizard-step').forEach((el, idx) => {
+        el.classList.remove('active');
+        if (idx + 1 < step) {
+            el.classList.add('completed');
+        } else {
+            el.classList.remove('completed');
+        }
+        if (idx + 1 === step) {
+            el.classList.add('active');
+        }
+    });
+    
+    document.querySelectorAll('.wizard-content').forEach(el => el.classList.remove('active'));
+    document.getElementById('step-' + step).classList.add('active');
+    
+    currentStep = step;
+    
+    if (step === 5) {
+        atualizarResumoSelecao();
+    }
+}
+
+// ETAPA 1: DADOS
+function salvarDadosEAvancar() {
+    const dados = {
+        titulo: document.getElementById('titulo').value,
+        setor: document.getElementById('setor').value,
+        data_limite_resposta: document.getElementById('data_limite_resposta').value,
+        observacoes: document.getElementById('observacoes').value
+    };
+    
+    if (!dados.titulo) {
+        alert('Informe o título da cotação.');
+        return;
+    }
+    
+    const url = cotacaoId 
+        ? `/api/cotacao/${cotacaoId}/salvar-dados/`
+        : '/api/cotacao/salvar-dados/';
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dados)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            cotacaoId = data.cotacao_id;
+            if (!window.location.pathname.includes(cotacaoId)) {
+                history.replaceState(null, '', `/compras/cotacoes/${cotacaoId}/`);
+            }
+            goToStep(2);
+        } else {
+            alert('Erro: ' + data.error);
+        }
+    });
+}
+
+// ETAPA 2: ITENS
+function adicionarItem() {
+    const tbody = document.getElementById('tbodyItens');
+    const numLinhas = tbody.rows.length + 1;
+    
+    const tr = document.createElement('tr');
+    tr.setAttribute('data-id', '');
+    tr.innerHTML = `
+        <td class="num-linha">${numLinhas}</td>
+        <td>
+            <select class="erp-form-select select-produto" onchange="produtoChanged(this)" style="margin-bottom: 8px;">
+                <option value="">-- Selecione ou digite manual --</option>
+                {% for produto in produtos %}
+                <option value="{{ produto.id }}">{{ produto.codigo }} - {{ produto.descricao }}</option>
+                {% endfor %}
+            </select>
+            <input type="text" class="erp-form-control input-manual" placeholder="Descrição manual...">
+        </td>
+        <td>
+            <input type="number" class="erp-form-control input-qtd" value="1" min="0.01" step="0.01">
+        </td>
+        <td>
+            <select class="erp-form-select select-unidade">
+                <option value="UN">UN</option>
+                <option value="CX">CX</option>
+                <option value="PC">PC</option>
+                <option value="KG">KG</option>
+                <option value="M">M</option>
+                <option value="L">L</option>
+            </select>
+        </td>
+        <td>
+            <input type="text" class="erp-form-control input-obs" placeholder="Obs...">
+        </td>
+        <td class="text-center">
+            <button type="button" class="erp-btn erp-btn--danger erp-btn--sm" onclick="removerItem(this)">
+                <span>🗑️</span>
+            </button>
+        </td>
+    `;
+    tbody.appendChild(tr);
+}
+
+function produtoChanged(select) {
+    const tr = select.closest('tr');
+    const inputManual = tr.querySelector('.input-manual');
+    if (select.value) {
+        inputManual.classList.add('d-none');
+        inputManual.value = '';
+    } else {
+        inputManual.classList.remove('d-none');
+    }
+}
+
+function removerItem(btn) {
+    const tbody = document.getElementById('tbodyItens');
+    if (tbody.rows.length > 1) {
+        btn.closest('tr').remove();
+        renumerarLinhas();
+    }
+}
+
+function renumerarLinhas() {
+    document.querySelectorAll('#tbodyItens tr').forEach((tr, idx) => {
+        tr.querySelector('.num-linha').textContent = idx + 1;
+    });
+}
+
+function salvarItensEAvancar() {
+    const itens = [];
+    document.querySelectorAll('#tbodyItens tr').forEach(tr => {
+        const produtoId = tr.querySelector('.select-produto').value;
+        const descManual = tr.querySelector('.input-manual').value;
+        const qtd = tr.querySelector('.input-qtd').value;
+        const unidade = tr.querySelector('.select-unidade').value;
+        const obs = tr.querySelector('.input-obs').value;
+        
+        if (produtoId || descManual) {
+            itens.push({
+                id: tr.getAttribute('data-id') || null,
+                produto_id: produtoId || null,
+                descricao_manual: descManual,
+                quantidade: qtd,
+                unidade_medida: unidade,
+                observacao: obs
+            });
+        }
+    });
+    
+    if (itens.length === 0) {
+        alert('Adicione pelo menos um item.');
+        return;
+    }
+    
+    fetch(`/api/cotacao/${cotacaoId}/salvar-itens/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ itens: itens })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const rows = document.querySelectorAll('#tbodyItens tr');
+            data.itens.forEach((item, idx) => {
+                if (rows[idx]) {
+                    rows[idx].setAttribute('data-id', item.id);
+                }
+            });
+            goToStep(3);
+        } else {
+            alert('Erro: ' + data.error);
+        }
+    });
+}
+
+function copiarParaEmail() {
+    if (!cotacaoId) {
+        alert('Salve a cotação primeiro.');
+        return;
+    }
+    fetch(`/api/cotacao/${cotacaoId}/copiar-lista-email/`)
+    .then(r => r.json())
+    .then(data => {
+        navigator.clipboard.writeText(data.texto);
+        const btn = event.target.closest('.btn-copiar');
+        btn.classList.add('copiado');
+        setTimeout(() => btn.classList.remove('copiado'), 2000);
+    });
+}
+
+function copiarParaWhatsApp() {
+    if (!cotacaoId) {
+        alert('Salve a cotação primeiro.');
+        return;
+    }
+    fetch(`/api/cotacao/${cotacaoId}/copiar-lista-whatsapp/`)
+    .then(r => r.json())
+    .then(data => {
+        navigator.clipboard.writeText(data.texto);
+        const btn = event.target.closest('.btn-copiar');
+        btn.classList.add('copiado');
+        setTimeout(() => btn.classList.remove('copiado'), 2002);
+    });
+}
+
+// ETAPA 3: FORNECEDORES
+document.getElementById('formImportarFornecedor').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch(`/api/cotacao/${cotacaoId}/importar-fornecedor/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Erro: ' + data.error);
+        }
+    });
+});
+
+function removerFornecedor(fornecedorId) {
+    if (!confirm('Remover cotação deste fornecedor?')) return;
+    
+    fetch(`/api/cotacao/${cotacaoId}/remover-fornecedor/${fornecedorId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Erro: ' + data.error);
+        }
+    });
+}
+
+// ETAPA 4: COMPARATIVO
+function calcularSugestoes() {
+    fetch(`/api/cotacao/${cotacaoId}/calcular-sugestoes/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'peso_preco=50&peso_prazo=30&peso_confiabilidade=20'
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Erro: ' + data.error);
+        }
+    });
+}
+
+function aceitarSugestoes() {
+    document.querySelectorAll('.sugerido .check-item').forEach(cb => {
+        cb.checked = true;
+    });
+}
+
+function limparSelecao() {
+    document.querySelectorAll('.check-item').forEach(cb => {
+        cb.checked = false;
+    });
+}
+
+function salvarSelecaoEAvancar() {
+    const itensSelecionados = [];
+    document.querySelectorAll('.check-item:checked').forEach(cb => {
+        itensSelecionados.push(parseInt(cb.getAttribute('data-item-id')));
+    });
+    
+    fetch(`/api/cotacao/${cotacaoId}/salvar-selecao/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ itens_selecionados: itensSelecionados })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            goToStep(5);
+        } else {
+            alert('Erro: ' + data.error);
+        }
+    });
+}
+
+// ETAPA 5: GERAR PEDIDOS
+function atualizarResumoSelecao() {
+    const checkeds = document.querySelectorAll('.check-item:checked').length;
+    const resumo = document.getElementById('resumoSelecao');
+    resumo.innerHTML = `
+        <h6 style="margin-bottom: 12px; color: var(--text-primary);">Resumo da Seleção:</h6>
+        <p style="color: var(--text-secondary);"><strong>${checkeds}</strong> item(ns) selecionado(s) para compra.</p>
+    `;
+}
+
+function gerarPedidos() {
+    if (!confirm('Confirma a geração dos pedidos de compra?')) return;
+    
+    const btn = document.getElementById('btnGerarPedidos');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Gerando...';
+    
+    fetch(`/api/cotacao/${cotacaoId}/gerar-pedidos/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('pedidosGerados').style.display = 'block';
+            let html = '';
+            data.pedidos.forEach(p => {
+                html += `
+                    <div class="card-pedido">
+                        <div style="padding: 16px; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong style="color: var(--text-primary);">${p.numero}</strong> - <span style="color: var(--text-secondary);">${p.fornecedor}</span>
+                                <br><small style="color: var(--text-tertiary);">${p.total_itens} itens | R$ ${p.valor_total.toFixed(2)}</small>
+                            </div>
+                            <a href="/compras/pedidos/editar/${p.id}/" class="erp-btn erp-btn--primary erp-btn--sm">
+                                <span>👁️</span> Ver
+                            </a>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('listaPedidos').innerHTML = html;
+            btn.innerHTML = '<span>✓</span> Pedidos Gerados!';
+            btn.classList.remove('erp-btn--success');
+            btn.classList.add('erp-btn--secondary');
+        } else {
+            alert('Erro: ' + data.error);
+            btn.disabled = false;
+            btn.innerHTML = '<span>🛒</span> Gerar Pedidos de Compra';
+        }
+    });
+}
+</script>
+{% endblock %}

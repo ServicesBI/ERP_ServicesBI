@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-ERP SERVICES BI - URLS LIMPAS (sem Cotacao antigo)
+ERP SERVICES BI - URLS COMPLETAS
 """
 from django.contrib.auth import views as auth_views
 from django.urls import path
@@ -82,6 +82,36 @@ urlpatterns = [
 
     # RELATÓRIOS COMPRAS
     path('compras/relatorios/', views.relatorio_compras, name='relatorio_compras'),
+
+    # =============================================================================
+    # COTAÇÃO COMPARATIVA (WIZARD)
+    # =============================================================================
+    
+    # Lista e Wizard
+    path('compras/cotacoes/', views.cotacao_lista, name='cotacao_lista'),
+    path('compras/cotacoes/nova/', views.cotacao_wizard, name='cotacao_wizard'),
+    path('compras/cotacoes/<int:pk>/', views.cotacao_wizard, name='cotacao_wizard_edit'),
+    
+    # APIs AJAX - Salvar Dados
+    path('api/cotacao/salvar-dados/', views.cotacao_salvar_dados, name='cotacao_salvar_dados_novo'),
+    path('api/cotacao/<int:pk>/salvar-dados/', views.cotacao_salvar_dados, name='cotacao_salvar_dados'),
+    path('api/cotacao/<int:pk>/salvar-itens/', views.cotacao_salvar_itens, name='cotacao_salvar_itens'),
+    
+    # APIs AJAX - Fornecedores
+    path('api/cotacao/<int:pk>/importar-fornecedor/', views.cotacao_importar_fornecedor, name='cotacao_importar_fornecedor'),
+    path('api/cotacao/<int:pk>/remover-fornecedor/<int:fornecedor_pk>/', views.cotacao_remover_fornecedor, name='cotacao_remover_fornecedor'),
+    
+    # APIs AJAX - Comparar e Selecionar
+    path('api/cotacao/<int:pk>/calcular-sugestoes/', views.cotacao_calcular_sugestoes, name='cotacao_calcular_sugestoes'),
+    path('api/cotacao/<int:pk>/salvar-selecao/', views.cotacao_salvar_selecao, name='cotacao_salvar_selecao'),
+    
+    # APIs AJAX - Gerar Pedidos
+    path('api/cotacao/<int:pk>/gerar-pedidos/', views.cotacao_gerar_pedidos, name='cotacao_gerar_pedidos'),
+    path('api/cotacao/<int:pk>/excluir/', views.cotacao_excluir, name='cotacao_excluir'),
+    
+    # Utilitários
+    path('api/cotacao/<int:pk>/copiar-lista-email/', views.cotacao_copiar_lista_email, name='cotacao_copiar_lista_email'),
+    path('api/cotacao/<int:pk>/copiar-lista-whatsapp/', views.cotacao_copiar_lista_whatsapp, name='cotacao_copiar_lista_whatsapp'),
 
     # =============================================================================
     # VENDAS
@@ -190,14 +220,4 @@ urlpatterns = [
     # RELATÓRIOS
     path('estoque/relatorio-posicao/', views.relatorio_estoque, name='relatorio_estoque'),
     path('estoque/relatorio-movimentacoes/', views.relatorio_movimentacoes, name='relatorio_movimentacoes'),
-
-    # =============================================================================
-    # COTAÇÃO COMPARATIVA (NOVO - SEM COTACAO ANTIGO)
-    # =============================================================================
-    path('cotacao-mae/', views.cotacao_mae_list, name='cotacao_mae_list'),
-    path('cotacao-mae/nova/', views.cotacao_mae_create, name='cotacao_mae_create'),
-    path('cotacao-mae/<int:pk>/', views.cotacao_mae_detail, name='cotacao_mae_detail'),
-    path('cotacao-mae/<int:pk>/editar/', views.cotacao_mae_edit, name='cotacao_mae_edit'),
-    path('cotacao-mae/<int:pk>/excluir/', views.cotacao_mae_delete, name='cotacao_mae_delete'),
-    path('cotacao-mae/<int:cotacao_mae_pk>/importar/', views.cotacao_fornecedor_importar, name='cotacao_fornecedor_importar'),
 ]

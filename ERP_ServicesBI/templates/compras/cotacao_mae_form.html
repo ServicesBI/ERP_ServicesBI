@@ -1,3 +1,5 @@
+html
+
 {% extends 'base.html' %}
 
 {% block title %}{{ titulo }} - ERP ServicesBI{% endblock %}
@@ -115,16 +117,17 @@
             <table style="width: 100%; border-collapse: collapse;">
                 <thead>
                     <tr style="background: #e2e8f0; font-weight: 600; color: #475569; font-size: 14px;">
-                        <th style="padding: 12px; text-align: left; width: 40%;">Produto</th>
+                        <th style="padding: 12px; text-align: left; width: 35%;">Produto</th>
                         <th style="padding: 12px; text-align: left; width: 30%;">Descrição (se não cadastrado)</th>
-                        <th style="padding: 12px; text-align: center; width: 15%;">Qtd</th>
-                        <th style="padding: 12px; text-align: center; width: 15%;">Unidade</th>
+                        <th style="padding: 12px; text-align: center; width: 12%;">Qtd</th>
+                        <th style="padding: 12px; text-align: center; width: 13%;">Unidade</th>
                         <th style="padding: 12px; text-align: center; width: 10%;">Excluir</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="itens-tbody">
                     {% for form_item in formset %}
-                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <tr style="border-bottom: 1px solid #e2e8f0;" class="item-row">
+                        {{ form_item.id }}
                         <td style="padding: 12px;">
                             {{ form_item.produto }}
                             {% if form_item.produto.errors %}
@@ -134,16 +137,14 @@
                         <td style="padding: 12px;">
                             {{ form_item.descricao_manual }}
                         </td>
-                        <td style="padding: 12px;">
+                        <td style="padding: 12px; text-align: center;">
                             {{ form_item.quantidade }}
                         </td>
-                        <td style="padding: 12px;">
+                        <td style="padding: 12px; text-align: center;">
                             {{ form_item.unidade_medida }}
                         </td>
                         <td style="padding: 12px; text-align: center;">
-                            {% if form_item.instance.pk %}
                             {{ form_item.DELETE }}
-                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -167,28 +168,83 @@
     </form>
 </div>
 
+<style>
+/* Estiliza os inputs dentro da tabela */
+#itens-tbody select,
+#itens-tbody input[type="text"],
+#itens-tbody input[type="number"] {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+}
+
+#itens-tbody select:focus,
+#itens-tbody input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+#itens-tbody input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+/* Quantidade e Unidade menores */
+#itens-tbody td:nth-child(4) input,
+#itens-tbody td:nth-child(5) input {
+    text-align: center;
+}
+</style>
+
 <script>
 function addItemRow() {
-    // Clona a última linha do formset
-    const table = document.querySelector('tbody');
-    const rows = table.querySelectorAll('tr');
+    const tbody = document.getElementById('itens-tbody');
+    const rows = tbody.querySelectorAll('.item-row');
     const lastRow = rows[rows.length - 1];
     const newRow = lastRow.cloneNode(true);
     
-    // Atualiza os índices dos inputs
-    const totalForms = document.querySelector('#id_itens-TOTAL_FORMS');
-    const newIndex = parseInt(totalForms.value);
+    // Pega o prefixo do formset (pode ser 'itens_solicitados' ou 'itens')
+    const totalFormsInput = document.querySelector('[name$="-TOTAL_FORMS"]');
+    const prefix = totalFormsInput.name.replace('-TOTAL_FORMS', '');
+    const newIndex = parseInt(totalFormsInput.value);
     
+    // Atualiza os índices dos inputs
     newRow.querySelectorAll('input, select').forEach(input => {
-        input.name = input.name.replace(/itens-\d+-/, `itens-${newIndex}-`);
-        input.id = input.id.replace(/itens-\d+-/, `itens-${newIndex}-`);
-        if (input.type !== 'hidden') {
+        const oldName = input.name;
+        const oldId = input.id;
+        
+        // Substitui o índice antigo pelo novo
+        const regex = new RegExp(prefix + '-\\d+-');
+        input.name = oldName.replace(regex, prefix + '-' + newIndex + '-');
+        input.id = oldId.replace(regex, prefix + '-' + newIndex + '-');
+        
+        // Limpa valores (exceto hidden fields de controle)
+        if (input.type === 'checkbox') {
+            input.checked = false;
+        } else if (input.type !== 'hidden' || input.name.includes('-id')) {
             input.value = '';
         }
     });
     
-    table.appendChild(newRow);
-    totalForms.value = newIndex + 1;
+    // Limpa também os labels (se houver)
+    newRow.querySelectorAll('label').forEach(label => {
+        if (label.htmlFor) {
+            const regex = new RegExp(prefix + '-\\d+-');
+            label.htmlFor = label.htmlFor.replace(regex, prefix + '-' + newIndex + '-');
+        }
+    });
+    
+    tbody.appendChild(newRow);
+    totalFormsInput.value = newIndex + 1;
+    
+    // Foca no primeiro campo da nova linha
+    const firstSelect = newRow.querySelector('select');
+    if (firstSelect) firstSelect.focus();
 }
 </script>
 {% endblock %}
