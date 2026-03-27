@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Condições de Pagamento - ERP ServicesBI{% endblock %}
+
+{% block extra_css %}
+<style>
+.erp-page-header { margin-bottom: 24px; }
+.erp-page-header__title { margin: 0; font-size: 24px; font-weight: 700; color: var(--gray-800); }
+.erp-page-header__subtitle { margin: 4px 0 0 0; color: var(--gray-500); font-size: 14px; }
+.erp-filters { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--gray-200); flex-wrap: wrap; gap: 15px; }
+.erp-filters__title { margin: 0; font-size: 18px; font-weight: 600; color: var(--gray-800); }
+.erp-filters__form { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.erp-status { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: var(--radius-full); font-size: 12px; font-weight: 600; text-transform: uppercase; }
+.erp-status--ativo { background: var(--success-100); color: var(--success-600); }
+.erp-status--inativo { background: var(--gray-100); color: var(--gray-600); }
+.erp-actions { position: relative; display: inline-block; }
+.erp-actions__btn { padding: 6px 12px; background: white; border: 1px solid var(--gray-300); border-radius: var(--radius); cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 4px; }
+.erp-actions__menu { position: fixed; background: white; border: 1px solid var(--gray-200); border-radius: var(--radius); box-shadow: 0 10px 25px rgba(0,0,0,0.15); min-width: 160px; z-index: 9999; display: none; }
+.erp-actions__menu.active { display: block; }
+.erp-actions__item { display: flex; align-items: center; gap: 8px; padding: 10px 14px; color: var(--gray-700); text-decoration: none; font-size: 14px; }
+.erp-actions__item:hover { background: var(--gray-50); }
+.erp-actions__item--danger { color: var(--danger); }
+.erp-empty { padding: 48px 24px; text-align: center; color: var(--gray-500); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="erp-page-header">
+    <h2 class="erp-page-header__title">CADASTRO</h2>
+    <p class="erp-page-header__subtitle">Gerenciamento de condições de pagamento</p>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        {% if message.tags == 'error' %}
+        <div class="erp-alert erp-alert--error erp-mb-4">{{ message }}</div>
+        {% else %}
+        <div class="erp-alert erp-alert--success erp-mb-4">{{ message }}</div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<div class="erp-card erp-mb-4">
+    <div class="erp-filters">
+        <h3 class="erp-filters__title">Condições de Pagamento ({{ condicoes|length }})</h3>
+        <a href="{% url 'ERP_ServicesBI:condicao_pagamento_add' %}" class="erp-btn erp-btn--success">
+            <span>+</span> Nova Condição
+        </a>
+    </div>
+    
+    <div class="erp-table-container">
+        <table class="erp-table">
+            <thead>
+                <tr>
+                    <th class="erp-text-left">Descrição</th>
+                    <th class="erp-text-center">Dias</th>
+                    <th class="erp-text-center">Parcelas</th>
+                    <th class="erp-text-center">Status</th>
+                    <th class="erp-text-center">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for condicao in condicoes %}
+                <tr>
+                    <td class="erp-text-left"><strong>{{ condicao.descricao }}</strong></td>
+                    <td class="erp-text-center">{{ condicao.dias }}</td>
+                    <td class="erp-text-center">{{ condicao.parcelas }}</td>
+                    <td class="erp-text-center">
+                        <span class="erp-status erp-status--{% if condicao.ativo %}ativo{% else %}inativo{% endif %}">
+                            {% if condicao.ativo %}Ativo{% else %}Inativo{% endif %}
+                        </span>
+                    </td>
+                    <td class="erp-text-center">
+                        <div class="erp-actions">
+                            <button class="erp-actions__btn" type="button">⚙️ Ações ▼</button>
+                            <div class="erp-actions__menu">
+                                <a href="{% url 'ERP_ServicesBI:condicao_pagamento_edit' condicao.pk %}" class="erp-actions__item">✏️ Editar</a>
+                                <a href="{% url 'ERP_ServicesBI:condicao_pagamento_delete' condicao.pk %}" class="erp-actions__item erp-actions__item--danger" onclick="return confirm('Tem certeza?')">🗑️ Excluir</a>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">
+                        <div class="erp-empty">
+                            <div class="erp-empty__icon">💳</div>
+                            <div class="erp-empty__title">Nenhuma condição encontrada</div>
+                            <a href="{% url 'ERP_ServicesBI:condicao_pagamento_add' %}" class="erp-empty__link">Criar primeira condição</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+document.querySelectorAll('.erp-actions__btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        document.querySelectorAll('.erp-actions__menu').forEach(function(m) { if(m !== btn.nextElementSibling) m.classList.remove('active'); });
+        var menu = btn.nextElementSibling;
+        var rect = btn.getBoundingClientRect();
+        menu.style.left = (rect.right - 160) + 'px';
+        menu.style.top = (rect.bottom + 5) + 'px';
+        menu.classList.toggle('active');
+    });
+});
+document.addEventListener('click', function(e) { if(!e.target.closest('.erp-actions')) document.querySelectorAll('.erp-actions__menu').forEach(function(m) { m.classList.remove('active'); }); });
+</script>
+{% endblock %}

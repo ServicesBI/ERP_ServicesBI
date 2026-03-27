@@ -307,7 +307,8 @@
         <a href="{% url 'ERP_ServicesBI:conciliacao_list' %}" class="erp-btn erp-btn--secondary">
             <span>❌</span> Limpar
         </a>
-        <a href="{% url 'ERP_ServicesBI:conciliacao_importar' %}" class="erp-btn erp-btn--primary">
+        <!-- ✅ CORRIGIDO: conciliacao_importar → conciliacao_add -->
+        <a href="{% url 'ERP_ServicesBI:conciliacao_add' %}" class="erp-btn erp-btn--primary">
             <span>📁</span> Importar OFX
         </a>
     </form>
@@ -384,7 +385,8 @@
                             <div class="erp-empty__icon">📁</div>
                             <div class="erp-empty__title">Nenhum extrato importado</div>
                             <p style="color: var(--gray-500); margin-bottom: 16px;">Importe seu primeiro extrato OFX</p>
-                            <a href="{% url 'ERP_ServicesBI:conciliacao_importar' %}" class="erp-btn erp-btn--primary">
+                            <!-- ✅ CORRIGIDO: conciliacao_importar → conciliacao_add -->
+                            <a href="{% url 'ERP_ServicesBI:conciliacao_add' %}" class="erp-btn erp-btn--primary">
                                 <span>📁</span> Importar OFX
                             </a>
                         </div>

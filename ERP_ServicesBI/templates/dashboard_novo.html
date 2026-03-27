@@ -1,0 +1,348 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Financeiro - ERP ServicesBI{% endblock %}
+
+{% block content %}
+<!-- DASHBOARD CONTAINER -->
+<div class="dashboard">
+    
+    <!-- HEADER DO DASHBOARD -->
+    <div class="dashboard__header">
+        <div>
+            <h1 class="dashboard__title">
+                📊 Dashboard Financeiro
+            </h1>
+            <p class="dashboard__subtitle" id="subtitle">
+                Período: <strong id="periodText">Janeiro 2025</strong> • Atualizado em <strong id="updateTime">--:--</strong>
+            </p>
+        </div>
+        <div class="dashboard__controls">
+            <button class="btn" onclick="refreshData()" title="Atualizar dados">
+                🔄 Atualizar
+            </button>
+            <button class="btn btn--primary" onclick="exportReport()">
+                📥 Exportar
+            </button>
+        </div>
+    </div>
+    
+    <!-- FILTROS -->
+    <div class="filters">
+        <div class="filter-group">
+            <label class="filter-label">Período:</label>
+            <select class="filter-select" id="filterPeriodo" onchange="applyFilters()">
+                <option value="7">Últimos 7 dias</option>
+                <option value="30" selected>Últimos 30 dias</option>
+                <option value="90">Últimos 90 dias</option>
+                <option value="365">Últimos 12 meses</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label class="filter-label">Centro de Custo:</label>
+            <select class="filter-select" id="filterCentro" onchange="applyFilters()">
+                <option value="">Todos</option>
+                <option value="adm">Administrativo</option>
+                <option value="vendas">Vendas</option>
+                <option value="producao">Produção</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label class="filter-label">Categoria:</label>
+            <select class="filter-select" id="filterCategoria" onchange="applyFilters()">
+                <option value="">Todas</option>
+                <option value="receita">Receitas</option>
+                <option value="despesa">Despesas</option>
+            </select>
+        </div>
+        <button class="btn" onclick="resetFilters()" style="margin-left: auto;">
+            ↻ Limpar filtros
+        </button>
+    </div>
+    
+    <!-- 4 MÉTRICAS PRINCIPAIS (4 colunas) -->
+    <div class="grid grid--4">
+        <div class="card card--success fade-in fade-in--delay-1" onclick="showDetail('receita')">
+            <div class="card__header">
+                <div class="card__icon">📈</div>
+                <div class="card__trend">↗ {{ trend_receitas|default:0 }}%</div>
+            </div>
+            <div class="card__label">Receitas</div>
+            <div class="card__value">R$ {{ total_receitas|default:0|floatformat:0 }}</div>
+            <div class="card__subtitle">vs período anterior</div>
+        </div>
+        
+        <div class="card card--danger fade-in fade-in--delay-2" onclick="showDetail('despesa')">
+            <div class="card__header">
+                <div class="card__icon">📉</div>
+                <div class="card__trend">{{ trend_despesas|default:0 }}%</div>
+            </div>
+            <div class="card__label">Despesas</div>
+            <div class="card__value">R$ {{ total_despesas|default:0|floatformat:0 }}</div>
+            <div class="card__subtitle">vs período anterior</div>
+        </div>
+        
+        <div class="card card--info fade-in fade-in--delay-3" onclick="showDetail('saldo')">
+            <div class="card__header">
+                <div class="card__icon">💰</div>
+                <div class="card__trend">{% if trend_saldo > 0 %}↗{% else %}↘{% endif %} {{ trend_saldo|default:0 }}%</div>
+            </div>
+            <div class="card__label">Saldo Líquido</div>
+            <div class="card__value">R$ {{ saldo_liquido|default:0|floatformat:0 }}</div>
+            <div class="card__subtitle">Receitas - Despesas</div>
+        </div>
+        
+        <div class="card card--warning fade-in fade-in--delay-4" onclick="showDetail('previsao')">
+            <div class="card__header">
+                <div class="card__icon">🎯</div>
+                <div class="card__trend">↗ 12%</div>
+            </div>
+            <div class="card__label">Saldo Previsto</div>
+            <div class="card__value">R$ {{ saldo_previsto|default:0|floatformat:0 }}</div>
+            <div class="card__subtitle">Próximos 30 dias</div>
+        </div>
+    </div>
+    
+    <!-- GRÁFICO PRINCIPAL (largura total) -->
+    <div class="grid grid--full">
+        <div class="chart-card fade-in fade-in--delay-1">
+            <div class="chart-card__header">
+                <h3 class="chart-card__title">Evolução Financeira</h3>
+                <div class="chart-card__actions">
+                    <button class="chart-card__btn" title="Fullscreen">⛶</button>
+                    <button class="chart-card__btn" onclick="downloadChart('chartMain')" title="Baixar">💾</button>
+                </div>
+            </div>
+            <div id="chartMain" class="chart-container"></div>
+        </div>
+    </div>
+    
+    <!-- GRÁFICOS SECUNDÁRIOS (2 colunas) -->
+    <div class="grid grid--2">
+        <div class="chart-card fade-in fade-in--delay-2">
+            <div class="chart-card__header">
+                <h3 class="chart-card__title">Distribuição de Despesas</h3>
+                <div class="chart-card__actions">
+                    <button class="chart-card__btn">⛶</button>
+                </div>
+            </div>
+            <div id="chartPie" class="chart-container--sm"></div>
+        </div>
+        
+        <div class="chart-card fade-in fade-in--delay-3">
+            <div class="chart-card__header">
+                <h3 class="chart-card__title">Margem de Lucro</h3>
+                <div class="chart-card__actions">
+                    <button class="chart-card__btn">⛶</button>
+                </div>
+            </div>
+            <div id="chartMargin" class="chart-container--sm"></div>
+        </div>
+    </div>
+    
+    <!-- TABELA DE MOVIMENTAÇÕES -->
+    <div class="table-card fade-in fade-in--delay-4">
+        <div class="table-card__header">
+            <h3 class="table-card__title">Movimentações Recentes</h3>
+            <div style="font-size: 12px; color: var(--text-secondary);">
+                Total: <strong id="totalMovimentacoes">0</strong> registros
+            </div>
+        </div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Descrição</th>
+                    <th>Tipo</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 32px; color: var(--text-tertiary);">
+                        Nenhuma movimentação registrada
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- ECharts -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+
+<script>
+/* ======== FUNÇÕES DO DASHBOARD ======== */
+
+function showToast(message, type) {
+    type = type || 'info';
+    var container = document.getElementById('toastContainer');
+    var toast = document.createElement('div');
+    toast.className = 'toast toast--' + type;
+    var icons = { success: '✅', danger: '❌', warning: '⚠️', info: 'ℹ️' };
+    toast.innerHTML = '<div style="display:flex;gap:12px;align-items:center;">' +
+        '<span style="font-size:18px;">' + (icons[type] || 'ℹ️') + '</span>' +
+        '<div><div style="font-weight:600;">' + message + '</div>' +
+        '<div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;">' +
+        new Date().toLocaleTimeString('pt-BR') + '</div></div></div>';
+    container.appendChild(toast);
+    setTimeout(function() { toast.remove(); }, 5000);
+}
+
+function refreshData() {
+    showToast('Atualizando dados...', 'info');
+    setTimeout(function() { location.reload(); }, 800);
+}
+
+function exportReport() {
+    showToast('Preparando relatório...', 'info');
+    setTimeout(function() { window.print(); }, 500);
+}
+
+function applyFilters() {
+    var periodo = document.getElementById('filterPeriodo').value;
+    showToast('Filtros aplicados: ' + periodo + ' dias', 'success');
+}
+
+function resetFilters() {
+    document.getElementById('filterPeriodo').value = '30';
+    document.getElementById('filterCentro').value = '';
+    document.getElementById('filterCategoria').value = '';
+    showToast('Filtros limpos', 'info');
+}
+
+function showDetail(type) {
+    var messages = {
+        receita:  'Receitas do período',
+        despesa:  'Despesas do período',
+        saldo:    'Saldo líquido = Receitas - Despesas',
+        previsao: 'Projeção baseada no histórico'
+    };
+    showToast(messages[type] || type, 'info');
+}
+
+function downloadChart() {
+    showToast('Gráfico exportado!', 'success');
+}
+
+/* ======== INICIALIZAÇÃO ======== */
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Relógio
+    var now = new Date();
+    document.getElementById('updateTime').textContent =
+        now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+    // Gráficos (aguarda ECharts carregar)
+    setTimeout(initCharts, 200);
+
+    showToast('Dashboard carregado!', 'success');
+});
+
+/* ======== GRÁFICOS ECHARTS ======== */
+
+var charts = {};
+
+function getChartTheme() {
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    return {
+        textColor:   isDark ? '#94a3b8' : '#64748b',
+        lineColor:   isDark ? '#334155' : '#e2e8f0',
+        bgColor:     'transparent',
+        tooltipBg:   isDark ? '#1e293b' : '#ffffff',
+        tooltipText: isDark ? '#f1f5f9' : '#1e293b'
+    };
+}
+
+function initCharts() {
+    if (typeof echarts === 'undefined') {
+        console.warn('ECharts ainda não carregou');
+        return;
+    }
+
+    var theme = getChartTheme();
+    var meses    = {{ meses_labels|default:"['Jan','Fev','Mar','Abr','Mai','Jun']"|safe }};
+    var receitas = {{ receitas_mensal|default:"[0,0,0,0,0,0]"|safe }};
+    var despesas = {{ despesas_mensal|default:"[0,0,0,0,0,0]"|safe }};
+
+    // 1. Evolução Financeira (linha)
+    var el1 = document.getElementById('chartMain');
+    if (el1) {
+        var c1 = echarts.init(el1);
+        charts['chartMain'] = c1;
+        c1.setOption({
+            tooltip: { trigger: 'axis', backgroundColor: theme.tooltipBg, textStyle: { color: theme.tooltipText } },
+            legend: { data: ['Receitas', 'Despesas'], bottom: 0, textStyle: { color: theme.textColor } },
+            grid: { left: '3%', right: '4%', bottom: '15%', top: '10%', containLabel: true },
+            xAxis: { type: 'category', data: meses, axisLine: { lineStyle: { color: theme.lineColor } }, axisLabel: { color: theme.textColor } },
+            yAxis: { type: 'value', splitLine: { lineStyle: { color: theme.lineColor } }, axisLabel: { color: theme.textColor } },
+            series: [
+                { name: 'Receitas', type: 'line', smooth: true, data: receitas, itemStyle: { color: '#22c55e' }, lineStyle: { width: 3 }, areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(34,197,94,0.25)' }, { offset: 1, color: 'rgba(34,197,94,0)' }] } } },
+                { name: 'Despesas', type: 'line', smooth: true, data: despesas, itemStyle: { color: '#ef4444' }, lineStyle: { width: 3 }, areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(239,68,68,0.25)' }, { offset: 1, color: 'rgba(239,68,68,0)' }] } } }
+            ]
+        });
+    }
+
+    // 2. Distribuição de Despesas (donut)
+    var el2 = document.getElementById('chartPie');
+    if (el2) {
+        var c2 = echarts.init(el2);
+        charts['chartPie'] = c2;
+        c2.setOption({
+            tooltip: { trigger: 'item', backgroundColor: theme.tooltipBg, textStyle: { color: theme.tooltipText } },
+            legend: { bottom: 0, textStyle: { color: theme.textColor } },
+            series: [{
+                type: 'pie', radius: ['40%', '70%'],
+                label: { color: theme.textColor },
+                data: [
+                    { value: 3500, name: 'Fornecedores', itemStyle: { color: '#3b82f6' } },
+                    { value: 2800, name: 'Salários',     itemStyle: { color: '#22c55e' } },
+                    { value: 1500, name: 'Aluguel',      itemStyle: { color: '#f59e0b' } },
+                    { value: 1200, name: 'Marketing',    itemStyle: { color: '#ef4444' } }
+                ]
+            }]
+        });
+    }
+
+    // 3. Margem de Lucro (barras)
+    var el3 = document.getElementById('chartMargin');
+    if (el3) {
+        var c3 = echarts.init(el3);
+        charts['chartMargin'] = c3;
+        c3.setOption({
+            tooltip: { trigger: 'axis', backgroundColor: theme.tooltipBg, textStyle: { color: theme.tooltipText } },
+            grid: { left: '3%', right: '4%', bottom: '10%', top: '10%', containLabel: true },
+            xAxis: { type: 'category', data: meses, axisLine: { lineStyle: { color: theme.lineColor } }, axisLabel: { color: theme.textColor } },
+            yAxis: { type: 'value', splitLine: { lineStyle: { color: theme.lineColor } }, axisLabel: { color: theme.textColor } },
+            series: [{
+                name: 'Margem %', type: 'bar', data: [25, 30, 28, 35, 32, 38],
+                itemStyle: { borderRadius: [6, 6, 0, 0], color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    { offset: 0, color: '#3b82f6' }, { offset: 1, color: '#06b6d4' }
+                ]) }
+            }]
+        });
+    }
+
+    // Resize automático
+    window.addEventListener('resize', function() {
+        Object.keys(charts).forEach(function(k) { charts[k] && charts[k].resize(); });
+    });
+}
+
+/* Quando o tema muda, reinicializa os gráficos */
+window.addEventListener('themeChanged', function() {
+    Object.keys(charts).forEach(function(k) {
+        if (charts[k]) { charts[k].dispose(); }
+    });
+    charts = {};
+    setTimeout(initCharts, 100);
+});
+</script>
+{% endblock %}

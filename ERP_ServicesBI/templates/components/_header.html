@@ -1,14 +1,19 @@
 <header class="erp-header">
     <div class="erp-flex erp-items-center erp-gap-2">
-        <!-- Botão hambúrguer — só aparece no mobile -->
-        <button onclick="toggleSidebar()"
-                style="display:none; background:none; border:none; color:white;
-                       font-size:22px; cursor:pointer; padding:4px 8px;"
-                class="erp-mobile-menu-btn"
-                title="Abrir menu">☰</button>
+        <!-- Botão hambúrguer (mobile) -->
+        <button onclick="toggleSidebar()" class="erp-mobile-menu-btn" title="Abrir menu">☰</button>
         <h1 class="erp-header__title">
             {% block header_title %}ERP - ServicesBI{% endblock %}
         </h1>
+    </div>
+    <div class="erp-header__controls">
+        <!-- Botão Dark/Light Mode -->
+        <button class="erp-header__theme-btn" 
+                onclick="toggleTheme()" 
+                title="Alternar tema (dark/light)"
+                id="themeToggleBtn">
+            <span id="themeIcon">🌙</span>
+        </button>
     </div>
     <div class="erp-header__user">
         <span class="erp-header__user-name">

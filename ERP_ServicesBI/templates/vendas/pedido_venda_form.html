@@ -225,7 +225,7 @@
     </p>
 </div>
 
-{% include "partials/messages.html" %}
+{% include "components/_messages.html" %}
 
 <div class="erp-card">
     <!-- CABEÇALHO -->
@@ -273,7 +273,7 @@
             <button type="submit" class="erp-btn erp-btn--primary">
                 <span>💾</span> Atualizar Cabeçalho
             </button>
-            <a href="{% url 'pedidovenda_list' %}" class="erp-btn erp-btn--secondary">
+            <a href="{% url 'ERP_ServicesBI:pedido_venda_list' %}" class="erp-btn erp-btn--secondary">
                 <span>❌</span> Voltar
             </a>
         </div>

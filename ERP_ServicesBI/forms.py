@@ -2,16 +2,17 @@
 from django import forms
 from django.contrib.auth.models import User
 from .models import (
-    Empresa, Cliente, Fornecedor, Produto, Categoria,
-    Cotacao, ItemCotacao, PedidoCompra, ItemPedidoCompra, 
+    Empresa, Cliente, Fornecedor, Produto, Categoria,Vendedor,CondicaoPagamento,FormaPagamento,
+    PedidoCompra, ItemPedidoCompra, 
     NotaFiscalEntrada, ItemNotaFiscalEntrada,
     Orcamento, ItemOrcamento, PedidoVenda, ItemPedidoVenda, 
     NotaFiscalSaida, ItemNotaFiscalSaida,
     ContaPagar, ContaReceber, MovimentoCaixa,
     CategoriaFinanceira, CentroCusto, OrcamentoFinanceiro,
-    ExtratoBancario, LancamentoExtrato,
+    ExtratoBancario, LancamentoExtrato,ConfiguracaoDRE, LinhaDRE, RelatorioDRE,
     MovimentacaoEstoque, Inventario, ItemInventario, 
-    TransferenciaEstoque, ItemTransferencia
+    TransferenciaEstoque, ItemTransferencia,
+    CotacaoMae, ItemSolicitado, CotacaoFornecedor, ItemCotacaoFornecedor
 )
 
 # --- CAMPO DE MOEDA PADRÃO ---
@@ -59,6 +60,19 @@ class ClienteForm(BaseForm):
         self.fields['cidade'].required = False
         self.fields['estado'].required = False
         self.fields['rg_inscricao_estadual'].required = False
+        self.fields['ativo'].required = False
+
+class VendedorForm(BaseForm):
+    class Meta:
+        model = Vendedor
+        fields = '__all__'
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].required = False
+        self.fields['telefone'].required = False
+        self.fields['percentual_comissao'].required = False
+        self.fields['meta_vendas'].required = False
         self.fields['ativo'].required = False
 
 
@@ -135,85 +149,51 @@ class ProdutoForm(BaseForm):
         self.fields['observacoes'].required = False
         self.fields['ativo'].required = False
 
-# =============================================================================
-# MÓDULO: COMPRAS
-# =============================================================================
-
-class CotacaoForm(BaseForm):
-    valor_total = MoneyField(required=False)
-    
+class CondicaoPagamentoForm(BaseForm):
     class Meta:
-        model = Cotacao
-        fields = ['fornecedor', 'solicitante', 'prazo_entrega', 'status', 'observacoes', 'ativo']
-        widgets = {
-            'fornecedor': forms.Select(attrs={'class': 'erp-select'}),
-            'solicitante': forms.TextInput(attrs={'class': 'erp-input', 'placeholder': 'Nome do solicitante'}),
-            'prazo_entrega': forms.DateInput(attrs={'type': 'date', 'class': 'erp-input'}),
-            'status': forms.Select(attrs={'class': 'erp-select'}),
-            'observacoes': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Informações adicionais...', 'class': 'erp-textarea'}),
-        }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        
-        # Popular Fornecedores (apenas ativos)
-        if 'fornecedor' in self.fields:
-            self.fields['fornecedor'].queryset = Fornecedor.objects.filter(ativo=True).order_by('nome_razao_social')
-            self.fields['fornecedor'].empty_label = "Selecione um fornecedor..."
-        
-        # Solicitante - CAMPO TEXTO LIVRE (não precisa queryset)
-        if 'solicitante' in self.fields:
-            self.fields['solicitante'].required = True
-            self.fields['solicitante'].widget.attrs.update({
-                'placeholder': 'Digite o nome do solicitante',
-                'class': 'erp-input'
-            })
-        
-        # Campos não obrigatórios
-        self.fields['observacoes'].required = False
-
-class ItemCotacaoForm(BaseForm):
-    preco_unitario = MoneyField()
-    subtotal = MoneyField(required=False)
-    
-    class Meta:
-        model = ItemCotacao
+        model = CondicaoPagamento
         fields = '__all__'
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['produto'].queryset = Produto.objects.filter(ativo=True).order_by('descricao')
-        self.fields['produto'].empty_label = "Selecione um produto..."
+        self.fields['descricao'].required = True
+        self.fields['dias'].required = False
+        self.fields['parcelas'].required = False
+        self.fields['ativo'].required = False
 
+
+class FormaPagamentoForm(BaseForm):
+    class Meta:
+        model = FormaPagamento
+        fields = '__all__'
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['descricao'].required = True
+        self.fields['tipo'].required = True
+        self.fields['ativo'].required = False
+
+# =============================================================================
+# MÓDULO: COMPRAS
+# =============================================================================
 
 class PedidoCompraForm(BaseForm):
     valor_total = MoneyField(required=False)
     
     class Meta:
         model = PedidoCompra
-        fields = ['fornecedor', 'data_prevista_entrega', 'status', 'cotacao_origem', 'observacoes', 'ativo']
+        fields = ['fornecedor', 'data_prevista_entrega', 'status', 'observacoes', 'ativo']
         widgets = {
             'fornecedor': forms.Select(attrs={'class': 'erp-select'}),
             'data_prevista_entrega': forms.DateInput(attrs={'type': 'date', 'class': 'erp-input'}),
             'status': forms.Select(attrs={'class': 'erp-select'}),
-            'cotacao_origem': forms.Select(attrs={'class': 'erp-select'}),
             'observacoes': forms.Textarea(attrs={'rows': 2, 'placeholder': 'Informações adicionais...', 'class': 'erp-textarea'}),
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
-        # Popular Fornecedores (apenas ativos)
         self.fields['fornecedor'].queryset = Fornecedor.objects.filter(ativo=True).order_by('nome_razao_social')
         self.fields['fornecedor'].empty_label = "Selecione um fornecedor..."
-        
-        # Cotação Origem - apenas cotações disponíveis
-        self.fields['cotacao_origem'].queryset = Cotacao.objects.filter(
-            status__in=['aprovada', 'pendente', 'respondida']
-        ).order_by('-data_solicitacao')
-        self.fields['cotacao_origem'].empty_label = "Nenhuma (opcional)"
-        self.fields['cotacao_origem'].required = False
-        
         self.fields['observacoes'].required = False
 
 
@@ -247,14 +227,12 @@ class NotaFiscalEntradaForm(BaseForm):
         self.fields['fornecedor'].queryset = Fornecedor.objects.filter(ativo=True).order_by('nome_razao_social')
         self.fields['fornecedor'].empty_label = "Selecione um fornecedor..."
         
-        # Pedido Origem - apenas pedidos disponíveis
         self.fields['pedido_origem'].queryset = PedidoCompra.objects.filter(
             status__in=['aprovado', 'parcial']
         ).order_by('-data_pedido')
         self.fields['pedido_origem'].empty_label = "Nenhum (opcional)"
         self.fields['pedido_origem'].required = False
         
-        self.fields['chave_acesso'].required = False
         self.fields['observacoes'].required = False
 
 
@@ -372,7 +350,7 @@ class CentroCustoForm(BaseForm):
 
 
 class OrcamentoFinanceiroForm(BaseForm):
-    valor_previsto = MoneyField()
+    valor_orcado = MoneyField()
     valor_realizado = MoneyField(required=False)
     
     class Meta:
@@ -381,9 +359,6 @@ class OrcamentoFinanceiroForm(BaseForm):
 
 
 class ExtratoBancarioForm(BaseForm):
-    saldo_inicial = MoneyField(required=False)
-    saldo_final = MoneyField(required=False)
-    
     class Meta:
         model = ExtratoBancario
         fields = '__all__'
@@ -397,12 +372,129 @@ class LancamentoExtratoForm(BaseForm):
         fields = '__all__'
 
 # =============================================================================
+# FORMS - DRE
+# =============================================================================
+
+class ConfiguracaoDREForm(forms.ModelForm):
+    """Form para configuração da DRE por empresa"""
+    
+    class Meta:
+        model = ConfiguracaoDRE
+        fields = [
+            'empresa',
+            'regime_tributario',
+            'atividade_principal',
+            'aliquota_simples',
+            'percentual_presuncao_comercio',
+            'percentual_presuncao_servico',
+            'aliquota_irpj',
+            'aliquota_irpj_adicional',
+            'aliquota_csll',
+            'ativo',
+        ]
+        widgets = {
+            'empresa': forms.Select(attrs={'class': 'form-control'}),
+            'regime_tributario': forms.Select(attrs={'class': 'form-control'}),
+            'atividade_principal': forms.Select(attrs={'class': 'form-control'}),
+            'aliquota_simples': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'percentual_presuncao_comercio': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'percentual_presuncao_servico': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'aliquota_irpj': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'aliquota_irpj_adicional': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'aliquota_csll': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'ativo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+
+class LinhaDREForm(forms.ModelForm):
+    """Form para configurar linhas customizadas da DRE"""
+    
+    class Meta:
+        model = LinhaDRE
+        fields = [
+            'codigo',
+            'descricao',
+            'tipo',
+            'natureza',
+            'grupos_dre',
+            'formula',
+            'ordem',
+            'nivel',
+            'negrito',
+            'visivel',
+            'regime_especifico',
+            'ativo',
+        ]
+        widgets = {
+            'codigo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: 1.0, 2.1'}),
+            'descricao': forms.TextInput(attrs={'class': 'form-control'}),
+            'tipo': forms.Select(attrs={'class': 'form-control'}),
+            'natureza': forms.Select(attrs={'class': 'form-control'}),
+            'grupos_dre': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ex: receita_bruta,outras_receitas'
+            }),
+            'formula': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ex: 1.0-2.0 ou 3.0+4.0'
+            }),
+            'ordem': forms.NumberInput(attrs={'class': 'form-control'}),
+            'nivel': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 3}),
+            'negrito': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'visivel': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'regime_especifico': forms.Select(attrs={'class': 'form-control'}),
+            'ativo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+
+class FiltroDREForm(forms.Form):
+    """Form para filtros do relatório DRE"""
+    
+    empresa = forms.ModelChoiceField(
+        queryset=None,  # Será definido no __init__
+        required=True,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label='Empresa'
+    )
+    data_inicio = forms.DateField(
+        required=True,
+        widget=forms.DateInput(attrs={
+            'class': 'form-control',
+            'type': 'date'
+        }),
+        label='Data Início'
+    )
+    data_fim = forms.DateField(
+        required=True,
+        widget=forms.DateInput(attrs={
+            'class': 'form-control',
+            'type': 'date'
+        }),
+        label='Data Fim'
+    )
+    regime = forms.ChoiceField(
+        choices=[
+            ('', 'Usar configuração da empresa'),
+            ('simples', 'Simples Nacional'),
+            ('presumido', 'Lucro Presumido'),
+            ('real', 'Lucro Real'),
+        ],
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label='Regime Tributário'
+    )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from .models import Empresa
+        self.fields['empresa'].queryset = Empresa.objects.filter(ativo=True)
+
+
+# =============================================================================
 # MÓDULO: ESTOQUE
 # =============================================================================
 
 class MovimentacaoEstoqueForm(BaseForm):
-    custo_unitario = MoneyField(required=False)
-    
     class Meta:
         model = MovimentacaoEstoque
         fields = '__all__'
@@ -412,14 +504,10 @@ class InventarioForm(BaseForm):
     class Meta:
         model = Inventario
         fields = '__all__'
-        widgets = {'data_inventario': forms.DateInput(attrs={'type': 'date'})}
+        widgets = {'data': forms.DateInput(attrs={'type': 'date'})}
 
 
 class ItemInventarioForm(BaseForm):
-    quantidade_sistema = MoneyField(required=False)
-    quantidade_contada = MoneyField(required=False)
-    valor_unitario = MoneyField(required=False)
-    
     class Meta:
         model = ItemInventario
         fields = '__all__'
@@ -435,3 +523,113 @@ class ItemTransferenciaForm(BaseForm):
     class Meta:
         model = ItemTransferencia
         fields = '__all__'
+
+# =============================================================================
+# MÓDULO: COTAÇÃO COMPARATIVA (NOVO)
+# =============================================================================
+
+class CotacaoMaeForm(BaseForm):
+    class Meta:
+        model = CotacaoMae
+        fields = ['titulo', 'setor', 'data_limite_resposta', 'observacoes', 'status', 'ativo']
+        widgets = {
+            'titulo': forms.TextInput(attrs={'class': 'erp-input', 'placeholder': 'Ex: Material de Escritório'}),
+            'setor': forms.TextInput(attrs={'class': 'erp-input', 'placeholder': 'Ex: RH, TI, etc'}),
+            'data_limite_resposta': forms.DateInput(attrs={'type': 'date', 'class': 'erp-input'}),
+            'observacoes': forms.Textarea(attrs={'rows': 3, 'class': 'erp-textarea'}),
+            'status': forms.Select(attrs={'class': 'erp-select'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['data_limite_resposta'].required = False
+        self.fields['observacoes'].required = False
+
+
+class ItemSolicitadoForm(BaseForm):
+    class Meta:
+        model = ItemSolicitado
+        fields = ['produto', 'descricao_manual', 'quantidade', 'unidade_medida']
+        widgets = {
+            'produto': forms.Select(attrs={'class': 'erp-select'}),
+            'descricao_manual': forms.TextInput(attrs={'class': 'erp-input', 'placeholder': 'Se não tiver cadastrado'}),
+            'quantidade': forms.NumberInput(attrs={'class': 'erp-input', 'step': '0.001'}),
+            'unidade_medida': forms.TextInput(attrs={'class': 'erp-input'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['produto'].queryset = Produto.objects.filter(ativo=True).order_by('descricao')
+        self.fields['produto'].empty_label = "Selecione ou digite abaixo..."
+        self.fields['produto'].required = False
+        self.fields['descricao_manual'].required = False
+
+
+ItemSolicitadoFormSet = forms.inlineformset_factory(
+    CotacaoMae,
+    ItemSolicitado,
+    form=ItemSolicitadoForm,
+    extra=1,
+    can_delete=True,
+    min_num=1,
+    validate_min=True,
+)
+
+
+class CotacaoFornecedorForm(BaseForm):
+    valor_total_bruto = MoneyField()
+    percentual_desconto = forms.DecimalField(max_digits=5, decimal_places=2, required=False)
+    valor_frete = MoneyField()
+    valor_total_liquido = MoneyField(required=False)
+    
+    class Meta:
+        model = CotacaoFornecedor
+        fields = ['fornecedor', 'contato_nome', 'contato_email', 'contato_telefone', 
+                  'valor_total_bruto', 'percentual_desconto', 'valor_frete', 
+                  'condicao_pagamento', 'prazo_entrega_dias', 'disponibilidade_produtos', 
+                  'status', 'observacoes']
+        widgets = {
+            'fornecedor': forms.Select(attrs={'class': 'erp-select'}),
+            'status': forms.Select(attrs={'class': 'erp-select'}),
+            'observacoes': forms.Textarea(attrs={'rows': 3, 'class': 'erp-textarea'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['fornecedor'].queryset = Fornecedor.objects.filter(ativo=True).order_by('nome_fantasia')
+        self.fields['contato_email'].required = False
+        self.fields['contato_telefone'].required = False
+        self.fields['observacoes'].required = False
+        self.fields['condicao_pagamento'].required = False
+
+
+class ItemCotacaoFornecedorForm(BaseForm):
+    preco_unitario = MoneyField()
+    preco_total = MoneyField(required=False)
+    
+    class Meta:
+        model = ItemCotacaoFornecedor
+        fields = ['item_solicitado', 'descricao_fornecedor', 'codigo_fornecedor', 
+                  'quantidade', 'unidade_medida', 'preco_unitario', 'disponivel', 
+                  'prazo_entrega_item', 'observacao']
+        widgets = {
+            'item_solicitado': forms.Select(attrs={'class': 'erp-select'}),
+            'observacao': forms.Textarea(attrs={'rows': 2, 'class': 'erp-textarea'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['item_solicitado'].required = False
+        self.fields['codigo_fornecedor'].required = False
+        self.fields['unidade_medida'].required = False
+        self.fields['prazo_entrega_item'].required = False
+        self.fields['observacao'].required = False
+
+
+ItemCotacaoFornecedorFormSet = forms.inlineformset_factory(
+    CotacaoFornecedor,
+    ItemCotacaoFornecedor,
+    form=ItemCotacaoFornecedorForm,
+    extra=0,
+    can_delete=True,
+)

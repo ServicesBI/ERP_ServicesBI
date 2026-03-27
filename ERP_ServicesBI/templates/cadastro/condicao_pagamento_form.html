@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if condicao %}Editar{% else %}Nova{% endif %} Condição de Pagamento - ERP ServicesBI{% endblock %}
+
+{% block content %}
+<div class="erp-page-header erp-mb-6">
+    <h1 class="erp-page-title">CADASTRO</h1>
+    <p class="erp-page-subtitle">{% if condicao %}Editar{% else %}Nova{% endif %} Condição de Pagamento</p>
+</div>
+
+<div class="erp-card" style="max-width: 600px;">
+    {% if messages %}
+        {% for message in messages %}
+            {% if message.tags == 'error' %}<div class="erp-alert erp-alert--error erp-mb-4">{{ message }}</div>{% else %}<div class="erp-alert erp-alert--success erp-mb-4">{{ message }}</div>{% endif %}
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" class="erp-form">
+        {% csrf_token %}
+        
+        <div class="erp-form-group erp-mb-4">
+            <label class="erp-checkbox" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px;">
+                <input type="hidden" name="ativo" value="False">
+                <input type="checkbox" name="ativo" value="True" {% if condicao.ativo or not condicao %}checked{% endif %} style="width: 16px; height: 16px;">
+                <span><strong>Ativo</strong></span>
+            </label>
+        </div>
+        
+        {% if form.errors %}
+        <div class="erp-alert erp-alert--error erp-mb-4">
+            <strong>❌ Corrija os erros:</strong>
+            <ul>{% for field in form %}{% for error in field.errors %}<li><strong>{{ field.label }}:</strong> {{ error }}</li>{% endfor %}{% endfor %}</ul>
+        </div>
+        {% endif %}
+        
+        <div class="erp-form-group">
+            <label class="erp-label erp-label-required" for="descricao">Descrição</label>
+            <input type="text" name="descricao" id="descricao" value="{{ condicao.descricao|default:'' }}" class="erp-input" placeholder="Ex: 30/60/90 dias" required>
+        </div>
+        
+        <div class="erp-form-row">
+            <div class="erp-form-group">
+                <label class="erp-label" for="dias">Dias (prazo máximo)</label>
+                <input type="number" name="dias" id="dias" value="{{ condicao.dias|default:'0' }}" class="erp-input" placeholder="0">
+            </div>
+            <div class="erp-form-group">
+                <label class="erp-label" for="parcelas">Número de Parcelas</label>
+                <input type="number" name="parcelas" id="parcelas" value="{{ condicao.parcelas|default:'1' }}" class="erp-input" placeholder="1">
+            </div>
+        </div>
+        
+        <div class="erp-flex erp-gap-2 erp-mt-6">
+            <button type="submit" class="erp-btn erp-btn--primary"><span>💾</span><span>Salvar</span></button>
+            <a href="{% url 'ERP_ServicesBI:condicao_pagamento_list' %}" class="erp-btn erp-btn--outline" style="color: #fc4564; border-color: #fc4564;"><span>Cancelar</span></a>
+        </div>
+    </form>
+</div>
+{% endblock %}

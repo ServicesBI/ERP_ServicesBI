@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Cotações Mãe - ERP ServicesBI{% endblock %}
+
+{% block content %}
+<div class="erp-page-header erp-mb-6">
+    <h1 class="erp-page-title">COTAÇÕES MÃE</h1>
+    <p class="erp-page-subtitle">Gerenciamento de Cotações Comparativas</p>
+</div>
+
+<div class="erp-card">
+    <div class="erp-flex erp-justify-between erp-align-center erp-mb-4">
+        <div>
+            <a href="{% url 'ERP_ServicesBI:cotacao_mae_create' %}" class="erp-btn erp-btn--primary">
+                <span>+</span>
+                <span>Nova Cotação Mãe</span>
+            </a>
+        </div>
+        
+        <!-- Filtro de Status -->
+        <form method="get" class="erp-flex erp-gap-2">
+            <select name="status" class="erp-select" onchange="this.form.submit()">
+                <option value="">Todos os Status</option>
+                {% for codigo, nome in status_choices %}
+                <option value="{{ codigo }}" {% if request.GET.status == codigo %}selected{% endif %}>
+                    {{ nome }}
+                </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+
+    {% if cotacoes %}
+    <div class="erp-table-container">
+        <table class="erp-table">
+            <thead>
+                <tr>
+                    <th>Número</th>
+                    <th>Título</th>
+                    <th>Solicitante</th>
+                    <th>Setor</th>
+                    <th>Status</th>
+                    <th>Data</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cotacao in cotacoes %}
+                <tr>
+                    <td><strong>{{ cotacao.numero }}</strong></td>
+                    <td>{{ cotacao.titulo }}</td>
+                    <td>{{ cotacao.solicitante.get_full_name|default:cotacao.solicitante.username }}</td>
+                    <td>{{ cotacao.setor }}</td>
+                    <td>
+                        <span class="erp-badge erp-badge--{{ cotacao.status }}">
+                            {{ cotacao.get_status_display }}
+                        </span>
+                    </td>
+                    <td>{{ cotacao.data_solicitacao|date:"d/m/Y" }}</td>
+                    <td>
+                        <div class="erp-flex erp-gap-1">
+                            <a href="{% url 'ERP_ServicesBI:cotacao_mae_detail' cotacao.pk %}" 
+                               class="erp-btn erp-btn--sm erp-btn--primary" title="Ver">
+                                👁️
+                            </a>
+                            <a href="{% url 'ERP_ServicesBI:cotacao_mae_edit' cotacao.pk %}" 
+                               class="erp-btn erp-btn--sm erp-btn--warning" title="Editar">
+                                ✏️
+                            </a>
+                            <a href="{% url 'ERP_ServicesBI:cotacao_mae_delete' cotacao.pk %}" 
+                               class="erp-btn erp-btn--sm erp-btn--danger" title="Excluir"
+                               onclick="return confirm('Excluir cotação {{ cotacao.numero }}?')">
+                                🗑️
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="erp-empty-state">
+        <div class="erp-empty-state__icon">📋</div>
+        <p>Nenhuma cotação mãe encontrada</p>
+        <a href="{% url 'ERP_ServicesBI:cotacao_mae_create' %}" class="erp-btn erp-btn--primary erp-mt-4">
+            Criar Primeira Cotação
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

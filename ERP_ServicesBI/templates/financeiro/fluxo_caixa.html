@@ -292,7 +292,8 @@
         <a href="{% url 'ERP_ServicesBI:fluxo_caixa' %}" class="erp-btn erp-btn--secondary">
             <span>❌</span> Limpar
         </a>
-        <a href="{% url 'ERP_ServicesBI:movimentocaixa_add' %}" class="erp-btn erp-btn--primary">
+        <!-- ✅ CORRIGIDO: movimentocaixa_add → movimentacao_caixa_add -->
+        <a href="{% url 'ERP_ServicesBI:movimentacao_caixa_add' %}" class="erp-btn erp-btn--primary">
             <span>+</span> Lançamento
         </a>
     </form>

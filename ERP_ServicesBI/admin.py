@@ -1,7 +1,8 @@
+# -*- coding: utf-8 -*-
 from django.contrib import admin
 from .models import (
     Empresa, Cliente, Fornecedor, Produto, Categoria,
-    Cotacao, ItemCotacao, PedidoCompra, ItemPedidoCompra,
+    PedidoCompra, ItemPedidoCompra,
     NotaFiscalEntrada, ItemNotaFiscalEntrada,
     Orcamento, ItemOrcamento, PedidoVenda, ItemPedidoVenda,
     NotaFiscalSaida, ItemNotaFiscalSaida,
@@ -9,7 +10,8 @@ from .models import (
     CategoriaFinanceira, CentroCusto, OrcamentoFinanceiro,
     ExtratoBancario, LancamentoExtrato,
     MovimentacaoEstoque, Inventario, ItemInventario,
-    TransferenciaEstoque, ItemTransferencia
+    TransferenciaEstoque, ItemTransferencia,
+    CotacaoMae, ItemSolicitado, CotacaoFornecedor, ItemCotacaoFornecedor,
 )
 
 
@@ -46,29 +48,15 @@ class CategoriaAdmin(admin.ModelAdmin):
 
 @admin.register(Produto)
 class ProdutoAdmin(admin.ModelAdmin):
-    list_display = ['codigo', 'descricao', 'categoria', 'preco_venda', 'estoque_atual', 'estoque_minimo', 'ativo']  # CORRIGIDO: quantidade_estoque -> estoque_atual
+    list_display = ['codigo', 'descricao', 'categoria', 'preco_venda', 'estoque_atual', 'estoque_minimo', 'ativo']
     search_fields = ['codigo', 'descricao']
     list_filter = ['ativo', 'categoria', 'unidade']
-    # CORRIGIDO: quantidade_estoque -> estoque_atual
     fields = ['codigo', 'descricao', 'categoria', 'unidade', 'preco_custo', 'preco_venda', 'estoque_atual', 'estoque_minimo', 'ativo']
 
 
 # =============================================================================
 # COMPRAS
 # =============================================================================
-
-class ItemCotacaoInline(admin.TabularInline):
-    model = ItemCotacao
-    extra = 1
-
-
-@admin.register(Cotacao)
-class CotacaoAdmin(admin.ModelAdmin):
-    list_display = ['numero', 'fornecedor', 'data_solicitacao', 'status', 'valor_total']
-    search_fields = ['numero', 'fornecedor__nome_razao_social']
-    list_filter = ['status', 'data_solicitacao']
-    inlines = [ItemCotacaoInline]
-
 
 class ItemPedidoCompraInline(admin.TabularInline):
     model = ItemPedidoCompra
@@ -233,3 +221,49 @@ class TransferenciaEstoqueAdmin(admin.ModelAdmin):
     search_fields = ['numero', 'origem', 'destino']
     list_filter = ['status', 'data']
     inlines = [ItemTransferenciaInline]
+
+
+# =============================================================================
+# COTAÇÃO COMPARATIVA (NOVO - SEM COTACAO ANTIGO)
+# =============================================================================
+
+class ItemSolicitadoInline(admin.TabularInline):
+    model = ItemSolicitado
+    extra = 1
+    fields = ['produto', 'descricao_manual', 'quantidade', 'unidade_medida']
+
+
+@admin.register(CotacaoMae)
+class CotacaoMaeAdmin(admin.ModelAdmin):
+    list_display = ['numero', 'titulo', 'solicitante', 'setor', 'status', 'data_solicitacao']
+    list_filter = ['status', 'setor', 'data_solicitacao']
+    search_fields = ['numero', 'titulo', 'observacoes']
+    inlines = [ItemSolicitadoInline]
+    readonly_fields = ['numero', 'created_at', 'updated_at']
+
+
+class ItemCotacaoFornecedorInline(admin.TabularInline):
+    model = ItemCotacaoFornecedor
+    extra = 0
+    fields = ['item_solicitado', 'descricao_fornecedor', 'quantidade', 'preco_unitario', 'preco_total', 'disponivel']
+
+
+@admin.register(CotacaoFornecedor)
+class CotacaoFornecedorAdmin(admin.ModelAdmin):
+    list_display = ['fornecedor', 'cotacao_mae', 'status', 'valor_total_liquido', 'data_recebimento']
+    list_filter = ['status', 'data_recebimento']
+    search_fields = ['fornecedor__nome_fantasia', 'cotacao_mae__numero']
+    inlines = [ItemCotacaoFornecedorInline]
+
+
+@admin.register(ItemSolicitado)
+class ItemSolicitadoAdmin(admin.ModelAdmin):
+    list_display = ['cotacao_mae', 'descricao_display', 'quantidade', 'unidade_medida']
+    list_filter = ['cotacao_mae__status']
+    search_fields = ['produto__descricao', 'descricao_manual']
+
+
+@admin.register(ItemCotacaoFornecedor)
+class ItemCotacaoFornecedorAdmin(admin.ModelAdmin):
+    list_display = ['cotacao_fornecedor', 'descricao_fornecedor', 'preco_unitario', 'preco_total', 'disponivel']
+    list_filter = ['disponivel', 'match_automatico']

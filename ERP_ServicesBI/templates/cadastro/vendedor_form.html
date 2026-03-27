@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if vendedor %}Editar{% else %}Novo{% endif %} Vendedor - ERP ServicesBI
+{% endblock %}
+
+{% block content %}
+<div class="erp-page-header erp-mb-6">
+    <h1 class="erp-page-title">CADASTRO</h1>
+    <p class="erp-page-subtitle">{% if vendedor %}Editar{% else %}Novo{% endif %} Vendedor</p>
+</div>
+
+<div class="erp-card" style="max-width: 900px;">
+    {% if messages %}
+        {% for message in messages %}
+            {% if message.tags == 'error' %}
+            <div class="erp-alert erp-alert--error erp-mb-4">
+                {{ message }}
+            </div>
+            {% else %}
+            <div class="erp-alert erp-alert--success erp-mb-4">
+                {{ message }}
+            </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" id="vendedorForm" class="erp-form">
+        {% csrf_token %}
+        
+        <!-- CHECKBOX ATIVO -->
+        <div class="erp-form-group erp-mb-4">
+            <label class="erp-checkbox" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: var(--gray-700);">
+                <input type="hidden" name="ativo" value="False">
+                <input type="checkbox" 
+                       name="ativo" 
+                       value="True"
+                       {% if vendedor.ativo or not vendedor %}checked{% endif %}
+                       style="width: 16px; height: 16px; cursor: pointer;">
+                <span><strong>Vendedor Ativo</strong></span>
+            </label>
+        </div>
+        
+        <!-- MOSTRA ERROS DO FORMULÁRIO -->
+        {% if form.errors %}
+        <div class="erp-alert erp-alert--error erp-mb-4">
+            <strong>❌ Corrija os erros abaixo:</strong>
+            <ul style="margin-top: 8px; margin-bottom: 0; padding-left: 20px;">
+                {% for field in form %}
+                    {% for error in field.errors %}
+                    <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        <h3 class="erp-section-title">Dados Básicos</h3>
+        
+        <!-- Nome -->
+        <div class="erp-form-group">
+            <label class="erp-label erp-label-required" for="nome">Nome</label>
+            <input type="text" name="nome" id="nome" 
+                   value="{{ vendedor.nome|default:'' }}" 
+                   class="erp-input"
+                   placeholder="Digite o nome do vendedor"
+                   required>
+        </div>
+        
+        <h3 class="erp-section-title erp-mt-6">Contato</h3>
+        
+        <div class="erp-form-row">
+            <!-- Email -->
+            <div class="erp-form-group">
+                <label class="erp-label" for="email">Email</label>
+                <input type="email" name="email" id="email" 
+                       value="{{ vendedor.email|default:'' }}" 
+                       class="erp-input"
+                       placeholder="email@exemplo.com">
+            </div>
+            
+            <!-- Telefone - COM MÁSCARA -->
+            <div class="erp-form-group">
+                <label class="erp-label" for="telefone">Telefone</label>
+                <input type="text" name="telefone" id="telefone" 
+                       value="{{ vendedor.telefone|default:'' }}" 
+                       class="erp-input"
+                       placeholder="(00) 00000-0000"
+                       maxlength="15">
+            </div>
+        </div>
+        
+        <h3 class="erp-section-title erp-mt-6">Informações Comerciais</h3>
+        
+        <div class="erp-form-row">
+            <!-- Comissão Padrão - COM MÁSCARA -->
+            <div class="erp-form-group" style="flex: 0 0 200px;">
+                <label class="erp-label" for="comissao_padrao">Comissão Padrão (%)</label>
+                <input type="text" name="comissao_padrao" id="comissao_padrao" 
+                       value="{{ vendedor.comissao_padrao|default:'' }}" 
+                       class="erp-input"
+                       placeholder="0,00%">
+            </div>
+        </div>
+        
+        <!-- BOTÕES DE AÇÃO -->
+        <div class="erp-flex erp-gap-2 erp-mt-6">
+            <button type="submit" class="erp-btn erp-btn--primary">
+                <span>💾</span>
+                <span>Salvar</span>
+            </button>
+            <a href="{% url 'ERP_ServicesBI:vendedor_list' %}" class="erp-btn erp-btn--outline" style="color: #fc4564; border-color: #fc4564;">
+                <span>Cancelar</span>
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+// Máscara Telefone: (00) 00000-0000 ou (00) 0000-0000
+function mascaraTelefone(input) {
+    let valor = input.value.replace(/\D/g, '');
+    
+    if (valor.length > 10) {
+        // Celular: (00) 00000-0000
+        valor = valor.replace(/^(\d{2})(\d)/g, '($1) $2');
+        valor = valor.replace(/(\d{5})(\d)/, '$1-$2');
+    } else {
+        // Fixo: (00) 0000-0000
+        valor = valor.replace(/^(\d{2})(\d)/g, '($1) $2');
+        valor = valor.replace(/(\d{4})(\d)/, '$1-$2');
+    }
+    
+    input.value = valor;
+}
+
+// Máscara Percentual: 00,00%
+function mascaraPercentual(input) {
+    let valor = input.value.replace(/\D/g, '');
+    
+    if (valor === '' || valor === '0') {
+        input.value = '';
+        return;
+    }
+    
+    // Limita a 4 dígitos (99,99%)
+    valor = valor.substring(0, 4);
+    
+    // Converte para decimal com 2 casas
+    valor = (parseInt(valor) / 100).toFixed(2);
+    
+    // Substitui ponto por vírgula
+    valor = valor.replace('.', ',');
+    
+    input.value = valor + '%';
+}
+
+// Limpar máscaras antes de enviar o formulário
+document.getElementById('vendedorForm').addEventListener('submit', function(e) {
+    // Limpa telefone (envia só números)
+    const telefoneInput = document.getElementById('telefone');
+    if (telefoneInput) {
+        telefoneInput.value = telefoneInput.value.replace(/\D/g, '');
+    }
+    
+    // Limpa comissão (envia como número decimal)
+    const comissaoInput = document.getElementById('comissao_padrao');
+    if (comissaoInput) {
+        let valor = comissaoInput.value.replace(/[^\d]/g, '');
+        if (valor) {
+            valor = (parseInt(valor) / 100).toFixed(2);
+            comissaoInput.value = valor;
+        } else {
+            comissaoInput.value = '0.00';
+        }
+    }
+});
+
+// Aplicar máscaras aos campos
+document.addEventListener('DOMContentLoaded', function() {
+    // Telefone
+    const telefoneInput = document.getElementById('telefone');
+    if (telefoneInput) {
+        telefoneInput.addEventListener('input', function() {
+            mascaraTelefone(this);
+        });
+        if (telefoneInput.value) {
+            mascaraTelefone(telefoneInput);
+        }
+    }
+    
+    // Comissão
+    const comissaoInput = document.getElementById('comissao_padrao');
+    if (comissaoInput) {
+        comissaoInput.addEventListener('input', function() {
+            mascaraPercentual(this);
+        });
+        if (comissaoInput.value && comissaoInput.value !== '0' && comissaoInput.value !== '0.00') {
+            let valorLimpo = comissaoInput.value.replace(/[^\d]/g, '');
+            if (valorLimpo && valorLimpo !== '0') {
+                comissaoInput.value = valorLimpo;
+                mascaraPercentual(comissaoInput);
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

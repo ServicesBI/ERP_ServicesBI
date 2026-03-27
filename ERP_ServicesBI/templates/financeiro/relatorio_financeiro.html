@@ -110,7 +110,7 @@
             <div style="font-size: 32px; font-weight: 700; color: #f59e0b; margin-bottom: 10px;">{{ contas_receber_aberto|currency_br }}</div>
             <div style="color: #ef4444; font-size: 14px; font-weight: 500;">⚠️ Vencidas: {{ contas_receber_vencidas|currency_br }}</div>
             <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
-                <a href="{% url 'contareceber_list' %}" style="color: #2563eb; text-decoration: none; font-size: 14px;">Ver detalhes →</a>
+                <a href="{% url 'conta_receber_list' %}" style="color: #2563eb; text-decoration: none; font-size: 14px;">Ver detalhes →</a>
             </div>
         </div>
     </div>
@@ -123,7 +123,7 @@
             <div style="font-size: 32px; font-weight: 700; color: #ef4444; margin-bottom: 10px;">{{ contas_pagar_aberto|currency_br }}</div>
             <div style="color: #ef4444; font-size: 14px; font-weight: 500;">⚠️ Vencidas: {{ contas_pagar_vencidas|currency_br }}</div>
             <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
-                <a href="{% url 'contapagar_list' %}" style="color: #2563eb; text-decoration: none; font-size: 14px;">Ver detalhes →</a>
+                <a href="{% url 'conta_pagar_list' %}" style="color: #2563eb; text-decoration: none; font-size: 14px;">Ver detalhes →</a>
             </div>
         </div>
     </div>

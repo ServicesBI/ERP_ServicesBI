@@ -234,12 +234,12 @@
             </button>
             
             {% if search %}
-            <a href="{% url 'ERP_ServicesBI:notafiscalsaida_list' %}" class="erp-btn erp-btn--secondary">
+            <a href="{% url 'ERP_ServicesBI:nota_fiscal_saida_list' %}" class="erp-btn erp-btn--secondary">
                 <span>❌</span> Limpar
             </a>
             {% endif %}
             
-            <a href="{% url 'ERP_ServicesBI:notafiscalsaida_add' %}" class="erp-btn erp-btn--success">
+            <a href="{% url 'ERP_ServicesBI:nota_fiscal_saida_add' %}" class="erp-btn erp-btn--success">
                 <span>+</span> Nova NF
             </a>
         </form>
@@ -271,10 +271,12 @@
                                 ⚙️ Ações ▼
                             </button>
                             <div class="erp-actions__menu">
-                                <a href="{% url 'ERP_ServicesBI:notafiscalsaida_edit' nota.pk %}" class="erp-actions__item">
+                                <!-- ✅ CORRIGIDO: notafiscalsaida_edit → nota_fiscal_saida_edit -->
+                                <a href="{% url 'ERP_ServicesBI:nota_fiscal_saida_edit' nota.pk %}" class="erp-actions__item">
                                     ✏️ Editar
                                 </a>
-                                <a href="{% url 'ERP_ServicesBI:notafiscalsaida_delete' nota.pk %}" 
+                                <!-- ✅ CORRIGIDO: notafiscalsaida_delete → nota_fiscal_saida_delete -->
+                                <a href="{% url 'ERP_ServicesBI:nota_fiscal_saida_delete' nota.pk %}" 
                                    class="erp-actions__item erp-actions__item--danger"
                                    onclick="return confirm('Tem certeza que deseja excluir esta NF?')">
                                     🗑️ Excluir
@@ -289,7 +291,8 @@
                         <div class="erp-empty">
                             <div class="erp-empty__icon">📄</div>
                             <div class="erp-empty__title">Nenhuma nota fiscal cadastrada</div>
-                            <a href="{% url 'ERP_ServicesBI:notafiscalsaida_add' %}" class="erp-empty__link">
+                            <!-- ✅ CORRIGIDO: notafiscalsaida_add → nota_fiscal_saida_add -->
+                            <a href="{% url 'ERP_ServicesBI:nota_fiscal_saida_add' %}" class="erp-empty__link">
                                 Clique aqui para criar a primeira NF
                             </a>
                         </div>
