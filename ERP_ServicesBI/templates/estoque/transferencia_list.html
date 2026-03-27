@@ -43,7 +43,7 @@
                     <option value="50" {% if per_page == '50' %}selected{% endif %}>50</option>
                 </select>
             </form>
-            <a href="{% url 'transferencia_add' %}" style="padding: 8px 16px; background: #f59e0b; color: white; border: none; border-radius: 6px; text-decoration: none; font-size: 14px;">+ Nova Transferência</a>
+            <a href="{% url 'ERP_ServicesBI:transferencia_add' %}" style="padding: 8px 16px; background: #f59e0b; color: white; border: none; border-radius: 6px; text-decoration: none; font-size: 14px;">+ Nova Transferência</a>
         </div>
     </div>
     
@@ -85,9 +85,9 @@
                     <td style="padding: 12px;">{{ transf.usuario.username|default:transf.usuario }}</td>
                     <td style="padding: 12px;">
                         <div style="display: flex; gap: 5px; justify-content: center;">
-                            <a href="{% url 'transferencia_edit' transf.id %}" title="Editar" style="padding: 6px 10px; background: #6b7280; color: white; border-radius: 4px; text-decoration: none; font-size: 12px;">✏️</a>
+                            <a href="{% url 'ERP_ServicesBI:transferencia_edit' transf.id %}" title="Editar" style="padding: 6px 10px; background: #6b7280; color: white; border-radius: 4px; text-decoration: none; font-size: 12px;">✏️</a>
                             {% if transf.status != 'efetivada' and transf.status != 'concluida' %}
-                                <a href="{% url 'transferencia_delete' transf.id %}" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir esta transferência?')" style="padding: 6px 10px; background: #ef4444; color: white; border-radius: 4px; text-decoration: none; font-size: 12px;">🗑️</a>
+                                <a href="{% url 'ERP_ServicesBI:transferencia_delete' transf.id %}" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir esta transferência?')" style="padding: 6px 10px; background: #ef4444; color: white; border-radius: 4px; text-decoration: none; font-size: 12px;">🗑️</a>
                             {% endif %}
                         </div>
                     </td>

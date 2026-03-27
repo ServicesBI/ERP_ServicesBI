@@ -85,7 +85,7 @@
                     <tr style="border-bottom: 1px solid #e5e7eb;">
                         <td style="padding: 12px;">{{ produto.descricao|truncatechars:30 }}</td>
                         <td style="padding: 12px; text-align: center;">{{ produto.quantidade_estoque|default:produto.estoque_atual|floatformat:3 }}</td>
-                        <td style="padding: 12px; text-align: right; font-weight: 600;">{{ produto.valor_estoque|default:produto.valor_total|currency_br }}</td>
+                        <td style="padding: 12px; text-align: right; font-weight: 600;">{{ produto.valor_estoque|currency_br }}</td>
                     </tr>
                     {% empty %}
                     <tr>

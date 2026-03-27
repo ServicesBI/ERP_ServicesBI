@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.http import JsonResponse
-from django.db.models import Sum, Q, F, Min
+from django.db.models import Sum, Q, F, Min,DecimalField
 from django.db import transaction
 from django.utils import timezone
 from django.views.decorators.http import require_POST, require_GET
@@ -2598,25 +2598,61 @@ def dre_comparativo(request):
 
 
 # =============================================================================
-# ESTOQUE (PADRONIZADO COM UNDERLINE)
+# ESTOQUE (PADRONIZADO COM UNDERLINE) - VERSÃO CORRIGIDA
 # =============================================================================
 
 @login_required
 def movimentacao_estoque_list(request):
-    movimentacoes = MovimentacaoEstoque.objects.select_related('produto').all().order_by('-data')
-    # ✅ PADRONIZADO: Paginação
-    paginator = Paginator(movimentacoes, 25)
+    """
+    Lista paginada de movimentações de estoque.
+    Filtros: produto, tipo, data_inicio, data_fim
+    """
+    movimentacoes = MovimentacaoEstoque.objects.select_related('produto', 'usuario').all().order_by('-data')
+    
+    # Filtros
+    produto_id = request.GET.get('produto')
+    tipo = request.GET.get('tipo')
+    data_inicio = request.GET.get('data_inicio')
+    data_fim = request.GET.get('data_fim')
+    
+    if produto_id:
+        movimentacoes = movimentacoes.filter(produto_id=produto_id)
+    if tipo:
+        movimentacoes = movimentacoes.filter(tipo=tipo)
+    if data_inicio:
+        movimentacoes = movimentacoes.filter(data__gte=data_inicio)
+    if data_fim:
+        movimentacoes = movimentacoes.filter(data__lte=data_fim)
+    
+    # Paginação
+    per_page = request.GET.get('per_page', '25')
+    try:
+        per_page = int(per_page)
+    except:
+        per_page = 25
+    
+    paginator = Paginator(movimentacoes, per_page)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
     context = {
         'page_obj': page_obj,
         'total': paginator.count,
+        'produtos': Produto.objects.filter(ativo=True).order_by('descricao'),
+        'tipos': MovimentacaoEstoque.TIPO_CHOICES,
+        'filtros': {
+            'produto': produto_id or '',
+            'tipo': tipo or '',
+            'data_inicio': data_inicio or '',
+            'data_fim': data_fim or '',
+        }
     }
     return render(request, 'estoque/movimentacao_estoque_list.html', context)
 
+
 @login_required
 def movimentacao_estoque_add(request):
+    """Cria nova movimentação de estoque"""
     if request.method == 'POST':
         form = MovimentacaoEstoqueForm(request.POST)
         if form.is_valid():
@@ -2626,13 +2662,28 @@ def movimentacao_estoque_add(request):
             messages.success(request, 'Movimentação registrada com sucesso!')
             return redirect('ERP_ServicesBI:movimentacao_estoque_list')
     else:
-        form = MovimentacaoEstoqueForm()
-    context = {'form': form, 'titulo': 'Nova Movimentação de Estoque'}
+        # Pre-fill com produto se vier por querystring
+        initial = {}
+        produto_id = request.GET.get('produto')
+        if produto_id:
+            initial['produto'] = produto_id
+        form = MovimentacaoEstoqueForm(initial=initial)
+    
+    context = {
+        'form': form, 
+        'titulo': 'Nova Movimentação de Estoque',
+        'produtos': Produto.objects.filter(ativo=True).order_by('descricao'),
+        'tipos': MovimentacaoEstoque.TIPO_CHOICES,
+        'is_edit': False,
+    }
     return render(request, 'estoque/movimentacao_estoque_form.html', context)
+
 
 @login_required
 def movimentacao_estoque_edit(request, pk):
+    """Edita movimentação existente"""
     movimentacao = get_object_or_404(MovimentacaoEstoque, pk=pk)
+    
     if request.method == 'POST':
         form = MovimentacaoEstoqueForm(request.POST, instance=movimentacao)
         if form.is_valid():
@@ -2641,44 +2692,178 @@ def movimentacao_estoque_edit(request, pk):
             return redirect('ERP_ServicesBI:movimentacao_estoque_list')
     else:
         form = MovimentacaoEstoqueForm(instance=movimentacao)
-    context = {'form': form, 'titulo': 'Editar Movimentação', 'movimentacao': movimentacao}
+    
+    context = {
+        'form': form, 
+        'titulo': 'Editar Movimentação', 
+        'movimentacao': movimentacao,
+        'produtos': Produto.objects.filter(ativo=True).order_by('descricao'),
+        'tipos': MovimentacaoEstoque.TIPO_CHOICES,
+        'is_edit': True,
+    }
     return render(request, 'estoque/movimentacao_estoque_form.html', context)
+
 
 @login_required
 def movimentacao_estoque_delete(request, pk):
+    """Exclui movimentação de estoque"""
     movimentacao = get_object_or_404(MovimentacaoEstoque, pk=pk)
+    
     if request.method == 'POST':
-        movimentacao.delete()
-        messages.success(request, 'Movimentação excluída com sucesso!')
+        try:
+            movimentacao.delete()
+            messages.success(request, 'Movimentação excluída com sucesso!')
+        except Exception as e:
+            messages.error(request, f'Erro ao excluir: {str(e)}')
         return redirect('ERP_ServicesBI:movimentacao_estoque_list')
-    context = {'objeto': movimentacao, 'titulo': 'Excluir Movimentação'}
+    
+    context = {
+        'objeto': movimentacao, 
+        'titulo': 'Excluir Movimentação',
+        'tipo_objeto': 'movimentação de estoque',
+        'voltar_url': 'ERP_ServicesBI:movimentacao_estoque_list',
+    }
     return render(request, 'estoque/movimentacao_estoque_confirm_delete.html', context)
+
+
+# =============================================================================
+# INVENTÁRIO (FLUXO COMPLETO CORRIGIDO)
+# =============================================================================
 
 @login_required
 def inventario_list(request):
-    inventarios = Inventario.objects.select_related('usuario').all().order_by('-data')
-    context = {'inventarios': inventarios}
+    """
+    Lista paginada de inventários.
+    Filtros: search, status, data_inicio, data_fim
+    """
+    inventarios = Inventario.objects.select_related('usuario').prefetch_related('itens').all().order_by('-data')
+    
+    # Filtros
+    search = request.GET.get('search', '')
+    status = request.GET.get('status', '')
+    data_inicio = request.GET.get('data_inicio', '')
+    data_fim = request.GET.get('data_fim', '')
+    order_by = request.GET.get('order_by', '-data')
+    per_page = request.GET.get('per_page', '25')
+    
+    if search:
+        inventarios = inventarios.filter(
+            Q(numero__icontains=search) | 
+            Q(descricao__icontains=search)
+        )
+    if status:
+        inventarios = inventarios.filter(status=status)
+    if data_inicio:
+        inventarios = inventarios.filter(data__gte=data_inicio)
+    if data_fim:
+        inventarios = inventarios.filter(data__lte=data_fim)
+    
+    # Ordenação segura
+    order_fields = ['data', '-data', 'id', '-id', 'numero', '-numero', 'status', '-status']
+    if order_by in order_fields:
+        inventarios = inventarios.order_by(order_by)
+    
+    # Paginação
+    try:
+        per_page = int(per_page)
+    except:
+        per_page = 25
+    
+    paginator = Paginator(inventarios, per_page)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'total': paginator.count,
+        'search': search,
+        'status': status,
+        'data_inicio': data_inicio,
+        'data_fim': data_fim,
+        'order_by': order_by,
+        'per_page': str(per_page),
+        'status_choices': Inventario.STATUS_CHOICES if hasattr(Inventario, 'STATUS_CHOICES') else [
+            ('em_andamento', 'Em Andamento'),
+            ('finalizado', 'Finalizado'),
+            ('cancelado', 'Cancelado'),
+        ],
+    }
     return render(request, 'estoque/inventario_list.html', context)
+
 
 @login_required
 def inventario_add(request):
+    """
+    Cria novo inventário.
+    Fluxo: Cria -> Redireciona para inventario_edit para adicionar itens
+    """
     if request.method == 'POST':
         form = InventarioForm(request.POST)
         if form.is_valid():
-            inventario = form.save(commit=False)
-            inventario.usuario = request.user
-            inventario.save()
-            messages.success(request, 'Inventário criado com sucesso!')
-            return redirect('ERP_ServicesBI:inventario_list')
+            try:
+                inventario = form.save(commit=False)
+                inventario.usuario = request.user
+                # Se tiver SequencialMixin, o número é gerado automaticamente no save()
+                # Senão, precisa gerar manualmente aqui
+                if not hasattr(inventario, 'gerar_numero_sequencial'):
+                    # Fallback se não usar o mixin
+                    ultimo = Inventario.objects.order_by('-id').first()
+                    proximo_num = (ultimo.id + 1) if ultimo else 1
+                    inventario.numero = f"INV-{proximo_num:06d}"
+                
+                inventario.save()
+                messages.success(request, f'Inventário #{inventario.numero} criado! Agora adicione os itens.')
+                # ✅ CORRIGIDO: Redireciona para edit em vez de list
+                return redirect('ERP_ServicesBI:inventario_edit', pk=inventario.pk)
+            except Exception as e:
+                messages.error(request, f'Erro ao criar inventário: {str(e)}')
+        else:
+            messages.error(request, 'Erro no formulário. Verifique os dados.')
     else:
         form = InventarioForm()
-    context = {'form': form, 'titulo': 'Novo Inventário'}
+        # Sugere próximo número se o campo existir e não for auto
+        numero_sugerido = None
+        if hasattr(Inventario, 'numero'):
+            try:
+                ultimo = Inventario.objects.order_by('-id').first()
+                proximo = (ultimo.id + 1) if ultimo else 1
+                numero_sugerido = f"INV-{proximo:06d}"
+            except:
+                pass
+    
+    from datetime import date
+    context = {
+        'form': form, 
+        'titulo': 'Novo Inventário',
+        'numero_sugerido': numero_sugerido,
+        'data_hoje': date.today().isoformat(),
+        'is_edit': False,
+    }
     return render(request, 'estoque/inventario_form.html', context)
+
 
 @login_required
 def inventario_edit(request, pk):
-    inventario = get_object_or_404(Inventario, pk=pk)
+    """
+    Edita inventário e gerencia itens (contagem de produtos).
+    GET: Mostra formulário + lista de itens
+    POST: Atualiza dados básicos do inventário
+    """
+    inventario = get_object_or_404(Inventario.objects.select_related('usuario'), pk=pk)
+    
+    # Busca ou cria itens do inventário (todos os produtos ativos se ainda não tiver)
+    if request.method == 'GET' and not inventario.itens.exists():
+        # Opcional: pré-popular com todos os produtos ativos
+        produtos = Produto.objects.filter(ativo=True)
+        for produto in produtos:
+            InventarioItem.objects.get_or_create(
+                inventario=inventario,
+                produto=produto,
+                defaults={'quantidade_sistema': produto.quantidade_estoque or 0}
+            )
+    
     if request.method == 'POST':
+        # POST para atualizar dados básicos do inventário
         form = InventarioForm(request.POST, instance=inventario)
         if form.is_valid():
             form.save()
@@ -2686,43 +2871,227 @@ def inventario_edit(request, pk):
             return redirect('ERP_ServicesBI:inventario_list')
     else:
         form = InventarioForm(instance=inventario)
-    context = {'form': form, 'titulo': 'Editar Inventário', 'inventario': inventario}
+    
+    # Calcula estatísticas dos itens
+    itens = inventario.itens.select_related('produto').all()
+    contados = itens.exclude(quantidade_contada__isnull=True).count()
+    total_itens = itens.count()
+    divergentes = itens.filter(divergencia__gt=0).count() if hasattr(InventarioItem, 'divergencia') else 0
+    
+    # Calcula percentual de progresso
+    progresso = (contados / total_itens * 100) if total_itens > 0 else 0
+    
+    context = {
+        'form': form, 
+        'titulo': f'Inventário #{inventario.numero}',
+        'inventario': inventario,
+        'itens': itens,
+        'contados': contados,
+        'total_itens': total_itens,
+        'divergentes': divergentes,
+        'progresso': round(progresso, 1),
+        'is_edit': True,
+        'pode_finalizar': contados > 0 and inventario.status == 'em_andamento',
+    }
     return render(request, 'estoque/inventario_form.html', context)
+
+
+@login_required
+def inventario_item_add(request, inventario_pk):
+    """
+    Adiciona item ao inventário (usado via AJAX ou formulário separado).
+    Ou atualiza quantidade contada de item existente.
+    """
+    inventario = get_object_or_404(Inventario, pk=inventario_pk)
+    
+    if request.method == 'POST':
+        produto_id = request.POST.get('produto')
+        quantidade = request.POST.get('quantidade_contada')
+        
+        try:
+            produto = Produto.objects.get(pk=produto_id)
+            item, created = InventarioItem.objects.update_or_create(
+                inventario=inventario,
+                produto=produto,
+                defaults={
+                    'quantidade_contada': quantidade,
+                    'quantidade_sistema': produto.quantidade_estoque or 0,
+                    'usuario': request.user,
+                }
+            )
+            messages.success(request, f'{produto.descricao} atualizado!')
+        except Exception as e:
+            messages.error(request, f'Erro: {str(e)}')
+        
+        return redirect('ERP_ServicesBI:inventario_edit', pk=inventario_pk)
+    
+    # GET: mostra formulário para adicionar produto
+    produtos_disponiveis = Produto.objects.filter(ativo=True).exclude(
+        id__in=inventario.itens.values_list('produto_id', flat=True)
+    )
+    
+    context = {
+        'inventario': inventario,
+        'produtos': produtos_disponiveis,
+    }
+    return render(request, 'estoque/inventario_item_form.html', context)
+
+
+@login_required
+def inventario_finalizar(request, pk):
+    """Finaliza o inventário e ajusta estoque se necessário"""
+    inventario = get_object_or_404(Inventario, pk=pk)
+    
+    if request.method == 'POST':
+        try:
+            inventario.status = 'finalizado'
+            inventario.data_finalizacao = timezone.now()
+            inventario.save()
+            
+            # Opcional: criar movimentações de ajuste para divergências
+            if request.POST.get('ajustar_estoque') == 'on':
+                for item in inventario.itens.exclude(quantidade_contada__isnull=True):
+                    if item.quantidade_contada != item.quantidade_sistema:
+                        MovimentacaoEstoque.objects.create(
+                            produto=item.produto,
+                            tipo='ajuste' if item.quantidade_contada > item.quantidade_sistema else 'ajuste_negativo',
+                            quantidade=abs(item.quantidade_contada - item.quantidade_sistema),
+                            motivo=f'Ajuste via Inventário #{inventario.numero}',
+                            usuario=request.user,
+                        )
+                        # Atualiza estoque do produto
+                        item.produto.quantidade_estoque = item.quantidade_contada
+                        item.produto.save()
+            
+            messages.success(request, f'Inventário #{inventario.numero} finalizado!')
+        except Exception as e:
+            messages.error(request, f'Erro ao finalizar: {str(e)}')
+    
+    return redirect('ERP_ServicesBI:inventario_list')
+
 
 @login_required
 def inventario_delete(request, pk):
+    """Exclui inventário e todos os seus itens"""
     inventario = get_object_or_404(Inventario, pk=pk)
-    if request.method == 'POST':
-        inventario.delete()
-        messages.success(request, 'Inventário excluído com sucesso!')
+    
+    # Verifica se pode excluir (só em_andamento ou cancelado)
+    if inventario.status == 'finalizado':
+        messages.error(request, 'Não é possível excluir inventário finalizado!')
         return redirect('ERP_ServicesBI:inventario_list')
-    context = {'objeto': inventario, 'titulo': 'Excluir Inventário'}
+    
+    if request.method == 'POST':
+        try:
+            # Exclui itens primeiro (se não tiver cascade)
+            inventario.itens.all().delete()
+            inventario.delete()
+            messages.success(request, 'Inventário excluído com sucesso!')
+        except Exception as e:
+            messages.error(request, f'Erro ao excluir: {str(e)}')
+        return redirect('ERP_ServicesBI:inventario_list')
+    
+    context = {
+        'objeto': inventario, 
+        'titulo': 'Excluir Inventário',
+        'tipo_objeto': 'inventário de estoque',
+        'mensagem_adicional': f'Este inventário possui {inventario.itens.count()} itens que também serão excluídos.',
+        'voltar_url': 'ERP_ServicesBI:inventario_list',
+    }
     return render(request, 'estoque/confirm_delete.html', context)
+
+
+# =============================================================================
+# TRANSFERÊNCIA (CORRIGIDO COM PAGINAÇÃO E CONTEXTOS)
+# =============================================================================
 
 @login_required
 def transferencia_list(request):
+    """
+    Lista paginada de transferências entre depósitos.
+    """
     transferencias = TransferenciaEstoque.objects.select_related('usuario').all().order_by('-data')
-    context = {'transferencias': transferencias}
+    
+    # Filtros
+    status = request.GET.get('status', '')
+    deposito = request.GET.get('deposito', '')
+    data_inicio = request.GET.get('data_inicio', '')
+    data_fim = request.GET.get('data_fim', '')
+    per_page = request.GET.get('per_page', '25')
+    
+    if status:
+        transferencias = transferencias.filter(status=status)
+    if deposito:
+        transferencias = transferencias.filter(
+            Q(origem=deposito) | Q(destino=deposito)
+        )
+    if data_inicio:
+        transferencias = transferencias.filter(data__gte=data_inicio)
+    if data_fim:
+        transferencias = transferencias.filter(data__lte=data_fim)
+    
+    # Paginação
+    try:
+        per_page = int(per_page)
+    except:
+        per_page = 25
+    
+    paginator = Paginator(transferencias, per_page)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'total': paginator.count,
+        'status': status,
+        'deposito': deposito,
+        'data_inicio': data_inicio,
+        'data_fim': data_fim,
+        'per_page': str(per_page),
+        'status_choices': getattr(TransferenciaEstoque, 'STATUS_CHOICES', [
+            ('pendente', 'Pendente'),
+            ('concluida', 'Concluída'),
+            ('cancelada', 'Cancelada'),
+        ]),
+    }
     return render(request, 'estoque/transferencia_list.html', context)
+
 
 @login_required
 def transferencia_add(request):
+    """Cria nova transferência de estoque entre depósitos"""
     if request.method == 'POST':
         form = TransferenciaEstoqueForm(request.POST)
         if form.is_valid():
             transferencia = form.save(commit=False)
             transferencia.usuario = request.user
+            transferencia.status = 'pendente'
             transferencia.save()
             messages.success(request, 'Transferência criada com sucesso!')
             return redirect('ERP_ServicesBI:transferencia_list')
     else:
         form = TransferenciaEstoqueForm()
-    context = {'form': form, 'titulo': 'Nova Transferência de Estoque'}
+    
+    # ✅ CORRIGIDO: Carrega produtos e depósitos para o template
+    context = {
+        'form': form, 
+        'titulo': 'Nova Transferência de Estoque',
+        'produtos': Produto.objects.filter(ativo=True).order_by('descricao'),
+        'depositos': Deposito.objects.filter(ativo=True).order_by('nome') if 'Deposito' in globals() else [],
+        'is_edit': False,
+    }
     return render(request, 'estoque/transferencia_form.html', context)
+
 
 @login_required
 def transferencia_edit(request, pk):
+    """Edita transferência pendente"""
     transferencia = get_object_or_404(TransferenciaEstoque, pk=pk)
+    
+    # Só permite editar se estiver pendente
+    if transferencia.status != 'pendente':
+        messages.error(request, 'Só é possível editar transferências pendentes!')
+        return redirect('ERP_ServicesBI:transferencia_list')
+    
     if request.method == 'POST':
         form = TransferenciaEstoqueForm(request.POST, instance=transferencia)
         if form.is_valid():
@@ -2731,25 +3100,191 @@ def transferencia_edit(request, pk):
             return redirect('ERP_ServicesBI:transferencia_list')
     else:
         form = TransferenciaEstoqueForm(instance=transferencia)
-    context = {'form': form, 'titulo': 'Editar Transferência', 'transferencia': transferencia}
+    
+    context = {
+        'form': form, 
+        'titulo': 'Editar Transferência', 
+        'transferencia': transferencia,
+        'produtos': Produto.objects.filter(ativo=True).order_by('descricao'),
+        'depositos': Deposito.objects.filter(ativo=True).order_by('nome') if 'Deposito' in globals() else [],
+        'is_edit': True,
+    }
     return render(request, 'estoque/transferencia_form.html', context)
+
+
+@login_required
+def transferencia_concluir(request, pk):
+    """Conclui transferência pendente (executa a movimentação de estoque)"""
+    transferencia = get_object_or_404(TransferenciaEstoque, pk=pk)
+    
+    if request.method == 'POST':
+        try:
+            # Executa a lógica de transferência
+            produto = transferencia.produto
+            quantidade = transferencia.quantidade
+            
+            # Verifica estoque no origem
+            if produto.quantidade_estoque < quantidade:
+                messages.error(request, f'Estoque insuficiente no depósito de origem! Disponível: {produto.quantidade_estoque}')
+                return redirect('ERP_ServicesBI:transferencia_list')
+            
+            # Cria movimentações de saída e entrada
+            MovimentacaoEstoque.objects.create(
+                produto=produto,
+                tipo='saida',
+                quantidade=quantidade,
+                motivo=f'Transferência para {transferencia.deposito_destino}',
+                usuario=request.user,
+            )
+            
+            MovimentacaoEstoque.objects.create(
+                produto=produto,
+                tipo='entrada',
+                quantidade=quantidade,
+                motivo=f'Transferência de {transferencia.deposito_origem}',
+                usuario=request.user,
+            )
+            
+            # Atualiza status
+            transferencia.status = 'concluida'
+            transferencia.data_conclusao = timezone.now()
+            transferencia.save()
+            
+            messages.success(request, 'Transferência concluída e estoque movimentado!')
+        except Exception as e:
+            messages.error(request, f'Erro ao concluir: {str(e)}')
+    
+    return redirect('ERP_ServicesBI:transferencia_list')
+
 
 @login_required
 def transferencia_delete(request, pk):
+    """Exclui transferência pendente"""
     transferencia = get_object_or_404(TransferenciaEstoque, pk=pk)
-    if request.method == 'POST':
-        transferencia.delete()
-        messages.success(request, 'Transferência excluída com sucesso!')
+    
+    if transferencia.status == 'concluida':
+        messages.error(request, 'Não é possível excluir transferência concluída!')
         return redirect('ERP_ServicesBI:transferencia_list')
-    context = {'objeto': transferencia, 'titulo': 'Excluir Transferência'}
+    
+    if request.method == 'POST':
+        try:
+            transferencia.delete()
+            messages.success(request, 'Transferência excluída com sucesso!')
+        except Exception as e:
+            messages.error(request, f'Erro ao excluir: {str(e)}')
+        return redirect('ERP_ServicesBI:transferencia_list')
+    
+    context = {
+        'objeto': transferencia, 
+        'titulo': 'Excluir Transferência',
+        'tipo_objeto': 'transferência de estoque',
+        'voltar_url': 'ERP_ServicesBI:transferencia_list',
+    }
     return render(request, 'estoque/confirm_delete.html', context)
+
+
+# =============================================================================
+# RELATÓRIOS (IMPLEMENTADOS)
+# =============================================================================
 
 @login_required
 def relatorio_estoque(request):
-    context = {}
-    return render(request, 'estoque/relatorio_posicao.html', context)
+    """
+    Relatório de posição atual do estoque.
+    Filtros: categoria, deposito, estoque_baixo
+    """
+    from django.db.models import Sum, F, DecimalField
+    
+    produtos = Produto.objects.select_related('categoria').filter(ativo=True)
+    
+    # Filtros
+    categoria_id = request.GET.get('categoria')
+    estoque_baixo = request.GET.get('estoque_baixo')
+    
+    if categoria_id:
+        produtos = produtos.filter(categoria_id=categoria_id)
+    if estoque_baixo:
+        produtos = produtos.filter(estoque_atual__lte=F('estoque_minimo'))
+    
+    # Agregações
+    total_produtos = produtos.count()
+    valor_total_estoque = produtos.aggregate(
+        total=Sum(F('estoque_atual') * F('preco_custo'), output_field=DecimalField())
+    )['total'] or 0
+    
+    estoque_baixo_count = produtos.filter(estoque_atual__lte=F('estoque_minimo')).count()
+    
+    # Produtos com estoque baixo para o card
+    produtos_baixo = produtos.filter(estoque_atual__lte=F('estoque_minimo'))[:10]
+    
+    # Curva ABC (top produtos por valor de estoque)
+    curva_abc = produtos.annotate(
+        valor_estoque=F('estoque_atual') * F('preco_custo')
+    ).order_by('-valor_estoque')[:10]
+    
+    context = {
+        'produtos': produtos.order_by('descricao'),
+        'total_produtos': total_produtos,
+        'valor_total_estoque': valor_total_estoque,
+        'estoque_baixo_count': estoque_baixo_count,
+        'produtos_baixo': produtos_baixo,
+        'curva_abc': curva_abc,
+        'categorias': Categoria.objects.filter(ativo=True) if 'Categoria' in globals() else [],
+        'filtros': {
+            'categoria': categoria_id or '',
+            'estoque_baixo': estoque_baixo or '',
+        }
+    }
+    return render(request, 'estoque/relatorio_estoque.html', context)
 
 @login_required
 def relatorio_movimentacoes(request):
-    context = {}
+    """
+    Relatório analítico de movimentações de estoque.
+    Filtros: período, produto, tipo, usuario
+    """
+    from django.db.models import Count, Sum, F
+    
+    movimentacoes = MovimentacaoEstoque.objects.select_related('produto', 'usuario').all()
+    
+    # Filtros
+    data_inicio = request.GET.get('data_inicio')
+    data_fim = request.GET.get('data_fim')
+    produto_id = request.GET.get('produto')
+    tipo = request.GET.get('tipo')
+    
+    if data_inicio:
+        movimentacoes = movimentacoes.filter(data__gte=data_inicio)
+    if data_fim:
+        movimentacoes = movimentacoes.filter(data__lte=data_fim)
+    if produto_id:
+        movimentacoes = movimentacoes.filter(produto_id=produto_id)
+    if tipo:
+        movimentacoes = movimentacoes.filter(tipo=tipo)
+    
+    # Resumo por tipo - CORRIGIDO: não usar Sum duas vezes
+    resumo_tipo = movimentacoes.values('tipo').annotate(
+        quantidade_movimentacoes=Count('id'),
+        total_quantidade=Sum('quantidade')
+    ).order_by('tipo')
+    
+    # Resumo por produto (top 20) - CORRIGIDO: não usar Sum duas vezes
+    resumo_produto = movimentacoes.values('produto__descricao').annotate(
+        total_movimentado=Sum('quantidade')
+    ).order_by('-total_movimentado')[:20]
+    
+    context = {
+        'movimentacoes': movimentacoes.order_by('-data')[:100],  # Últimas 100
+        'resumo_tipo': resumo_tipo,
+        'resumo_produto': resumo_produto,
+        'total_registros': movimentacoes.count(),
+        'produtos': Produto.objects.filter(ativo=True),
+        'tipos': MovimentacaoEstoque.TIPO_CHOICES,
+        'filtros': {
+            'data_inicio': data_inicio or '',
+            'data_fim': data_fim or '',
+            'produto': produto_id or '',
+            'tipo': tipo or '',
+        }
+    }
     return render(request, 'estoque/relatorio_movimentacoes.html', context)

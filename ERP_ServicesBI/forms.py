@@ -494,11 +494,38 @@ class FiltroDREForm(forms.Form):
 # MÓDULO: ESTOQUE
 # =============================================================================
 
-class MovimentacaoEstoqueForm(BaseForm):
+class MovimentacaoEstoqueForm(forms.ModelForm):
+    produto = forms.ModelChoiceField(
+        queryset=Produto.objects.filter(ativo=True).order_by('descricao'),
+        empty_label="Selecione um produto...",
+        required=True,
+        widget=forms.Select(attrs={'class': 'erp-select'})
+    )
+    
+    tipo = forms.ChoiceField(
+        choices=[('', 'Selecione o tipo...')] + list(MovimentacaoEstoque.TIPO_CHOICES),
+        required=True,
+        widget=forms.Select(attrs={'class': 'erp-select'})
+    )
+    
+    quantidade = forms.DecimalField(
+        required=True,
+        widget=forms.NumberInput(attrs={'class': 'erp-input', 'step': '0.001'})
+    )
+    
+    observacoes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'erp-textarea', 'rows': 3})
+    )
+    
     class Meta:
         model = MovimentacaoEstoque
-        fields = '__all__'
-
+        exclude = ['data', 'usuario', 'nota_fiscal_entrada', 'nota_fiscal_saida', 'transferencia']
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Garante que os campos estão configurados
+        self.fields['produto'].queryset = Produto.objects.filter(ativo=True).order_by('descricao')
 
 class InventarioForm(BaseForm):
     class Meta:
