@@ -2,14 +2,14 @@
 from django import forms
 from django.contrib.auth.models import User
 from .models import (
-    Empresa, Cliente, Fornecedor, Produto, Categoria,
+    Empresa, Cliente, Fornecedor, Produto, Categoria,Vendedor,CondicaoPagamento,FormaPagamento,
     PedidoCompra, ItemPedidoCompra, 
     NotaFiscalEntrada, ItemNotaFiscalEntrada,
     Orcamento, ItemOrcamento, PedidoVenda, ItemPedidoVenda, 
     NotaFiscalSaida, ItemNotaFiscalSaida,
     ContaPagar, ContaReceber, MovimentoCaixa,
     CategoriaFinanceira, CentroCusto, OrcamentoFinanceiro,
-    ExtratoBancario, LancamentoExtrato,
+    ExtratoBancario, LancamentoExtrato,ConfiguracaoDRE, LinhaDRE, RelatorioDRE,
     MovimentacaoEstoque, Inventario, ItemInventario, 
     TransferenciaEstoque, ItemTransferencia,
     CotacaoMae, ItemSolicitado, CotacaoFornecedor, ItemCotacaoFornecedor
@@ -60,6 +60,19 @@ class ClienteForm(BaseForm):
         self.fields['cidade'].required = False
         self.fields['estado'].required = False
         self.fields['rg_inscricao_estadual'].required = False
+        self.fields['ativo'].required = False
+
+class VendedorForm(BaseForm):
+    class Meta:
+        model = Vendedor
+        fields = '__all__'
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['email'].required = False
+        self.fields['telefone'].required = False
+        self.fields['percentual_comissao'].required = False
+        self.fields['meta_vendas'].required = False
         self.fields['ativo'].required = False
 
 
@@ -134,6 +147,30 @@ class ProdutoForm(BaseForm):
         self.fields['estoque_atual'].required = False
         self.fields['estoque_minimo'].required = False
         self.fields['observacoes'].required = False
+        self.fields['ativo'].required = False
+
+class CondicaoPagamentoForm(BaseForm):
+    class Meta:
+        model = CondicaoPagamento
+        fields = '__all__'
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['descricao'].required = True
+        self.fields['dias'].required = False
+        self.fields['parcelas'].required = False
+        self.fields['ativo'].required = False
+
+
+class FormaPagamentoForm(BaseForm):
+    class Meta:
+        model = FormaPagamento
+        fields = '__all__'
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['descricao'].required = True
+        self.fields['tipo'].required = True
         self.fields['ativo'].required = False
 
 # =============================================================================
@@ -333,6 +370,125 @@ class LancamentoExtratoForm(BaseForm):
     class Meta:
         model = LancamentoExtrato
         fields = '__all__'
+
+# =============================================================================
+# FORMS - DRE
+# =============================================================================
+
+class ConfiguracaoDREForm(forms.ModelForm):
+    """Form para configuração da DRE por empresa"""
+    
+    class Meta:
+        model = ConfiguracaoDRE
+        fields = [
+            'empresa',
+            'regime_tributario',
+            'atividade_principal',
+            'aliquota_simples',
+            'percentual_presuncao_comercio',
+            'percentual_presuncao_servico',
+            'aliquota_irpj',
+            'aliquota_irpj_adicional',
+            'aliquota_csll',
+            'ativo',
+        ]
+        widgets = {
+            'empresa': forms.Select(attrs={'class': 'form-control'}),
+            'regime_tributario': forms.Select(attrs={'class': 'form-control'}),
+            'atividade_principal': forms.Select(attrs={'class': 'form-control'}),
+            'aliquota_simples': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'percentual_presuncao_comercio': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'percentual_presuncao_servico': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'aliquota_irpj': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'aliquota_irpj_adicional': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'aliquota_csll': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'ativo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+
+class LinhaDREForm(forms.ModelForm):
+    """Form para configurar linhas customizadas da DRE"""
+    
+    class Meta:
+        model = LinhaDRE
+        fields = [
+            'codigo',
+            'descricao',
+            'tipo',
+            'natureza',
+            'grupos_dre',
+            'formula',
+            'ordem',
+            'nivel',
+            'negrito',
+            'visivel',
+            'regime_especifico',
+            'ativo',
+        ]
+        widgets = {
+            'codigo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ex: 1.0, 2.1'}),
+            'descricao': forms.TextInput(attrs={'class': 'form-control'}),
+            'tipo': forms.Select(attrs={'class': 'form-control'}),
+            'natureza': forms.Select(attrs={'class': 'form-control'}),
+            'grupos_dre': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ex: receita_bruta,outras_receitas'
+            }),
+            'formula': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ex: 1.0-2.0 ou 3.0+4.0'
+            }),
+            'ordem': forms.NumberInput(attrs={'class': 'form-control'}),
+            'nivel': forms.NumberInput(attrs={'class': 'form-control', 'min': 0, 'max': 3}),
+            'negrito': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'visivel': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'regime_especifico': forms.Select(attrs={'class': 'form-control'}),
+            'ativo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+
+class FiltroDREForm(forms.Form):
+    """Form para filtros do relatório DRE"""
+    
+    empresa = forms.ModelChoiceField(
+        queryset=None,  # Será definido no __init__
+        required=True,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label='Empresa'
+    )
+    data_inicio = forms.DateField(
+        required=True,
+        widget=forms.DateInput(attrs={
+            'class': 'form-control',
+            'type': 'date'
+        }),
+        label='Data Início'
+    )
+    data_fim = forms.DateField(
+        required=True,
+        widget=forms.DateInput(attrs={
+            'class': 'form-control',
+            'type': 'date'
+        }),
+        label='Data Fim'
+    )
+    regime = forms.ChoiceField(
+        choices=[
+            ('', 'Usar configuração da empresa'),
+            ('simples', 'Simples Nacional'),
+            ('presumido', 'Lucro Presumido'),
+            ('real', 'Lucro Real'),
+        ],
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        label='Regime Tributário'
+    )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from .models import Empresa
+        self.fields['empresa'].queryset = Empresa.objects.filter(ativo=True)
+
 
 # =============================================================================
 # MÓDULO: ESTOQUE

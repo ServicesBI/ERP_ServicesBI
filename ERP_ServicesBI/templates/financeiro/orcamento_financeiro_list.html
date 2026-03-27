@@ -113,7 +113,8 @@
 <div class="erp-table-card">
     <div class="erp-table-card__header">
         <h3 class="erp-table-card__title">📋 Orçamentos Cadastrados ({{ orcamentos.count }})</h3>
-        <a href="{% url 'ERP_ServicesBI:orcamentofinanceiro_add' %}" class="erp-btn erp-btn--primary">
+        <!-- ✅ CORRIGIDO: orcamentofinanceiro_add → orcamento_financeiro_add -->
+        <a href="{% url 'ERP_ServicesBI:orcamento_financeiro_add' %}" class="erp-btn erp-btn--primary">
             <span>+</span> Novo Orçamento
         </a>
     </div>
@@ -141,10 +142,12 @@
                     </td>
                     <td class="erp-text-center">
                         <div class="erp-actions">
-                            <a href="{% url 'ERP_ServicesBI:orcamentofinanceiro_edit' orc.pk %}" class="erp-btn-icon erp-btn-icon--edit" title="Editar">
+                            <!-- ✅ CORRIGIDO: orcamentofinanceiro_edit → orcamento_financeiro_edit -->
+                            <a href="{% url 'ERP_ServicesBI:orcamento_financeiro_edit' orc.pk %}" class="erp-btn-icon erp-btn-icon--edit" title="Editar">
                                 ✏️
                             </a>
-                            <a href="{% url 'ERP_ServicesBI:orcamentofinanceiro_delete' orc.pk %}" class="erp-btn-icon erp-btn-icon--delete" title="Excluir" data-confirm="Tem certeza que deseja excluir este orçamento?">
+                            <!-- ✅ CORRIGIDO: orcamentofinanceiro_delete → orcamento_financeiro_delete -->
+                            <a href="{% url 'ERP_ServicesBI:orcamento_financeiro_delete' orc.pk %}" class="erp-btn-icon erp-btn-icon--delete" title="Excluir" data-confirm="Tem certeza que deseja excluir este orçamento?">
                                 🗑️
                             </a>
                         </div>
@@ -157,7 +160,8 @@
                             <div class="erp-empty__icon">📊</div>
                             <div class="erp-empty__title">Nenhum orçamento cadastrado</div>
                             <p style="color: var(--gray-500); margin-bottom: 16px;">Cadastre seu primeiro orçamento financeiro</p>
-                            <a href="{% url 'ERP_ServicesBI:orcamentofinanceiro_add' %}" class="erp-btn erp-btn--primary">
+                            <!-- ✅ CORRIGIDO: orcamentofinanceiro_add → orcamento_financeiro_add -->
+                            <a href="{% url 'ERP_ServicesBI:orcamento_financeiro_add' %}" class="erp-btn erp-btn--primary">
                                 <span>+</span> Novo Orçamento
                             </a>
                         </div>

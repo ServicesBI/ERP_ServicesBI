@@ -217,10 +217,12 @@
         <button type="submit" class="erp-btn erp-btn--primary">
             <span>🔍</span> Filtrar
         </button>
-        <a href="{% url 'ERP_ServicesBI:contapagar_list' %}" class="erp-btn erp-btn--secondary">
+        <!-- ✅ CORRIGIDO: contapagar_list → conta_pagar_list -->
+        <a href="{% url 'ERP_ServicesBI:conta_pagar_list' %}" class="erp-btn erp-btn--secondary">
             <span>❌</span> Limpar
         </a>
-        <a href="{% url 'ERP_ServicesBI:contapagar_add' %}" class="erp-btn erp-btn--primary">
+        <!-- ✅ CORRIGIDO: contapagar_add → conta_pagar_add -->
+        <a href="{% url 'ERP_ServicesBI:conta_pagar_add' %}" class="erp-btn erp-btn--primary">
             <span>+</span> Adicionar
         </a>
     </form>
@@ -276,14 +278,17 @@
                     <td class="erp-text-center">
                         <div class="erp-actions">
                             {% if conta.status != 'quitado' and conta.status != 'pago' %}
-                                <a href="{% url 'ERP_ServicesBI:contapagar_baixar' conta.id %}" class="erp-btn-icon erp-btn-icon--success" title="Baixar">
+                                <!-- ✅ CORRIGIDO: contapagar_baixar → conta_pagar_baixar -->
+                                <a href="{% url 'ERP_ServicesBI:conta_pagar_baixar' conta.id %}" class="erp-btn-icon erp-btn-icon--success" title="Baixar">
                                     💰
                                 </a>
                             {% endif %}
-                            <a href="{% url 'ERP_ServicesBI:contapagar_edit' conta.id %}" class="erp-btn-icon erp-btn-icon--edit" title="Editar">
+                            <!-- ✅ CORRIGIDO: contapagar_edit → conta_pagar_edit -->
+                            <a href="{% url 'ERP_ServicesBI:conta_pagar_edit' conta.id %}" class="erp-btn-icon erp-btn-icon--edit" title="Editar">
                                 ✏️
                             </a>
-                            <a href="{% url 'ERP_ServicesBI:contapagar_delete' conta.id %}" class="erp-btn-icon erp-btn-icon--delete" title="Excluir" data-confirm="Tem certeza que deseja excluir esta conta?">
+                            <!-- ✅ CORRIGIDO: contapagar_delete → conta_pagar_delete -->
+                            <a href="{% url 'ERP_ServicesBI:conta_pagar_delete' conta.id %}" class="erp-btn-icon erp-btn-icon--delete" title="Excluir" data-confirm="Tem certeza que deseja excluir esta conta?">
                                 🗑️
                             </a>
                         </div>
@@ -296,7 +301,8 @@
                             <div class="erp-empty__icon">💸</div>
                             <div class="erp-empty__title">Nenhuma conta a pagar encontrada</div>
                             <p style="color: var(--gray-500); margin-bottom: 16px;">Cadastre sua primeira conta</p>
-                            <a href="{% url 'ERP_ServicesBI:contapagar_add' %}" class="erp-btn erp-btn--primary">
+                            <!-- ✅ CORRIGIDO: contapagar_add → conta_pagar_add -->
+                            <a href="{% url 'ERP_ServicesBI:conta_pagar_add' %}" class="erp-btn erp-btn--primary">
                                 <span>+</span> Adicionar
                             </a>
                         </div>

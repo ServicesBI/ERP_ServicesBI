@@ -91,6 +91,22 @@ def abs_currency(value):
 # FILTROS DE FORMATAÇÃO NUMÉRICA
 # ========================================================================
 
+@register.filter(name='number_br')
+def number_br(value, decimals=2):
+    """
+    Formata número no padrão brasileiro (vírgula como decimal)
+    Exemplo: 1000.50 -> 1.000,50
+    """
+    if value is None or value == '':
+        return '0'
+    
+    try:
+        value = float(value)
+        return f'{value:,.{decimals}f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
+    except (ValueError, TypeError):
+        return '0'
+
+
 @register.filter(name='number_format')
 def number_format(value, decimals=2):
     """

@@ -334,12 +334,14 @@
             </button>
             
             {% if search or status %}
-            <a href="{% url 'ERP_ServicesBI:pedidocompra_list' %}?per_page={{ per_page }}" class="erp-btn erp-btn--secondary">
+            <!-- ✅ CORRIGIDO: pedidocompra_list → pedido_compra_list -->
+            <a href="{% url 'ERP_ServicesBI:pedido_compra_list' %}?per_page={{ per_page }}" class="erp-btn erp-btn--secondary">
                 <span>❌</span> Limpar
             </a>
             {% endif %}
             
-            <a href="{% url 'ERP_ServicesBI:pedidocompra_add' %}" class="erp-btn erp-btn--success">
+            <!-- ✅ CORRIGIDO: pedidocompra_add → pedido_compra_add -->
+            <a href="{% url 'ERP_ServicesBI:pedido_compra_add' %}" class="erp-btn erp-btn--success">
                 <span>+</span> Novo Pedido
             </a>
         </form>
@@ -394,10 +396,12 @@
                                 ⚙️ Ações ▼
                             </button>
                             <div class="erp-actions__menu">
-                                <a href="{% url 'ERP_ServicesBI:pedidocompra_edit' pedido.pk %}" class="erp-actions__item">
+                                <!-- ✅ CORRIGIDO: pedidocompra_edit → pedido_compra_edit -->
+                                <a href="{% url 'ERP_ServicesBI:pedido_compra_edit' pedido.pk %}" class="erp-actions__item">
                                     ✏️ Editar
                                 </a>
-                                <a href="{% url 'ERP_ServicesBI:pedidocompra_delete' pedido.pk %}" 
+                                <!-- ✅ CORRIGIDO: pedidocompra_delete → pedido_compra_delete -->
+                                <a href="{% url 'ERP_ServicesBI:pedido_compra_delete' pedido.pk %}" 
                                    class="erp-actions__item erp-actions__item--danger"
                                    onclick="return confirm('Tem certeza que deseja excluir este pedido?')">
                                     🗑️ Excluir
@@ -415,7 +419,8 @@
                             {% if search or status %}
                             <p>Tente ajustar os filtros de busca</p>
                             {% else %}
-                            <a href="{% url 'ERP_ServicesBI:pedidocompra_add' %}" class="erp-empty__link">
+                            <!-- ✅ CORRIGIDO: pedidocompra_add → pedido_compra_add -->
+                            <a href="{% url 'ERP_ServicesBI:pedido_compra_add' %}" class="erp-empty__link">
                                 Clique aqui para criar o primeiro pedido
                             </a>
                             {% endif %}

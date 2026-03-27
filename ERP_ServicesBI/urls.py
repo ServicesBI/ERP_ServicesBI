@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-ERP SERVICES BI - URLS COMPLETAS
+ERP SERVICES BI - URLS COMPLETAS (PADRONIZADAS)
 """
 from django.contrib.auth import views as auth_views
 from django.urls import path
@@ -31,6 +31,12 @@ urlpatterns = [
     path('cadastro/clientes/editar/<int:pk>/', views.cliente_edit, name='cliente_edit'),
     path('cadastro/clientes/excluir/<int:pk>/', views.cliente_delete, name='cliente_delete'),
 
+    # VENDEDORES
+    path('cadastro/vendedores/', views.vendedor_list, name='vendedor_list'),
+    path('cadastro/vendedores/novo/', views.vendedor_add, name='vendedor_add'),
+    path('cadastro/vendedores/editar/<int:pk>/', views.vendedor_edit, name='vendedor_edit'),
+    path('cadastro/vendedores/excluir/<int:pk>/', views.vendedor_delete, name='vendedor_delete'),
+
     # EMPRESAS
     path('cadastro/empresas/', views.empresa_list, name='empresa_list'),
     path('cadastro/empresas/nova/', views.empresa_add, name='empresa_add'),
@@ -58,27 +64,39 @@ urlpatterns = [
     path('cadastro/produtos/excluir/<int:pk>/', views.produto_delete, name='produto_delete'),
     path('api/produto/<int:pk>/json/', views.produto_json, name='produto_json'),
 
+    # CONDIÇÕES DE PAGAMENTO
+    path('cadastro/condicoes-pagamento/', views.condicao_pagamento_list, name='condicao_pagamento_list'),
+    path('cadastro/condicoes-pagamento/nova/', views.condicao_pagamento_add, name='condicao_pagamento_add'),
+    path('cadastro/condicoes-pagamento/editar/<int:pk>/', views.condicao_pagamento_edit, name='condicao_pagamento_edit'),
+    path('cadastro/condicoes-pagamento/excluir/<int:pk>/', views.condicao_pagamento_delete, name='condicao_pagamento_delete'),
+
+    # FORMAS DE PAGAMENTO
+    path('cadastro/formas-pagamento/', views.forma_pagamento_list, name='forma_pagamento_list'),
+    path('cadastro/formas-pagamento/nova/', views.forma_pagamento_add, name='forma_pagamento_add'),
+    path('cadastro/formas-pagamento/editar/<int:pk>/', views.forma_pagamento_edit, name='forma_pagamento_edit'),
+    path('cadastro/formas-pagamento/excluir/<int:pk>/', views.forma_pagamento_delete, name='forma_pagamento_delete'),
+
     # =============================================================================
     # COMPRAS
     # =============================================================================
     
-    # PEDIDOS DE COMPRA
-    path('compras/pedidos/', views.pedidocompra_list, name='pedidocompra_list'),
-    path('compras/pedidos/novo/', views.pedidocompra_add, name='pedidocompra_add'),
-    path('compras/pedidos/editar/<int:pk>/', views.pedidocompra_edit, name='pedidocompra_edit'),
-    path('compras/pedidos/excluir/<int:pk>/', views.pedidocompra_delete, name='pedidocompra_delete'),
-    path('compras/pedidos/<int:pedido_pk>/itens/novo/', views.pedidocompra_item_add, name='pedidocompra_item_add'),
-    path('compras/pedidos/<int:pedido_pk>/itens/<int:item_pk>/editar/', views.pedidocompra_item_edit, name='pedidocompra_item_edit'),
-    path('compras/pedidos/itens/excluir/<int:pk>/', views.pedidocompra_item_delete, name='pedidocompra_item_delete'),
-    path('compras/pedidos/<int:pk>/gerar-nfe/', views.pedidocompra_gerar_nfe, name='pedidocompra_gerar_nfe'),
+    # PEDIDOS DE COMPRA (PADRONIZADO COM UNDERLINE)
+    path('compras/pedidos/', views.pedido_compra_list, name='pedido_compra_list'),
+    path('compras/pedidos/novo/', views.pedido_compra_add, name='pedido_compra_add'),
+    path('compras/pedidos/editar/<int:pk>/', views.pedido_compra_edit, name='pedido_compra_edit'),
+    path('compras/pedidos/excluir/<int:pk>/', views.pedido_compra_delete, name='pedido_compra_delete'),
+    path('compras/pedidos/<int:pedido_pk>/itens/novo/', views.pedido_compra_item_add, name='pedido_compra_item_add'),
+    path('compras/pedidos/<int:pedido_pk>/itens/<int:item_pk>/editar/', views.pedido_compra_item_edit, name='pedido_compra_item_edit'),
+    path('compras/pedidos/itens/excluir/<int:pk>/', views.pedido_compra_item_delete, name='pedido_compra_item_delete'),
+    path('compras/pedidos/<int:pk>/gerar-nfe/', views.pedido_compra_gerar_nfe, name='pedido_compra_gerar_nfe'),
 
-    # NOTAS FISCAIS DE ENTRADA
-    path('compras/notas-fiscais/', views.notafiscalentrada_list, name='notafiscalentrada_list'),
-    path('compras/notas-fiscais/nova/', views.notafiscalentrada_add, name='notafiscalentrada_add'),
-    path('compras/notas-fiscais/editar/<int:pk>/', views.notafiscalentrada_edit, name='notafiscalentrada_edit'),
-    path('compras/notas-fiscais/excluir/<int:pk>/', views.notafiscalentrada_delete, name='notafiscalentrada_delete'),
-    path('compras/notas-fiscais/<int:nota_pk>/item/novo/', views.notafiscalentrada_item_add, name='notafiscalentrada_item_add'),
-    path('compras/notas-fiscais/item/excluir/<int:pk>/', views.notafiscalentrada_item_delete, name='notafiscalentrada_item_delete'),
+    # NOTAS FISCAIS DE ENTRADA (PADRONIZADO COM UNDERLINE)
+    path('compras/notas-fiscais/', views.nota_fiscal_entrada_list, name='nota_fiscal_entrada_list'),
+    path('compras/notas-fiscais/nova/', views.nota_fiscal_entrada_add, name='nota_fiscal_entrada_add'),
+    path('compras/notas-fiscais/editar/<int:pk>/', views.nota_fiscal_entrada_edit, name='nota_fiscal_entrada_edit'),
+    path('compras/notas-fiscais/excluir/<int:pk>/', views.nota_fiscal_entrada_delete, name='nota_fiscal_entrada_delete'),
+    path('compras/notas-fiscais/<int:nota_pk>/item/novo/', views.nota_fiscal_entrada_item_add, name='nota_fiscal_entrada_item_add'),
+    path('compras/notas-fiscais/item/excluir/<int:pk>/', views.nota_fiscal_entrada_item_delete, name='nota_fiscal_entrada_item_delete'),
 
     # RELATÓRIOS COMPRAS
     path('compras/relatorios/', views.relatorio_compras, name='relatorio_compras'),
@@ -116,7 +134,7 @@ urlpatterns = [
     # =============================================================================
     # VENDAS
     # =============================================================================
-    
+
     # ORÇAMENTOS
     path('vendas/orcamentos/', views.orcamento_list, name='orcamento_list'),
     path('vendas/orcamentos/novo/', views.orcamento_add, name='orcamento_add'),
@@ -127,64 +145,64 @@ urlpatterns = [
     path('vendas/orcamentos/<int:pk>/gerar-pedido/', views.orcamento_gerar_pedido, name='orcamento_gerar_pedido'),
 
     # PEDIDOS DE VENDA
-    path('vendas/pedidos/', views.pedidovenda_list, name='pedidovenda_list'),
-    path('vendas/pedidos/novo/', views.pedidovenda_add, name='pedidovenda_add'),
-    path('vendas/pedidos/editar/<int:pk>/', views.pedidovenda_edit, name='pedidovenda_edit'),
-    path('vendas/pedidos/excluir/<int:pk>/', views.pedidovenda_delete, name='pedidovenda_delete'),
-    path('vendas/pedidos/<int:pedido_pk>/item/novo/', views.pedidovenda_item_add, name='pedidovenda_item_add'),
-    path('vendas/pedidos/item/excluir/<int:pk>/', views.pedidovenda_item_delete, name='pedidovenda_item_delete'),
-    path('vendas/pedidos/<int:pk>/gerar-nfs/', views.pedidovenda_gerar_nfe, name='pedidovenda_gerar_nfs'),
+    path('vendas/pedidos/', views.pedido_venda_list, name='pedido_venda_list'),
+    path('vendas/pedidos/novo/', views.pedido_venda_add, name='pedido_venda_add'),
+    path('vendas/pedidos/editar/<int:pk>/', views.pedido_venda_edit, name='pedido_venda_edit'),
+    path('vendas/pedidos/excluir/<int:pk>/', views.pedido_venda_delete, name='pedido_venda_delete'),
+    path('vendas/pedidos/<int:pedido_pk>/item/novo/', views.pedido_venda_item_add, name='pedido_venda_item_add'),
+    path('vendas/pedidos/item/excluir/<int:pk>/', views.pedido_venda_item_delete, name='pedido_venda_item_delete'),
+    path('vendas/pedidos/<int:pk>/gerar-nfs/', views.pedido_venda_gerar_nfe, name='pedido_venda_gerar_nfs'),
 
     # NOTAS FISCAIS DE SAÍDA
-    path('vendas/notas-fiscais/', views.notafiscalsaida_list, name='notafiscalsaida_list'),
-    path('vendas/notas-fiscais/nova/', views.notafiscalsaida_add, name='notafiscalsaida_add'),
-    path('vendas/notas-fiscais/editar/<int:pk>/', views.notafiscalsaida_edit, name='notafiscalsaida_edit'),
-    path('vendas/notas-fiscais/excluir/<int:pk>/', views.notafiscalsaida_delete, name='notafiscalsaida_delete'),
-    path('vendas/notas-fiscais/<int:nota_pk>/item/novo/', views.notafiscalsaida_item_add, name='notafiscalsaida_item_add'),
-    path('vendas/notas-fiscais/item/excluir/<int:pk>/', views.notafiscalsaida_item_delete, name='notafiscalsaida_item_delete'),
+    path('vendas/notas-fiscais/', views.nota_fiscal_saida_list, name='nota_fiscal_saida_list'),
+    path('vendas/notas-fiscais/nova/', views.nota_fiscal_saida_add, name='nota_fiscal_saida_add'),
+    path('vendas/notas-fiscais/editar/<int:pk>/', views.nota_fiscal_saida_edit, name='nota_fiscal_saida_edit'),
+    path('vendas/notas-fiscais/excluir/<int:pk>/', views.nota_fiscal_saida_delete, name='nota_fiscal_saida_delete'),
+    path('vendas/notas-fiscais/<int:nota_pk>/item/novo/', views.nota_fiscal_saida_item_add, name='nota_fiscal_saida_item_add'),
+    path('vendas/notas-fiscais/item/excluir/<int:pk>/', views.nota_fiscal_saida_item_delete, name='nota_fiscal_saida_item_delete'),
 
     # RELATÓRIOS VENDAS
     path('vendas/relatorios/', views.relatorio_vendas, name='relatorio_vendas'),
 
     # =============================================================================
-    # FINANCEIRO
+    # FINANCEIRO (TODOS PADRONIZADOS COM UNDERLINE)
     # =============================================================================
     
     # CATEGORIAS FINANCEIRAS
-    path('financeiro/categorias/', views.categoriafinanceira_list, name='categoriafinanceira_list'),
-    path('financeiro/categorias/nova/', views.categoriafinanceira_add, name='categoriafinanceira_add'),
-    path('financeiro/categorias/editar/<int:pk>/', views.categoriafinanceira_edit, name='categoriafinanceira_edit'),
-    path('financeiro/categorias/excluir/<int:pk>/', views.categoriafinanceira_delete, name='categoriafinanceira_delete'),
+    path('financeiro/categorias/', views.categoria_financeira_list, name='categoria_financeira_list'),
+    path('financeiro/categorias/nova/', views.categoria_financeira_add, name='categoria_financeira_add'),
+    path('financeiro/categorias/editar/<int:pk>/', views.categoria_financeira_edit, name='categoria_financeira_edit'),
+    path('financeiro/categorias/excluir/<int:pk>/', views.categoria_financeira_delete, name='categoria_financeira_delete'),
 
     # CENTROS DE CUSTO
-    path('financeiro/centros-custo/', views.centrocusto_list, name='centrocusto_list'),
-    path('financeiro/centros-custo/novo/', views.centrocusto_add, name='centrocusto_add'),
-    path('financeiro/centros-custo/editar/<int:pk>/', views.centrocusto_edit, name='centrocusto_edit'),
-    path('financeiro/centros-custo/excluir/<int:pk>/', views.centrocusto_delete, name='centrocusto_delete'),
+    path('financeiro/centros-custo/', views.centro_custo_list, name='centro_custo_list'),
+    path('financeiro/centros-custo/novo/', views.centro_custo_add, name='centro_custo_add'),
+    path('financeiro/centros-custo/editar/<int:pk>/', views.centro_custo_edit, name='centro_custo_edit'),
+    path('financeiro/centros-custo/excluir/<int:pk>/', views.centro_custo_delete, name='centro_custo_delete'),
 
     # ORÇAMENTO FINANCEIRO
-    path('financeiro/orcamentos/', views.orcamentofinanceiro_list, name='orcamentofinanceiro_list'),
-    path('financeiro/orcamentos/novo/', views.orcamentofinanceiro_add, name='orcamentofinanceiro_add'),
-    path('financeiro/orcamentos/editar/<int:pk>/', views.orcamentofinanceiro_edit, name='orcamentofinanceiro_edit'),
-    path('financeiro/orcamentos/excluir/<int:pk>/', views.orcamentofinanceiro_delete, name='orcamentofinanceiro_delete'),
+    path('financeiro/orcamentos/', views.orcamento_financeiro_list, name='orcamento_financeiro_list'),
+    path('financeiro/orcamentos/novo/', views.orcamento_financeiro_add, name='orcamento_financeiro_add'),
+    path('financeiro/orcamentos/editar/<int:pk>/', views.orcamento_financeiro_edit, name='orcamento_financeiro_edit'),
+    path('financeiro/orcamentos/excluir/<int:pk>/', views.orcamento_financeiro_delete, name='orcamento_financeiro_delete'),
 
     # CONTAS A RECEBER
-    path('financeiro/contas-receber/', views.contareceber_list, name='contareceber_list'),
-    path('financeiro/contas-receber/nova/', views.contareceber_add, name='contareceber_add'),
-    path('financeiro/contas-receber/editar/<int:pk>/', views.contareceber_edit, name='contareceber_edit'),
-    path('financeiro/contas-receber/excluir/<int:pk>/', views.contareceber_delete, name='contareceber_delete'),
-    path('financeiro/contas-receber/baixar/<int:pk>/', views.contareceber_baixar, name='contareceber_baixar'),
+    path('financeiro/contas-receber/', views.conta_receber_list, name='conta_receber_list'),
+    path('financeiro/contas-receber/nova/', views.conta_receber_add, name='conta_receber_add'),
+    path('financeiro/contas-receber/editar/<int:pk>/', views.conta_receber_edit, name='conta_receber_edit'),
+    path('financeiro/contas-receber/excluir/<int:pk>/', views.conta_receber_delete, name='conta_receber_delete'),
+    path('financeiro/contas-receber/baixar/<int:pk>/', views.conta_receber_baixar, name='conta_receber_baixar'),
 
     # CONTAS A PAGAR
-    path('financeiro/contas-pagar/', views.contapagar_list, name='contapagar_list'),
-    path('financeiro/contas-pagar/nova/', views.contapagar_add, name='contapagar_add'),
-    path('financeiro/contas-pagar/editar/<int:pk>/', views.contapagar_edit, name='contapagar_edit'),
-    path('financeiro/contas-pagar/excluir/<int:pk>/', views.contapagar_delete, name='contapagar_delete'),
-    path('financeiro/contas-pagar/baixar/<int:pk>/', views.contapagar_baixar, name='contapagar_baixar'),
+    path('financeiro/contas-pagar/', views.conta_pagar_list, name='conta_pagar_list'),
+    path('financeiro/contas-pagar/nova/', views.conta_pagar_add, name='conta_pagar_add'),
+    path('financeiro/contas-pagar/editar/<int:pk>/', views.conta_pagar_edit, name='conta_pagar_edit'),
+    path('financeiro/contas-pagar/excluir/<int:pk>/', views.conta_pagar_delete, name='conta_pagar_delete'),
+    path('financeiro/contas-pagar/baixar/<int:pk>/', views.conta_pagar_baixar, name='conta_pagar_baixar'),
 
     # FLUXO DE CAIXA
     path('financeiro/fluxo-caixa/', views.fluxo_caixa, name='fluxo_caixa'),
-    path('financeiro/fluxo-caixa/lancamento/', views.movimentocaixa_add, name='movimentocaixa_add'),
+    path('financeiro/fluxo-caixa/lancamento/', views.movimentacao_caixa_add, name='movimentacao_caixa_add'),
 
     # CONCILIAÇÃO BANCÁRIA
     path('financeiro/conciliacao/', views.conciliacao_list, name='conciliacao_list'),
@@ -192,18 +210,32 @@ urlpatterns = [
     path('financeiro/conciliacao/editar/<int:pk>/', views.conciliacao_edit, name='conciliacao_edit'),
     path('financeiro/conciliacao/excluir/<int:pk>/', views.conciliacao_delete, name='conciliacao_delete'),
 
-    # DRE GERENCIAL
-    path('financeiro/dre/', views.dre_gerencial, name='dre_gerencial'),
+   
+    # =============================================================================
+    # DRE - ADICIONAR ESTAS ROTAS
+    # =============================================================================
+
+    # DRE Gerencial
+    path('dre/', views.dre_gerencial, name='dre_gerencial'),
+    path('dre/configuracao/', views.dre_configuracao, name='dre_configuracao'),
+    path('dre/configuracao/<int:empresa_id>/', views.dre_configuracao, name='dre_configuracao_empresa'),
+    path('dre/alterar-regime/', views.dre_alterar_regime, name='dre_alterar_regime'),
+    path('dre/exportar/pdf/', views.dre_exportar_pdf, name='dre_exportar_pdf'),
+    path('dre/exportar/excel/', views.dre_exportar_excel, name='dre_exportar_excel'),
+    path('dre/salvar/', views.dre_salvar_relatorio, name='dre_salvar_relatorio'),
+    path('dre/historico/', views.dre_historico, name='dre_historico'),
+    path('dre/relatorio/<int:pk>/', views.dre_visualizar_relatorio, name='dre_visualizar_relatorio'),
+    path('dre/comparativo/', views.dre_comparativo, name='dre_comparativo'),
 
     # =============================================================================
-    # ESTOQUE
+    # ESTOQUE (PADRONIZADOS COM UNDERLINE)
     # =============================================================================
     
     # MOVIMENTAÇÕES
-    path('estoque/movimentacoes/', views.movimentacaoestoque_list, name='movimentacaoestoque_list'),
-    path('estoque/movimentacoes/nova/', views.movimentacaoestoque_add, name='movimentacaoestoque_add'),
-    path('estoque/movimentacoes/editar/<int:pk>/', views.movimentacaoestoque_edit, name='movimentacaoestoque_edit'),
-    path('estoque/movimentacoes/excluir/<int:pk>/', views.movimentacaoestoque_delete, name='movimentacaoestoque_delete'),
+    path('estoque/movimentacoes/', views.movimentacao_estoque_list, name='movimentacao_estoque_list'),
+    path('estoque/movimentacoes/nova/', views.movimentacao_estoque_add, name='movimentacao_estoque_add'),
+    path('estoque/movimentacoes/editar/<int:pk>/', views.movimentacao_estoque_edit, name='movimentacao_estoque_edit'),
+    path('estoque/movimentacoes/excluir/<int:pk>/', views.movimentacao_estoque_delete, name='movimentacao_estoque_delete'),
 
     # INVENTÁRIO
     path('estoque/inventarios/', views.inventario_list, name='inventario_list'),

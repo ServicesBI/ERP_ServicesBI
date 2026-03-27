@@ -263,7 +263,8 @@
             🔍 Buscar
         </button>
         
-        <a href="{% url 'ERP_ServicesBI:categoriafinanceira_add' %}" class="erp-btn erp-btn--success">
+        <!-- ✅ CORRIGIDO: categoriafinanceira_add → categoria_financeira_add -->
+        <a href="{% url 'ERP_ServicesBI:categoria_financeira_add' %}" class="erp-btn erp-btn--success">
             ➕ Nova Categoria
         </a>
     </form>
@@ -273,7 +274,8 @@
 <div class="erp-table-card">
     <div class="erp-table-card__header">
         <h2 class="erp-table-card__title">Categorias ({{ categorias.count }})</h2>
-        <a href="{% url 'ERP_ServicesBI:categoriafinanceira_add' %}" class="erp-btn erp-btn--success">
+        <!-- ✅ CORRIGIDO: categoriafinanceira_add → categoria_financeira_add -->
+        <a href="{% url 'ERP_ServicesBI:categoria_financeira_add' %}" class="erp-btn erp-btn--success">
             ➕ Nova Categoria
         </a>
     </div>
@@ -316,11 +318,13 @@
                             Ações ▼
                         </button>
                         <div class="erp-dropdown__menu">
-                            <a href="{% url 'ERP_ServicesBI:categoriafinanceira_edit' categoria.pk %}" class="erp-dropdown__item">
+                            <!-- ✅ CORRIGIDO: categoriafinanceira_edit → categoria_financeira_edit -->
+                            <a href="{% url 'ERP_ServicesBI:categoria_financeira_edit' categoria.pk %}" class="erp-dropdown__item">
                                 ✏️ Editar
                             </a>
+                            <!-- ✅ CORRIGIDO: categoriafinanceira_delete → categoria_financeira_delete -->
                             <button type="button" class="erp-dropdown__item erp-dropdown__item--danger" 
-                                    onclick="confirmarExclusao('{% url 'ERP_ServicesBI:categoriafinanceira_delete' categoria.pk %}', '{{ categoria.nome }}')">
+                                    onclick="confirmarExclusao('{% url 'ERP_ServicesBI:categoria_financeira_delete' categoria.pk %}', '{{ categoria.nome }}')">
                                 🗑️ Excluir
                             </button>
                         </div>

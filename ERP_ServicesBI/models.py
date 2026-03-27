@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-ERP ServicesBI - Models LIMPOS (sem Cotacao antigo)
+ERP ServicesBI - Models Organizados por Módulos
 Segurança: Thread-safe sequenciais
 Performance: Otimizado para PostgreSQL
 """
@@ -115,6 +115,61 @@ class Cliente(Pessoa):
         ordering = ['nome_razao_social']
 
 
+class Vendedor(models.Model):
+    """Cadastro de vendedores/comissionados do sistema"""
+    
+    usuario = models.OneToOneField(
+        User, 
+        on_delete=models.PROTECT,
+        related_name='vendedor_profile',
+        verbose_name='Usuário do Sistema',
+        null=True,
+        blank=True
+    )
+    nome = models.CharField(max_length=255, verbose_name='Nome')
+    email = models.EmailField(blank=True, null=True, verbose_name='E-mail')
+    telefone = models.CharField(max_length=20, blank=True, null=True, verbose_name='Telefone')
+    percentual_comissao = models.DecimalField(
+        max_digits=5, 
+        decimal_places=2, 
+        default=0,
+        verbose_name='% Comissão'
+    )
+    meta_vendas = models.DecimalField(
+        max_digits=12, 
+        decimal_places=2, 
+        default=0,
+        verbose_name='Meta de Vendas'
+    )
+    ativo = models.BooleanField(default=True, verbose_name='Ativo')
+    observacoes = models.TextField(blank=True, verbose_name='Observações')
+    criado_em = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name = 'Vendedor'
+        verbose_name_plural = 'Vendedores'
+        ordering = ['nome']
+    
+    def __str__(self):
+        return self.nome
+    
+    @property
+    def total_vendas_mes(self):
+        """Retorna total de vendas do mês atual"""
+        from datetime import datetime
+        hoje = datetime.now()
+        return self.orcamentos.filter(
+            data_orcamento__month=hoje.month,
+            data_orcamento__year=hoje.year,
+            status__in=['aprovado', 'convertido']
+        ).aggregate(total=models.Sum('valor_total'))['total'] or 0
+    
+    @property
+    def comissao_a_receber(self):
+        """Calcula comissão baseada nas vendas"""
+        return (self.total_vendas_mes * self.percentual_comissao) / 100
+
+
 class Empresa(models.Model):
     """Cadastro da empresa matriz/filial do sistema"""
     nome_fantasia = models.CharField(max_length=100)
@@ -211,13 +266,53 @@ class Produto(SequencialMixin, models.Model):
         return self.descricao
 
 
-# =============================================================================
-# MÓDULO: COMPRAS COMPLETO (Cotação Comparativa + Pedidos + NF Entrada)
-# =============================================================================
+class CondicaoPagamento(models.Model):
+    """Condições de pagamento (prazos e parcelas)"""
+    descricao = models.CharField(max_length=100, verbose_name='Descrição')
+    dias = models.IntegerField(default=0, verbose_name='Dias')
+    parcelas = models.IntegerField(default=1, verbose_name='Parcelas')
+    ativo = models.BooleanField(default=True, verbose_name='Ativo')
+    
+    class Meta:
+        verbose_name = 'Condição de Pagamento'
+        verbose_name_plural = 'Condições de Pagamento'
+        ordering = ['descricao']
+    
+    def __str__(self):
+        return self.descricao
 
-# -----------------------------------------------------------------------------
-# COTAÇÃO MÃE - Solicitação original do setor
-# -----------------------------------------------------------------------------
+
+class FormaPagamento(models.Model):
+    """Formas de pagamento (meios: PIX, Cartão, etc.)"""
+    TIPO_CHOICES = [
+        ('dinheiro', 'Dinheiro'),
+        ('pix', 'PIX'),
+        ('cartao_debito', 'Cartão de Débito'),
+        ('cartao_credito', 'Cartão de Crédito'),
+        ('boleto', 'Boleto'),
+        ('transferencia', 'Transferência Bancária'),
+        ('cheque', 'Cheque'),
+        ('outro', 'Outro'),
+    ]
+    
+    descricao = models.CharField(max_length=100, verbose_name='Descrição')
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='outro', verbose_name='Tipo')
+    ativo = models.BooleanField(default=True, verbose_name='Ativo')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Forma de Pagamento'
+        verbose_name_plural = 'Formas de Pagamento'
+        ordering = ['descricao']
+    
+    def __str__(self):
+        return self.descricao
+
+
+# =============================================================================
+# MÓDULO: COMPRAS
+# =============================================================================
 
 class CotacaoMae(models.Model):
     """
@@ -289,10 +384,6 @@ class CotacaoMae(models.Model):
         return self.cotacoes_fornecedor.exclude(status='pendente').count()
 
 
-# -----------------------------------------------------------------------------
-# ITEM SOLICITADO - Itens que o solicitante pediu
-# -----------------------------------------------------------------------------
-
 class ItemSolicitado(models.Model):
     """
     Itens que o solicitante pediu na Cotação Mãe
@@ -347,10 +438,6 @@ class ItemSolicitado(models.Model):
         """Retorna o código do produto ou vazio"""
         return self.produto.codigo if self.produto else ''
 
-
-# -----------------------------------------------------------------------------
-# COTAÇÃO DO FORNECEDOR - Resposta de cada fornecedor
-# -----------------------------------------------------------------------------
 
 class CotacaoFornecedor(models.Model):
     """
@@ -465,10 +552,6 @@ class CotacaoFornecedor(models.Model):
         return self.itens.count()
 
 
-# -----------------------------------------------------------------------------
-# ITEM DA COTAÇÃO DO FORNECEDOR - Preço de cada item
-# -----------------------------------------------------------------------------
-
 class ItemCotacaoFornecedor(models.Model):
     """
     Cada item que o fornecedor cotou
@@ -535,10 +618,6 @@ class ItemCotacaoFornecedor(models.Model):
             self.preco_total = self.preco_unitario * self.quantidade
         super().save(*args, **kwargs)
 
-
-# -----------------------------------------------------------------------------
-# PEDIDO DE COMPRA
-# -----------------------------------------------------------------------------
 
 class PedidoCompra(SequencialMixin, models.Model):
     STATUS_CHOICES = [
@@ -632,10 +711,6 @@ class ItemPedidoCompra(models.Model):
         super().save(*args, **kwargs)
 
 
-# -----------------------------------------------------------------------------
-# NOTA FISCAL DE ENTRADA
-# -----------------------------------------------------------------------------
-
 class NotaFiscalEntrada(models.Model):
     STATUS_CHOICES = [
         ('pendente', 'Pendente'),
@@ -727,7 +802,7 @@ class Orcamento(SequencialMixin, models.Model):
     
     numero = models.CharField(max_length=20, unique=True, blank=True)
     cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, related_name='orcamentos')
-    vendedor = models.ForeignKey(User, on_delete=models.PROTECT, related_name='orcamentos_vendedor')
+    vendedor = models.ForeignKey(Vendedor, on_delete=models.PROTECT, related_name='orcamentos', null=True, blank=True)
     data_orcamento = models.DateField(auto_now_add=True)
     data_criacao = models.DateTimeField(auto_now_add=True)
     data_validade = models.DateField()
@@ -787,7 +862,7 @@ class PedidoVenda(SequencialMixin, models.Model):
     
     numero = models.CharField(max_length=20, unique=True, blank=True)
     cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, related_name='pedidos')
-    vendedor = models.ForeignKey(User, on_delete=models.PROTECT, related_name='pedidos_vendedor')
+    vendedor = models.ForeignKey(Vendedor, on_delete=models.PROTECT, related_name='pedidos', null=True, blank=True)
     orcamento_origem = models.ForeignKey(Orcamento, on_delete=models.SET_NULL, null=True, blank=True, related_name='pedido_gerado')
     data_pedido = models.DateField(auto_now_add=True)
     data_prevista_entrega = models.DateField()
@@ -934,16 +1009,30 @@ class CategoriaFinanceira(models.Model):
     ]
     
     GRUPO_DRE_CHOICES = [
-        ('receita_bruta', 'Receita Bruta'),
-        ('deducoes', 'Deduções da Receita'),
-        ('receita_liquida', 'Receita Líquida'),
-        ('outras_receitas', 'Outras Receitas'),
-        ('cmv', 'Custo das Mercadorias Vendidas'),
-        ('despesa_admin', 'Despesas Administrativas'),
-        ('despesa_vendas', 'Despesas com Vendas'),
-        ('despesa_financeira', 'Despesas Financeiras'),
-        ('outras_despesas', 'Outras Despesas'),
-    ]
+    # Receitas
+    ('receita_bruta', 'Receita Operacional Bruta'),
+    ('deducoes', 'Deduções da Receita'),
+    ('outras_receitas', 'Outras Receitas Operacionais'),
+    
+    # Custos
+    ('cmv', 'CMV - Custo das Mercadorias Vendidas'),
+    ('cpv', 'CPV - Custo dos Produtos Vendidos'),
+    ('csv', 'CSV - Custo dos Serviços Prestados'),
+    
+    # Despesas Operacionais
+    ('despesa_vendas', 'Despesas com Vendas'),
+    ('despesa_admin', 'Despesas Administrativas'),
+    ('despesa_pessoal', 'Despesas com Pessoal'),
+    ('depreciacao', 'Depreciação e Amortização'),
+    ('outras_despesas', 'Outras Despesas Operacionais'),
+    
+    # Resultado Financeiro
+    ('receita_financeira', 'Receitas Financeiras'),
+    ('despesa_financeira', 'Despesas Financeiras'),
+    
+    # Impostos sobre Lucro
+    ('impostos_lucro', 'Impostos sobre o Lucro (IR/CSLL)'),
+]
     
     nome = models.CharField(max_length=100)
     tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
@@ -1235,7 +1324,9 @@ class ContaPagar(models.Model):
         
         self.save()
 
-
+# =============================================================================
+# MÓDULO: FLUXO DE CAIXA 
+# =============================================================================
 class MovimentoCaixa(models.Model):
     TIPO_CHOICES = [
         ('entrada', 'Entrada'),
@@ -1258,6 +1349,372 @@ class MovimentoCaixa(models.Model):
     
     def __str__(self):
         return f"{self.descricao} - {self.tipo} - R$ {self.valor}"
+    
+# =============================================================================
+# MÓDULO: CONCILIAÇÃO BANCÁRIA 
+# =============================================================================
+    
+
+# =============================================================================
+# MÓDULO: DRE - DEMONSTRAÇÃO DO RESULTADO DO EXERCÍCIO
+# =============================================================================
+
+class ConfiguracaoDRE(models.Model):
+    """
+    Configuração da DRE por empresa - define regime tributário e parâmetros
+    """
+    REGIME_CHOICES = [
+        ('simples', 'Simples Nacional'),
+        ('presumido', 'Lucro Presumido'),
+        ('real', 'Lucro Real'),
+    ]
+    
+    ATIVIDADE_CHOICES = [
+        ('comercio', 'Comércio'),
+        ('servico', 'Serviços'),
+        ('industria', 'Indústria'),
+        ('misto', 'Misto'),
+    ]
+    
+    empresa = models.OneToOneField(
+        Empresa,
+        on_delete=models.CASCADE,
+        related_name='configuracao_dre',
+        verbose_name='Empresa'
+    )
+    regime_tributario = models.CharField(
+        max_length=15,
+        choices=REGIME_CHOICES,
+        default='simples',
+        verbose_name='Regime Tributário'
+    )
+    atividade_principal = models.CharField(
+        max_length=15,
+        choices=ATIVIDADE_CHOICES,
+        default='comercio',
+        verbose_name='Atividade Principal'
+    )
+    
+    # Parâmetros Simples Nacional
+    aliquota_simples = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=6.00,
+        verbose_name='Alíquota Simples (%)',
+        help_text='Alíquota efetiva do Simples Nacional'
+    )
+    
+    # Parâmetros Lucro Presumido
+    percentual_presuncao_comercio = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=8.00,
+        verbose_name='% Presunção Comércio',
+        help_text='Percentual de presunção para comércio (8%)'
+    )
+    percentual_presuncao_servico = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=32.00,
+        verbose_name='% Presunção Serviços',
+        help_text='Percentual de presunção para serviços (32%)'
+    )
+    
+    # Alíquotas IR/CSLL (Presumido e Real)
+    aliquota_irpj = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=15.00,
+        verbose_name='Alíquota IRPJ (%)'
+    )
+    aliquota_irpj_adicional = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=10.00,
+        verbose_name='Alíquota IRPJ Adicional (%)',
+        help_text='Adicional sobre lucro excedente a R$ 20.000/mês'
+    )
+    aliquota_csll = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=9.00,
+        verbose_name='Alíquota CSLL (%)'
+    )
+    
+    # Controle
+    ativo = models.BooleanField(default=True, verbose_name='Ativo')
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Configuração DRE'
+        verbose_name_plural = 'Configurações DRE'
+    
+    def __str__(self):
+        return f"Config DRE - {self.empresa.nome_fantasia} ({self.get_regime_tributario_display()})"
+
+
+class LinhaDRE(models.Model):
+    """
+    Define a estrutura/layout de cada linha da DRE
+    Permite customização da ordem e fórmulas
+    """
+    TIPO_LINHA_CHOICES = [
+        ('grupo', 'Grupo/Título'),
+        ('soma_categoria', 'Soma de Categorias'),
+        ('calculo', 'Cálculo/Subtotal'),
+        ('imposto', 'Cálculo de Imposto'),
+    ]
+    
+    NATUREZA_CHOICES = [
+        ('receita', 'Receita (+)'),
+        ('despesa', 'Despesa (-)'),
+        ('resultado', 'Resultado (=)'),
+    ]
+    
+    codigo = models.CharField(
+        max_length=10,
+        unique=True,
+        verbose_name='Código',
+        help_text='Ex: 1.0, 1.1, 2.0, 3.0'
+    )
+    descricao = models.CharField(
+        max_length=100,
+        verbose_name='Descrição',
+        help_text='Nome da linha na DRE'
+    )
+    tipo = models.CharField(
+        max_length=20,
+        choices=TIPO_LINHA_CHOICES,
+        default='soma_categoria',
+        verbose_name='Tipo'
+    )
+    natureza = models.CharField(
+        max_length=10,
+        choices=NATUREZA_CHOICES,
+        default='despesa',
+        verbose_name='Natureza'
+    )
+    
+    # Vinculação com grupo_dre da CategoriaFinanceira
+    grupos_dre = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name='Grupos DRE',
+        help_text='Lista separada por vírgula dos grupo_dre a somar. Ex: receita_bruta,outras_receitas'
+    )
+    
+    # Para linhas de cálculo (subtotais)
+    formula = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name='Fórmula',
+        help_text='Códigos das linhas para cálculo. Ex: 1.0-2.0 ou 3.0+4.0-5.0'
+    )
+    
+    # Configuração de exibição
+    ordem = models.IntegerField(
+        default=0,
+        verbose_name='Ordem de Exibição'
+    )
+    nivel = models.IntegerField(
+        default=0,
+        verbose_name='Nível de Indentação',
+        help_text='0=Principal, 1=Subitem, 2=Detalhe'
+    )
+    negrito = models.BooleanField(
+        default=False,
+        verbose_name='Negrito',
+        help_text='Destacar linha em negrito'
+    )
+    visivel = models.BooleanField(
+        default=True,
+        verbose_name='Visível',
+        help_text='Exibir no relatório'
+    )
+    
+    # Regime tributário (None = todos)
+    regime_especifico = models.CharField(
+        max_length=15,
+        blank=True,
+        null=True,
+        choices=ConfiguracaoDRE.REGIME_CHOICES,
+        verbose_name='Regime Específico',
+        help_text='Deixe vazio para exibir em todos os regimes'
+    )
+    
+    ativo = models.BooleanField(default=True, verbose_name='Ativo')
+    
+    class Meta:
+        verbose_name = 'Linha DRE'
+        verbose_name_plural = 'Linhas DRE'
+        ordering = ['ordem', 'codigo']
+    
+    def __str__(self):
+        return f"{self.codigo} - {self.descricao}"
+    
+    def get_grupos_lista(self):
+        """Retorna lista de grupos_dre"""
+        if not self.grupos_dre:
+            return []
+        return [g.strip() for g in self.grupos_dre.split(',')]
+
+
+class RelatorioDRE(models.Model):
+    """
+    Relatório DRE gerado - armazena resultado para histórico/cache
+    """
+    STATUS_CHOICES = [
+        ('rascunho', 'Rascunho'),
+        ('finalizado', 'Finalizado'),
+        ('aprovado', 'Aprovado'),
+    ]
+    
+    empresa = models.ForeignKey(
+        Empresa,
+        on_delete=models.CASCADE,
+        related_name='relatorios_dre',
+        verbose_name='Empresa'
+    )
+    
+    # Período
+    data_inicio = models.DateField(verbose_name='Data Início')
+    data_fim = models.DateField(verbose_name='Data Fim')
+    
+    # Regime usado no cálculo
+    regime_tributario = models.CharField(
+        max_length=15,
+        choices=ConfiguracaoDRE.REGIME_CHOICES,
+        verbose_name='Regime Tributário'
+    )
+    
+    # Totais calculados (cache)
+    receita_bruta = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    deducoes = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    receita_liquida = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    custo_total = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    lucro_bruto = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    despesas_operacionais = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    resultado_operacional = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    resultado_financeiro = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    resultado_antes_ir = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    impostos_lucro = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    lucro_liquido = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    
+    # JSON com todos os dados detalhados
+    dados_json = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name='Dados Completos (JSON)'
+    )
+    
+    # Controle
+    status = models.CharField(
+        max_length=15,
+        choices=STATUS_CHOICES,
+        default='rascunho',
+        verbose_name='Status'
+    )
+    gerado_em = models.DateTimeField(auto_now_add=True, verbose_name='Gerado em')
+    gerado_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='relatorios_dre_gerados',
+        verbose_name='Gerado por'
+    )
+    observacoes = models.TextField(blank=True, verbose_name='Observações')
+    
+    class Meta:
+        verbose_name = 'Relatório DRE'
+        verbose_name_plural = 'Relatórios DRE'
+        ordering = ['-data_fim', '-gerado_em']
+        unique_together = ['empresa', 'data_inicio', 'data_fim']
+    
+    def __str__(self):
+        return f"DRE {self.empresa.nome_fantasia} - {self.data_inicio} a {self.data_fim}"
+    
+    @property
+    def periodo_formatado(self):
+        return f"{self.data_inicio.strftime('%d/%m/%Y')} a {self.data_fim.strftime('%d/%m/%Y')}"
+    
+    @property
+    def margem_bruta(self):
+        """Margem Bruta = Lucro Bruto / Receita Líquida * 100"""
+        if self.receita_liquida == 0:
+            return 0
+        return (self.lucro_bruto / self.receita_liquida) * 100
+    
+    @property
+    def margem_operacional(self):
+        """Margem Operacional = Resultado Operacional / Receita Líquida * 100"""
+        if self.receita_liquida == 0:
+            return 0
+        return (self.resultado_operacional / self.receita_liquida) * 100
+    
+    @property
+    def margem_liquida(self):
+        """Margem Líquida = Lucro Líquido / Receita Líquida * 100"""
+        if self.receita_liquida == 0:
+            return 0
+        return (self.lucro_liquido / self.receita_liquida) * 100
+
+
+class ItemRelatorioDRE(models.Model):
+    """
+    Cada linha do relatório DRE com seu valor calculado
+    """
+    relatorio = models.ForeignKey(
+        RelatorioDRE,
+        on_delete=models.CASCADE,
+        related_name='itens',
+        verbose_name='Relatório'
+    )
+    linha_dre = models.ForeignKey(
+        LinhaDRE,
+        on_delete=models.PROTECT,
+        related_name='itens_relatorio',
+        verbose_name='Linha DRE'
+    )
+    
+    valor = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        default=0,
+        verbose_name='Valor'
+    )
+    valor_anterior = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        default=0,
+        verbose_name='Valor Período Anterior',
+        help_text='Para análise comparativa'
+    )
+    
+    # Análise Vertical (% sobre Receita Líquida)
+    percentual_vertical = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        default=0,
+        verbose_name='% Vertical'
+    )
+    
+    # Análise Horizontal (variação vs período anterior)
+    percentual_horizontal = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        default=0,
+        verbose_name='% Horizontal'
+    )
+    
+    class Meta:
+        verbose_name = 'Item do Relatório DRE'
+        verbose_name_plural = 'Itens do Relatório DRE'
+        ordering = ['linha_dre__ordem']
+        unique_together = ['relatorio', 'linha_dre']
+    
+    def __str__(self):
+        return f"{self.linha_dre.descricao}: R$ {self.valor}"
 
 
 # =============================================================================
@@ -1416,4 +1873,3 @@ class ItemTransferencia(models.Model):
     class Meta:
         verbose_name = 'Item da Transferência'
         verbose_name_plural = 'Itens da Transferência'
-

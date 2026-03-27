@@ -2,7 +2,7 @@
 
 {% load custom_filters %}
 
-{% block title %}Notas Fiscais de Entrada - ERP ServicesBI{% endblock %}
+{% block title %}Vendedores - ERP ServicesBI{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -63,6 +63,27 @@
     box-shadow: var(--shadow-focus);
 }
 
+/* Status badges */
+.erp-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.erp-status--ativo {
+    background: var(--success-100);
+    color: var(--success-600);
+}
+
+.erp-status--inativo {
+    background: var(--gray-100);
+    color: var(--gray-600);
+}
+
 /* Ações em dropdown */
 .erp-actions {
     position: relative;
@@ -117,6 +138,14 @@
     background: var(--gray-50);
 }
 
+.erp-actions__item:first-child {
+    border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.erp-actions__item:last-child {
+    border-radius: 0 0 var(--radius) var(--radius);
+}
+
 .erp-actions__item--danger {
     color: var(--danger);
 }
@@ -149,7 +178,7 @@
     cursor: pointer;
 }
 
-/* Paginação estilo Google */
+/* Paginação Inteligente */
 .erp-pagination-container {
     display: flex;
     flex-direction: column;
@@ -243,7 +272,7 @@
 {% block content %}
 <div class="erp-page-header">
     <h2 class="erp-page-header__title">CADASTRO</h2>
-    <p class="erp-page-header__subtitle">Gerenciamento de notas fiscais de entrada</p>
+    <p class="erp-page-header__subtitle">Gerenciamento de vendedores</p>
 </div>
 
 {% if messages %}
@@ -262,14 +291,19 @@
 
 <div class="erp-card erp-mb-4">
     <div class="erp-filters">
-        <h3 class="erp-filters__title">Notas Fiscais de Entrada ({{ total }})</h3>
+        <h3 class="erp-filters__title">Vendedores ({{ total }})</h3>
         <form method="get" class="erp-filters__form" id="filterForm">
-            <input type="hidden" name="per_page" value="{{ per_page }}" id="perPageInput">
+            <input 
+                type="hidden" 
+                name="per_page" 
+                value="{{ per_page }}"
+                id="perPageInput"
+            >
             <input 
                 type="text" 
                 name="search" 
                 class="erp-filters__input"
-                placeholder="Buscar por número NF, fornecedor..." 
+                placeholder="Buscar por nome, email..." 
                 value="{{ search|default:'' }}"
             >
             <button type="submit" class="erp-btn erp-btn--primary">
@@ -277,20 +311,18 @@
             </button>
             
             {% if search %}
-            <!-- ✅ CORRIGIDO: notafiscalentrada_list → nota_fiscal_entrada_list -->
-            <a href="{% url 'ERP_ServicesBI:nota_fiscal_entrada_list' %}?per_page={{ per_page }}" class="erp-btn erp-btn--secondary">
+            <a href="{% url 'ERP_ServicesBI:vendedor_list' %}?per_page={{ per_page }}" class="erp-btn erp-btn--secondary">
                 <span>❌</span> Limpar
             </a>
             {% endif %}
             
-            <!-- ✅ CORRIGIDO: notafiscalentrada_add → nota_fiscal_entrada_add -->
-            <a href="{% url 'ERP_ServicesBI:nota_fiscal_entrada_add' %}" class="erp-btn erp-btn--success">
-                <span>+</span> Nova NF Entrada
+            <a href="{% url 'ERP_ServicesBI:vendedor_add' %}" class="erp-btn erp-btn--success">
+                <span>+</span> Novo Vendedor
             </a>
         </form>
     </div>
     
-    <!-- PAGINAÇÃO SUPERIOR -->
+    <!-- PAGINAÇÃO SUPERIOR: Itens por página -->
     <div class="erp-per-page">
         <form method="get" class="erp-per-page__form">
             {% if search %}
@@ -308,46 +340,38 @@
         <table class="erp-table">
             <thead>
                 <tr>
-                    <th class="erp-text-left">Número NF</th>
-                    <th class="erp-text-left">Fornecedor</th>
-                    <th class="erp-text-center">Data Entrada</th>
-                    <th class="erp-text-center">Pedido Origem</th>
-                    <th class="erp-text-right">Valor Total</th>
+                    <th class="erp-text-left">Nome</th>
+                    <th class="erp-text-left">Email</th>
+                    <th class="erp-text-center">Telefone</th>
+                    <th class="erp-text-center">Comissão (%)</th>
+                    <th class="erp-text-center">Status</th>
                     <th class="erp-text-center">Ações</th>
                 </tr>
             </thead>
             <tbody>
-                {% for nota in notas %}
+                {% for vendedor in vendedores %}
                 <tr>
-                    <td class="erp-text-left"><strong>{{ nota.numero_nf }}</strong></td>
-                    <td class="erp-text-left">{{ nota.fornecedor.nome_razao_social }}</td>
-                    <td class="erp-text-center">{{ nota.data_entrada|date:"d/m/Y" }}</td>
+                    <td class="erp-text-left"><strong>{{ vendedor.nome }}</strong></td>
+                    <td class="erp-text-left">{{ vendedor.email|default:"-" }}</td>
+                    <td class="erp-text-center">{{ vendedor.telefone|format_telefone|default:"-" }}</td>
+                    <td class="erp-text-center">{{ vendedor.comissao_padrao|default:"0" }}%</td>
                     <td class="erp-text-center">
-                        {% if nota.pedido_origem %}
-                            <!-- ✅ CORRIGIDO: pedidocompra_edit → pedido_compra_edit -->
-                            <a href="{% url 'ERP_ServicesBI:pedido_compra_edit' nota.pedido_origem.pk %}" 
-                               style="color: var(--primary-600); text-decoration: none; font-weight: 500;">
-                                {{ nota.pedido_origem.numero }}
-                            </a>
-                        {% else %}
-                            <span style="color: var(--gray-400);">-</span>
-                        {% endif %}
+                        <span class="erp-status erp-status--{% if vendedor.ativo %}ativo{% else %}inativo{% endif %}">
+                            {% if vendedor.ativo %}Ativo{% else %}Inativo{% endif %}
+                        </span>
                     </td>
-                    <td class="erp-text-right erp-font-semibold">{{ nota.valor_total|currency_br }}</td>
                     <td class="erp-text-center">
                         <div class="erp-actions">
                             <button class="erp-actions__btn" type="button">
                                 ⚙️ Ações ▼
                             </button>
                             <div class="erp-actions__menu">
-                                <!-- ✅ CORRIGIDO: notafiscalentrada_edit → nota_fiscal_entrada_edit -->
-                                <a href="{% url 'ERP_ServicesBI:nota_fiscal_entrada_edit' nota.pk %}" class="erp-actions__item">
+                                <a href="{% url 'ERP_ServicesBI:vendedor_edit' vendedor.pk %}" class="erp-actions__item">
                                     ✏️ Editar
                                 </a>
-                                <!-- ✅ CORRIGIDO: notafiscalentrada_delete → nota_fiscal_entrada_delete -->
-                                <a href="{% url 'ERP_ServicesBI:nota_fiscal_entrada_delete' nota.pk %}" 
+                                <a href="{% url 'ERP_ServicesBI:vendedor_delete' vendedor.pk %}" 
                                    class="erp-actions__item erp-actions__item--danger"
-                                   onclick="return confirm('Tem certeza que deseja excluir esta NF? O estoque será estornado.')">
+                                   onclick="return confirm('Tem certeza que deseja excluir este vendedor?')">
                                     🗑️ Excluir
                                 </a>
                             </div>
@@ -358,14 +382,13 @@
                 <tr>
                     <td colspan="6">
                         <div class="erp-empty">
-                            <div class="erp-empty__icon">🧾</div>
-                            <div class="erp-empty__title">Nenhuma nota fiscal de entrada encontrada</div>
+                            <div class="erp-empty__icon">👤</div>
+                            <div class="erp-empty__title">Nenhum vendedor encontrado</div>
                             {% if search %}
                             <p>Tente ajustar os filtros de busca</p>
                             {% else %}
-                            <!-- ✅ CORRIGIDO: notafiscalentrada_add → nota_fiscal_entrada_add -->
-                            <a href="{% url 'ERP_ServicesBI:nota_fiscal_entrada_add' %}" class="erp-empty__link">
-                                Clique aqui para criar a primeira NF
+                            <a href="{% url 'ERP_ServicesBI:vendedor_add' %}" class="erp-empty__link">
+                                Clique aqui para criar o primeiro vendedor
                             </a>
                             {% endif %}
                         </div>
@@ -377,17 +400,23 @@
     </div>
     
     {% if page_obj.has_other_pages %}
+    <!-- PAGINAÇÃO INFERIOR -->
     <div class="erp-pagination-container">
         <nav class="erp-pagination" aria-label="Paginação">
             {% if page_obj.has_previous %}
                 <a href="?page={{ page_obj.previous_page_number }}&per_page={{ per_page }}{% if search %}&search={{ search }}{% endif %}" 
-                   class="erp-pagination__link erp-pagination__nav">← Anterior</a>
+                   class="erp-pagination__link erp-pagination__nav">
+                    ← Anterior
+                </a>
             {% else %}
-                <span class="erp-pagination__link erp-pagination__nav erp-pagination__link--disabled">← Anterior</span>
+                <span class="erp-pagination__link erp-pagination__nav erp-pagination__link--disabled">
+                    ← Anterior
+                </span>
             {% endif %}
             
             {% if page_obj.number > 3 %}
-                <a href="?page=1&per_page={{ per_page }}{% if search %}&search={{ search }}{% endif %}" class="erp-pagination__link">1</a>
+                <a href="?page=1&per_page={{ per_page }}{% if search %}&search={{ search }}{% endif %}" 
+                   class="erp-pagination__link">1</a>
                 {% if page_obj.number > 4 %}
                     <span class="erp-pagination__ellipsis">...</span>
                 {% endif %}
@@ -398,7 +427,8 @@
                     {% if num == page_obj.number %}
                         <span class="erp-pagination__link erp-pagination__link--active">{{ num }}</span>
                     {% else %}
-                        <a href="?page={{ num }}&per_page={{ per_page }}{% if search %}&search={{ search }}{% endif %}" class="erp-pagination__link">{{ num }}</a>
+                        <a href="?page={{ num }}&per_page={{ per_page }}{% if search %}&search={{ search }}{% endif %}" 
+                           class="erp-pagination__link">{{ num }}</a>
                     {% endif %}
                 {% endif %}
             {% endfor %}
@@ -407,13 +437,19 @@
                 {% if page_obj.number < page_obj.paginator.num_pages|add:'-3' %}
                     <span class="erp-pagination__ellipsis">...</span>
                 {% endif %}
-                <a href="?page={{ page_obj.paginator.num_pages }}&per_page={{ per_page }}{% if search %}&search={{ search }}{% endif %}" class="erp-pagination__link">{{ page_obj.paginator.num_pages }}</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}&per_page={{ per_page }}{% if search %}&search={{ search }}{% endif %}" 
+                   class="erp-pagination__link">{{ page_obj.paginator.num_pages }}</a>
             {% endif %}
             
             {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}&per_page={{ per_page }}{% if search %}&search={{ search }}{% endif %}" class="erp-pagination__link erp-pagination__nav">Próxima →</a>
+                <a href="?page={{ page_obj.next_page_number }}&per_page={{ per_page }}{% if search %}&search={{ search }}{% endif %}" 
+                   class="erp-pagination__link erp-pagination__nav">
+                    Próxima →
+                </a>
             {% else %}
-                <span class="erp-pagination__link erp-pagination__nav erp-pagination__link--disabled">Próxima →</span>
+                <span class="erp-pagination__link erp-pagination__nav erp-pagination__link--disabled">
+                    Próxima →
+                </span>
             {% endif %}
         </nav>
         
@@ -425,19 +461,22 @@
 </div>
 
 <script>
-// Dropdown de ações
 document.querySelectorAll('.erp-actions__btn').forEach(function(btn) {
     btn.addEventListener('click', function(e) {
         e.stopPropagation();
+        
         document.querySelectorAll('.erp-actions__menu').forEach(function(menu) {
             if (menu !== btn.nextElementSibling) {
                 menu.classList.remove('active');
             }
         });
+        
         var menu = btn.nextElementSibling;
         var rect = btn.getBoundingClientRect();
+        
         menu.style.left = (rect.right - 160) + 'px';
         menu.style.top = (rect.bottom + 5) + 'px';
+        
         menu.classList.toggle('active');
     });
 });

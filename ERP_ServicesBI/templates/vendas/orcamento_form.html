@@ -51,7 +51,7 @@
                     <option value="">Selecione...</option>
                     {% for vendedor in vendedores %}
                     <option value="{{ vendedor.id }}" {% if orcamento.vendedor.id == vendedor.id %}selected{% endif %}>
-                        {{ vendedor.username }}
+                        {{ vendedor.nome }}
                     </option>
                     {% endfor %}
                 </select>

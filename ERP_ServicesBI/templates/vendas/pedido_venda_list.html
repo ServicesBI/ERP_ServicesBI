@@ -295,12 +295,14 @@
             </button>
             
             {% if search or status %}
-            <a href="{% url 'ERP_ServicesBI:pedidovenda_list' %}" class="erp-btn erp-btn--secondary">
+            <!-- ✅ CORRIGIDO: pedidovenda_list → pedido_venda_list -->
+            <a href="{% url 'ERP_ServicesBI:pedido_venda_list' %}" class="erp-btn erp-btn--secondary">
                 <span>❌</span> Limpar
             </a>
             {% endif %}
             
-            <a href="{% url 'ERP_ServicesBI:pedidovenda_add' %}" class="erp-btn erp-btn--success">
+            <!-- ✅ CORRIGIDO: pedidovenda_add → pedido_venda_add -->
+            <a href="{% url 'ERP_ServicesBI:pedido_venda_add' %}" class="erp-btn erp-btn--success">
                 <span>+</span> Novo Pedido
             </a>
         </form>
@@ -338,17 +340,20 @@
                                 ⚙️ Ações ▼
                             </button>
                             <div class="erp-actions__menu">
-                                <a href="{% url 'ERP_ServicesBI:pedidovenda_edit' pedido.pk %}" class="erp-actions__item">
+                                <!-- ✅ CORRIGIDO: pedidovenda_edit → pedido_venda_edit -->
+                                <a href="{% url 'ERP_ServicesBI:pedido_venda_edit' pedido.pk %}" class="erp-actions__item">
                                     ✏️ Editar
                                 </a>
                                 {% if pedido.status == 'aprovado' %}
-                                <a href="{% url 'ERP_ServicesBI:pedidovenda_gerar_nfs' pedido.pk %}" 
+                                <!-- ✅ CORRIGIDO: pedidovenda_gerar_nfs → pedido_venda_gerar_nfs -->
+                                <a href="{% url 'ERP_ServicesBI:pedido_venda_gerar_nfs' pedido.pk %}" 
                                    class="erp-actions__item erp-actions__item--success"
                                    onclick="return confirm('Gerar nota fiscal para este pedido?')">
                                     📄 Gerar NF
                                 </a>
                                 {% endif %}
-                                <a href="{% url 'ERP_ServicesBI:pedidovenda_delete' pedido.pk %}" 
+                                <!-- ✅ CORRIGIDO: pedidovenda_delete → pedido_venda_delete -->
+                                <a href="{% url 'ERP_ServicesBI:pedido_venda_delete' pedido.pk %}" 
                                    class="erp-actions__item erp-actions__item--danger"
                                    onclick="return confirm('Tem certeza que deseja excluir este pedido?')">
                                     🗑️ Excluir
@@ -363,7 +368,8 @@
                         <div class="erp-empty">
                             <div class="erp-empty__icon">📦</div>
                             <div class="erp-empty__title">Nenhum pedido cadastrado</div>
-                            <a href="{% url 'ERP_ServicesBI:pedidovenda_add' %}" class="erp-empty__link">
+                            <!-- ✅ CORRIGIDO: pedidovenda_add → pedido_venda_add -->
+                            <a href="{% url 'ERP_ServicesBI:pedido_venda_add' %}" class="erp-empty__link">
                                 Clique aqui para criar o primeiro pedido
                             </a>
                         </div>

@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 {% load custom_filters %}
 
-{% block title %}Excluir Conta a Receber - ERP ServicesBI{% endblock %}
+{% block title %}Excluir Conta a Pagar - ERP ServicesBI{% endblock %}
 
 {% block content %}
 <div style="margin-bottom: 20px;">
     <h2 style="margin: 0; font-size: 24px; color: #1f2937;">FINANCEIRO</h2>
-    <p style="margin: 5px 0 0 0; color: #6b7280;">Excluir conta a receber</p>
+    <p style="margin: 5px 0 0 0; color: #6b7280;">Excluir conta a pagar</p>
 </div>
 
 <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; text-align: center;">
@@ -18,7 +18,7 @@
         </p>
         <p style="color: #6b7280; font-size: 14px; margin-top: 5px;">
             Descrição: {{ conta.descricao }}<br>
-            Cliente: {{ conta.cliente.nome_razao_social|default:"-" }}<br>
+            Fornecedor: {{ conta.fornecedor.nome_razao_social|default:"-" }}<br>
             Vencimento: {{ conta.data_vencimento|date:"d/m/Y" }}<br>
             Valor: {{ conta.valor_original|currency_br }}<br>
             Status: {{ conta.get_status_display|default:conta.status }}
@@ -31,7 +31,7 @@
     <form method="post" style="display: flex; gap: 10px; justify-content: center;">
         {% csrf_token %}
         <button type="submit" style="padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 5px;">🗑️ Sim, Excluir</button>
-        <a href="{% url 'contareceber_list' %}" style="padding: 10px 20px; background: #6b7280; color: white; border: none; border-radius: 6px; text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 5px;">❌ Cancelar</a>
+        <a href="{% url 'conta_pagar_list' %}" style="padding: 10px 20px; background: #6b7280; color: white; border: none; border-radius: 6px; text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 5px;">❌ Cancelar</a>
     </form>
 </div>
 {% endblock %}

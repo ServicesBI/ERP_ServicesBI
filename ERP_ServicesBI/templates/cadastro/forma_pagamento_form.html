@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if forma %}Editar{% else %}Nova{% endif %} Forma de Pagamento - ERP ServicesBI{% endblock %}
+
+{% block content %}
+<div class="erp-page-header erp-mb-6">
+    <h1 class="erp-page-title">CADASTRO</h1>
+    <p class="erp-page-subtitle">{% if forma %}Editar{% else %}Nova{% endif %} Forma de Pagamento</p>
+</div>
+
+<div class="erp-card" style="max-width: 600px;">
+    {% if messages %}
+        {% for message in messages %}
+            {% if message.tags == 'error' %}<div class="erp-alert erp-alert--error erp-mb-4">{{ message }}</div>{% else %}<div class="erp-alert erp-alert--success erp-mb-4">{{ message }}</div>{% endif %}
+        {% endfor %}
+    {% endif %}
+
+    <form method="post" class="erp-form">
+        {% csrf_token %}
+        
+        <div class="erp-form-group erp-mb-4">
+            <label class="erp-checkbox" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px;">
+                <input type="hidden" name="ativo" value="False">
+                <input type="checkbox" name="ativo" value="True" {% if forma.ativo or not forma %}checked{% endif %} style="width: 16px; height: 16px;">
+                <span><strong>Ativo</strong></span>
+            </label>
+        </div>
+        
+        {% if form.errors %}
+        <div class="erp-alert erp-alert--error erp-mb-4">
+            <strong>❌ Corrija os erros:</strong>
+            <ul>{% for field in form %}{% for error in field.errors %}<li><strong>{{ field.label }}:</strong> {{ error }}</li>{% endfor %}{% endfor %}</ul>
+        </div>
+        {% endif %}
+        
+        <div class="erp-form-group">
+            <label class="erp-label erp-label-required" for="descricao">Descrição</label>
+            <input type="text" name="descricao" id="descricao" value="{{ forma.descricao|default:'' }}" class="erp-input" placeholder="Ex: PIX" required>
+        </div>
+        
+        <div class="erp-form-group">
+            <label class="erp-label erp-label-required" for="tipo">Tipo</label>
+            <select name="tipo" id="tipo" class="erp-select" required>
+                <option value="">Selecione...</option>
+                <option value="dinheiro" {% if forma.tipo == 'dinheiro' %}selected{% endif %}>Dinheiro</option>
+                <option value="pix" {% if forma.tipo == 'pix' %}selected{% endif %}>PIX</option>
+                <option value="cartao_debito" {% if forma.tipo == 'cartao_debito' %}selected{% endif %}>Cartão de Débito</option>
+                <option value="cartao_credito" {% if forma.tipo == 'cartao_credito' %}selected{% endif %}>Cartão de Crédito</option>
+                <option value="boleto" {% if forma.tipo == 'boleto' %}selected{% endif %}>Boleto</option>
+                <option value="transferencia" {% if forma.tipo == 'transferencia' %}selected{% endif %}>Transferência Bancária</option>
+                <option value="cheque" {% if forma.tipo == 'cheque' %}selected{% endif %}>Cheque</option>
+                <option value="outro" {% if forma.tipo == 'outro' %}selected{% endif %}>Outro</option>
+            </select>
+        </div>
+        
+        <div class="erp-flex erp-gap-2 erp-mt-6">
+            <button type="submit" class="erp-btn erp-btn--primary"><span>💾</span><span>Salvar</span></button>
+            <a href="{% url 'ERP_ServicesBI:forma_pagamento_list' %}" class="erp-btn erp-btn--outline" style="color: #fc4564; border-color: #fc4564;"><span>Cancelar</span></a>
+        </div>
+    </form>
+</div>
+{% endblock %}

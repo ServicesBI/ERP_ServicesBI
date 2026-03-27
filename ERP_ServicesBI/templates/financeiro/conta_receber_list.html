@@ -217,10 +217,12 @@
         <button type="submit" class="erp-btn erp-btn--primary">
             <span>🔍</span> Filtrar
         </button>
-        <a href="{% url 'ERP_ServicesBI:contareceber_list' %}" class="erp-btn erp-btn--secondary">
+        <!-- ✅ CORRIGIDO: contareceber_list → conta_receber_list -->
+        <a href="{% url 'ERP_ServicesBI:conta_receber_list' %}" class="erp-btn erp-btn--secondary">
             <span>❌</span> Limpar
         </a>
-        <a href="{% url 'ERP_ServicesBI:contareceber_add' %}" class="erp-btn erp-btn--primary">
+        <!-- ✅ CORRIGIDO: contareceber_add → conta_receber_add -->
+        <a href="{% url 'ERP_ServicesBI:conta_receber_add' %}" class="erp-btn erp-btn--primary">
             <span>+</span> Adicionar
         </a>
     </form>
@@ -276,14 +278,17 @@
                     <td class="erp-text-center">
                         <div class="erp-actions">
                             {% if conta.status != 'quitado' and conta.status != 'recebido' %}
-                                <a href="{% url 'ERP_ServicesBI:contareceber_baixar' conta.id %}" class="erp-btn-icon erp-btn-icon--success" title="Baixar">
+                                <!-- ✅ CORRIGIDO: contareceber_baixar → conta_receber_baixar -->
+                                <a href="{% url 'ERP_ServicesBI:conta_receber_baixar' conta.id %}" class="erp-btn-icon erp-btn-icon--success" title="Baixar">
                                     💰
                                 </a>
                             {% endif %}
-                            <a href="{% url 'ERP_ServicesBI:contareceber_edit' conta.id %}" class="erp-btn-icon erp-btn-icon--edit" title="Editar">
+                            <!-- ✅ CORRIGIDO: contareceber_edit → conta_receber_edit -->
+                            <a href="{% url 'ERP_ServicesBI:conta_receber_edit' conta.id %}" class="erp-btn-icon erp-btn-icon--edit" title="Editar">
                                 ✏️
                             </a>
-                            <a href="{% url 'ERP_ServicesBI:contareceber_delete' conta.id %}" class="erp-btn-icon erp-btn-icon--delete" title="Excluir" data-confirm="Tem certeza que deseja excluir esta conta?">
+                            <!-- ✅ CORRIGIDO: contareceber_delete → conta_receber_delete -->
+                            <a href="{% url 'ERP_ServicesBI:conta_receber_delete' conta.id %}" class="erp-btn-icon erp-btn-icon--delete" title="Excluir" data-confirm="Tem certeza que deseja excluir esta conta?">
                                 🗑️
                             </a>
                         </div>
@@ -296,7 +301,8 @@
                             <div class="erp-empty__icon">💰</div>
                             <div class="erp-empty__title">Nenhuma conta a receber encontrada</div>
                             <p style="color: var(--gray-500); margin-bottom: 16px;">Cadastre sua primeira conta</p>
-                            <a href="{% url 'ERP_ServicesBI:contareceber_add' %}" class="erp-btn erp-btn--primary">
+                            <!-- ✅ CORRIGIDO: contareceber_add → conta_receber_add -->
+                            <a href="{% url 'ERP_ServicesBI:conta_receber_add' %}" class="erp-btn erp-btn--primary">
                                 <span>+</span> Adicionar
                             </a>
                         </div>

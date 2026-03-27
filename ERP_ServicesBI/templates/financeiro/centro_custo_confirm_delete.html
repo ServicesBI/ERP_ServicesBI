@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 {% load custom_filters %}
 
-{% block title %}Excluir Conta a Pagar - ERP ServicesBI{% endblock %}
+{% block title %}Excluir Centro de Custo - ERP ServicesBI{% endblock %}
 
 {% block content %}
 <div style="margin-bottom: 20px;">
     <h2 style="margin: 0; font-size: 24px; color: #1f2937;">FINANCEIRO</h2>
-    <p style="margin: 5px 0 0 0; color: #6b7280;">Excluir conta a pagar</p>
+    <p style="margin: 5px 0 0 0; color: #6b7280;">Excluir centro de custo</p>
 </div>
 
 <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; text-align: center;">
@@ -14,14 +14,12 @@
         <div style="font-size: 48px; margin-bottom: 15px;">⚠️</div>
         <h3 style="margin: 0 0 10px 0; color: #dc2626; font-size: 20px;">Confirmar Exclusão</h3>
         <p style="color: #6b7280; margin: 0;">
-            Tem certeza que deseja excluir a conta <strong style="color: #1f2937;">#{{ conta.id }}</strong>?
+            Tem certeza que deseja excluir o centro de custo <strong style="color: #1f2937;">{{ centro.nome }}</strong>?
         </p>
         <p style="color: #6b7280; font-size: 14px; margin-top: 5px;">
-            Descrição: {{ conta.descricao }}<br>
-            Fornecedor: {{ conta.fornecedor.nome_razao_social|default:"-" }}<br>
-            Vencimento: {{ conta.data_vencimento|date:"d/m/Y" }}<br>
-            Valor: {{ conta.valor_original|currency_br }}<br>
-            Status: {{ conta.get_status_display|default:conta.status }}
+            Código: {{ centro.codigo|default:"-" }}<br>
+            Tipo: {{ centro.get_tipo_display|default:centro.tipo }}<br>
+            Responsável: {{ centro.responsavel|default:"-" }}
         </p>
         <p style="color: #dc2626; font-size: 14px; margin-top: 10px;">
             Esta ação não pode ser desfeita.
@@ -31,7 +29,7 @@
     <form method="post" style="display: flex; gap: 10px; justify-content: center;">
         {% csrf_token %}
         <button type="submit" style="padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 5px;">🗑️ Sim, Excluir</button>
-        <a href="{% url 'contapagar_list' %}" style="padding: 10px 20px; background: #6b7280; color: white; border: none; border-radius: 6px; text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 5px;">❌ Cancelar</a>
+        <a href="{% url 'centro_custo_list' %}" style="padding: 10px 20px; background: #6b7280; color: white; border: none; border-radius: 6px; text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 5px;">❌ Cancelar</a>
     </form>
 </div>
 {% endblock %}
