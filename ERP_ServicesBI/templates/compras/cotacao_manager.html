@@ -1,0 +1,2481 @@
+{% extends 'base.html' %}
+{% load static custom_filters %}
+
+{% block title %}Cotações Comparativas - ERP ServicesBI{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ============================================================================
+   COTAÇÃO MANAGER - PADRÃO CLIENTE + WIZARD EMBUTIDO
+   ============================================================================ */
+
+:root {
+    --input-bg-light: #f5f5f0;
+    --card-resumo-bg: #faf9f6;
+    --success-light: #dcfce7;
+    --warning-light: #fef3c7;
+    --danger-light: #fee2e2;
+    --info-light: #cffafe;
+    --wizard-bg: #f8f9fa;
+}
+
+html[data-theme="dark"] {
+    --card-resumo-bg: #1e293b;
+    --input-bg-light: #1e3048;
+    --wizard-bg: #1e293b;
+}
+
+/* Cards de resumo */
+.resumo-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 28px;
+}
+
+.resumo-card {
+    background: var(--card-resumo-bg);
+    border-radius: 16px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+}
+
+.resumo-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.resumo-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+}
+
+.resumo-card--total::before { background: var(--primary-500); }
+.resumo-card--andamento::before { background: var(--warning-500); }
+.resumo-card--respondidas::before { background: var(--info-500); }
+.resumo-card--concluidas::before { background: var(--success-500); }
+
+.resumo-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.resumo-card__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.resumo-card--total .resumo-card__icon { background: var(--primary-100); }
+.resumo-card--andamento .resumo-card__icon { background: var(--warning-light); }
+.resumo-card--respondidas .resumo-card__icon { background: var(--info-light); }
+.resumo-card--concluidas .resumo-card__icon { background: var(--success-light); }
+
+.resumo-card__label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.resumo-card__value {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Header e Toolbar */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+}
+
+.page-header__title h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.page-header__title p {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.toolbar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 16px 20px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.search-box {
+    position: relative;
+    flex: 1;
+    max-width: 400px;
+}
+
+.search-box__icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-tertiary);
+    font-size: 16px;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 10px 14px 10px 42px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--input-bg-light);
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    background: #fff;
+}
+
+/* Tabela */
+.table-container {
+    background: var(--card-bg);
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.data-table thead {
+    background: var(--bg-tertiary);
+}
+
+.data-table th {
+    padding: 16px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.data-table td {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.data-table tbody tr {
+    background: var(--input-bg-light);
+    transition: all 0.15s ease;
+}
+
+.data-table tbody tr:hover {
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.col-numero { font-family: monospace; font-weight: 600; }
+.col-titulo { font-weight: 600; color: var(--text-primary); }
+.col-itens, .col-forn { text-align: center; font-weight: 600; }
+
+/* Status pills */
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-pill::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.status-pill--rascunho { background: var(--gray-100); color: var(--gray-600); }
+.status-pill--rascunho::before { background: var(--gray-400); }
+
+.status-pill--enviada { background: var(--info-light); color: var(--info-700); }
+.status-pill--enviada::before { background: var(--info-500); animation: pulse 2s infinite; }
+
+.status-pill--respondida { background: var(--warning-light); color: var(--warning-700); }
+.status-pill--respondida::before { background: var(--warning-500); }
+
+.status-pill--analisada { background: var(--primary-100); color: var(--primary-700); }
+.status-pill--analisada::before { background: var(--primary-500); }
+
+.status-pill--concluida { background: var(--success-light); color: var(--success-700); }
+.status-pill--concluida::before { background: var(--success-500); }
+
+.status-pill--cancelada { background: var(--danger-light); color: var(--danger-700); }
+.status-pill--cancelada::before { background: var(--danger-500); }
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Acoes */
+.acoes {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-acao {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    background: transparent;
+    color: var(--text-tertiary);
+    transition: all 0.2s;
+}
+
+.btn-acao:hover { transform: scale(1.1); }
+.btn-acao--editar:hover { background: var(--primary-100); color: var(--primary-600); }
+.btn-acao--excluir:hover { background: var(--danger-light); color: var(--danger-600); }
+.btn-acao--visualizar:hover { background: var(--info-light); color: var(--info-600); }
+
+/* Paginacao */
+.pagination-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.pagination-info { font-size: 13px; color: var(--text-secondary); }
+
+.pagination-btns { display: flex; gap: 6px; }
+
+.pagination-btn {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+
+.pagination-btn:hover:not(:disabled):not(.active) {
+    border-color: var(--primary-500);
+    color: var(--primary-600);
+}
+
+.pagination-btn.active {
+    background: var(--primary-600);
+    color: #fff;
+    border-color: var(--primary-600);
+}
+
+.pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 60px 24px;
+    color: var(--text-tertiary);
+}
+
+.empty-state__icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
+.empty-state__title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+
+/* ============================================================================
+   WIZARD EMBUTIDO
+   ============================================================================ */
+
+.wizard-container {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.wizard-container.active { display: block; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.wizard-header {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    border: 1px solid var(--border-color);
+}
+
+.wizard-header__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.wizard-header__title h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.wizard-header__title p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+/* Stepper */
+.wizard-stepper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    background: var(--bg-tertiary);
+    transition: all 0.2s;
+}
+
+.step__number {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--text-tertiary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.step.active {
+    background: var(--primary-100);
+    color: var(--primary-700);
+}
+
+.step.active .step__number { background: var(--primary-600); }
+
+.step.completed {
+    background: var(--success-light);
+    color: var(--success-700);
+}
+
+.step.completed .step__number { background: var(--success-500); }
+
+.step-divider {
+    width: 24px;
+    height: 2px;
+    background: var(--border-color);
+}
+
+.step-divider.completed { background: var(--success-500); }
+
+/* Conteudo do wizard */
+.wizard-content {
+    display: none;
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 32px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 24px;
+}
+
+.wizard-content.active { display: block; animation: slideIn 0.3s ease; }
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* Formularios do wizard */
+.form-section__title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-section__title::before {
+    content: '';
+    width: 4px;
+    height: 18px;
+    background: var(--primary-600);
+    border-radius: 2px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.form-row:last-child { margin-bottom: 0; }
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group.full-width { grid-column: 1 / -1; }
+
+.form-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.form-label .required { color: var(--danger-500); margin-left: 2px; }
+
+.form-input,
+.form-select,
+.form-textarea {
+    padding: 12px 16px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: var(--input-bg-light);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: inherit;
+    width: 100%;
+    transition: all 0.2s;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+    outline: none;
+    border-color: var(--primary-400);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    background: #ffffff;
+}
+
+.form-select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    padding-right: 40px;
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* Tabela de itens dinamica */
+.itens-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+}
+
+.itens-table th,
+.itens-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.itens-table th {
+    background: var(--bg-tertiary);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.itens-table td { background: var(--input-bg-light); }
+
+.itens-table input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    font-size: 14px;
+}
+
+.itens-table input:focus {
+    outline: none;
+    border-color: var(--primary-400);
+    background: #fff;
+}
+
+.btn-add-item {
+    margin-top: 12px;
+    padding: 10px 20px;
+    border: 2px dashed var(--border-color);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.btn-add-item:hover {
+    border-color: var(--primary-400);
+    color: var(--primary-600);
+    background: var(--primary-50);
+}
+
+/* Cards de fornecedores */
+.fornecedores-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.fornecedor-card {
+    background: var(--input-bg-light);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.fornecedor-card:hover {
+    border-color: var(--primary-300);
+    transform: translateY(-2px);
+}
+
+.fornecedor-card.selected {
+    border-color: var(--primary-500);
+    background: var(--primary-50);
+}
+
+.fornecedor-card__nome {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.fornecedor-card__doc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-family: monospace;
+}
+
+/* BOTÃO DE IMPORTAR COTAÇÃO */
+.btn-importar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 20px 32px;
+    border: 2px dashed var(--primary-400);
+    border-radius: 12px;
+    background: var(--primary-50);
+    color: var(--primary-700);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.btn-importar:hover {
+    background: var(--primary-100);
+    border-color: var(--primary-600);
+    transform: translateY(-2px);
+}
+
+.btn-importar .icon-big {
+    font-size: 32px;
+}
+
+/* Cards de importação no Passo 3 */
+.importar-fornecedor-card {
+    background: var(--input-bg-light);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.importar-fornecedor-card:hover {
+    border-color: var(--primary-400);
+    box-shadow: var(--shadow-sm);
+}
+
+.importar-fornecedor-card__nome {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+/* Tabela comparativa */
+.comparativo-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+}
+
+.comparativo-table th,
+.comparativo-table td {
+    padding: 16px;
+    text-align: center;
+    border: 1px solid var(--border-light);
+}
+
+.comparativo-table th {
+    background: var(--bg-tertiary);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.comparativo-table td { background: var(--input-bg-light); }
+
+.comparativo-table .item-nome {
+    text-align: left;
+    font-weight: 600;
+}
+
+.preco-menor { background: var(--success-light) !important; color: var(--success-700); font-weight: 700; }
+.preco-maior { background: var(--danger-light) !important; color: var(--danger-700); }
+
+/* Sugestao */
+.sugestao-card {
+    background: linear-gradient(135deg, var(--success-50), var(--success-100));
+    border: 2px solid var(--success-300);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 24px;
+}
+
+.sugestao-card__title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--success-800);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sugestao-card__text {
+    font-size: 13px;
+    color: var(--success-700);
+}
+
+/* Pedidos gerados */
+.pedidos-gerados {
+    margin-top: 24px;
+}
+
+.pedido-resumo {
+    background: var(--input-bg-light);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pedido-resumo__info h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.pedido-resumo__info p {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+/* Acoes do wizard */
+.wizard-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.wizard-actions__right {
+    display: flex;
+    gap: 12px;
+}
+
+/* Modal de exclusao */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal-overlay.active { display: flex; }
+
+.modal-exclusao {
+    background: var(--card-bg);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from { opacity: 0; transform: scale(0.9) translateY(20px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-exclusao__header {
+    background: var(--danger-500);
+    color: #fff;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.modal-exclusao__title {
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-exclusao__close {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.modal-exclusao__close:hover { background: rgba(255,255,255,0.2); }
+
+.modal-exclusao__body {
+    padding: 32px 24px;
+    text-align: center;
+}
+
+.modal-exclusao__icon {
+    width: 80px;
+    height: 80px;
+    background: var(--danger-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 40px;
+}
+
+.modal-exclusao__text {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.modal-exclusao__subtext {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+}
+
+.modal-exclusao__footer {
+    display: flex;
+    gap: 12px;
+    padding: 20px 24px;
+    border-top: 1px solid var(--border-color);
+    justify-content: flex-end;
+}
+
+/* Responsivo */
+@media (max-width: 1200px) {
+    .resumo-grid { grid-template-columns: repeat(2, 1fr); }
+    .form-row { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+    .resumo-grid { grid-template-columns: 1fr; }
+    .page-header { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .toolbar { flex-direction: column; align-items: stretch; }
+    .search-box { max-width: 100%; }
+    .wizard-stepper { flex-wrap: wrap; }
+    .step-divider { display: none; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ==================== MODO LISTA ==================== -->
+<div id="modo-lista">
+    <!-- HEADER -->
+    <div class="page-header">
+        <div class="page-header__title">
+            <h1>COTAÇÕES COMPARATIVAS</h1>
+            <p>Gerenciamento de cotações de compra</p>
+        </div>
+        <button type="button" class="erp-btn erp-btn--primary erp-btn--lg" onclick="novaCotacao()">
+            <span>➕</span> Nova Cotação
+        </button>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="erp-alert erp-alert--{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} erp-mb-4">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- CARDS DE RESUMO -->
+    <div class="resumo-grid">
+        <div class="resumo-card resumo-card--total">
+            <div class="resumo-card__header">
+                <div class="resumo-card__icon">📋</div>
+            </div>
+            <div class="resumo-card__label">Total de Cotações</div>
+            <div class="resumo-card__value">{{ total_cotacoes|default:"0" }}</div>
+        </div>
+
+        <div class="resumo-card resumo-card--andamento">
+            <div class="resumo-card__header">
+                <div class="resumo-card__icon">⏳</div>
+            </div>
+            <div class="resumo-card__label">Em Andamento</div>
+            <div class="resumo-card__value" style="color: var(--warning-600);">{{ em_andamento|default:"0" }}</div>
+        </div>
+
+        <div class="resumo-card resumo-card--respondidas">
+            <div class="resumo-card__header">
+                <div class="resumo-card__icon">📨</div>
+            </div>
+            <div class="resumo-card__label">Respondidas</div>
+            <div class="resumo-card__value" style="color: var(--info-600);">{{ respondidas|default:"0" }}</div>
+        </div>
+
+        <div class="resumo-card resumo-card--concluidas">
+            <div class="resumo-card__header">
+                <div class="resumo-card__icon">✅</div>
+            </div>
+            <div class="resumo-card__label">Concluídas</div>
+            <div class="resumo-card__value" style="color: var(--success-600);">{{ concluidas|default:"0" }}</div>
+        </div>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+        <div class="search-box">
+            <span class="search-box__icon">🔍</span>
+            <form method="get" style="display: contents;">
+                <input type="text" name="search" placeholder="Buscar por número ou título..." 
+                       value="{{ search|default:'' }}">
+            </form>
+        </div>
+        
+        <select name="status" class="form-select" style="width: 180px;" onchange="this.form.submit()">
+            <option value="">Todos os status</option>
+            <option value="RASCUNHO" {% if status == 'RASCUNHO' %}selected{% endif %}>Rascunho</option>
+            <option value="ENVIADA" {% if status == 'ENVIADA' %}selected{% endif %}>Enviada</option>
+            <option value="RESPONDIDA" {% if status == 'RESPONDIDA' %}selected{% endif %}>Respondida</option>
+            <option value="ANALISADA" {% if status == 'ANALISADA' %}selected{% endif %}>Em Análise</option>
+            <option value="CONCLUIDA" {% if status == 'CONCLUIDA' %}selected{% endif %}>Concluída</option>
+            <option value="CANCELADA" {% if status == 'CANCELADA' %}selected{% endif %}>Cancelada</option>
+        </select>
+
+        {% if search or status %}
+        <a href="{% url 'ERP_ServicesBI:cotacao_manager' %}" class="erp-btn erp-btn--secondary">
+            Limpar
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- TABELA -->
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Número</th>
+                    <th>Título</th>
+                    <th width="80">Itens</th>
+                    <th width="80">Forn.</th>
+                    <th>Data Limite</th>
+                    <th>Status</th>
+                    <th width="140">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cotacao in cotacoes %}
+                <tr id="linha-{{ cotacao.id }}">
+                    <td class="col-numero">{{ cotacao.numero }}</td>
+                    <td class="col-titulo">{{ cotacao.titulo }}</td>
+                    <td class="col-itens">{{ cotacao.total_itens|default:"0" }}</td>
+                    <td class="col-forn">{{ cotacao.total_fornecedores|default:"0" }}</td>
+                    <td>{{ cotacao.data_limite_resposta|date:"d/m/Y"|default:"—" }}</td>
+                    <td>
+                        <span class="status-pill status-pill--{{ cotacao.status|lower }}">
+                            {{ cotacao.get_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="acoes">
+                            <button type="button" class="btn-acao btn-acao--visualizar" title="Visualizar"
+                                    onclick="visualizarCotacao({{ cotacao.id }})">
+                                👁️
+                            </button>
+                            <button type="button" class="btn-acao btn-acao--editar" title="Editar"
+                                    onclick="editarCotacao({{ cotacao.id }})">
+                                ✏️
+                            </button>
+                            <button type="button" class="btn-acao btn-acao--excluir" title="Excluir"
+                                    onclick="abrirModalExclusao({{ cotacao.id }}, '{{ cotacao.numero }}', '{{ cotacao.titulo|escapejs }}')">
+                                🗑️
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <div class="empty-state__icon">📋</div>
+                            <div class="empty-state__title">Nenhuma cotação encontrada</div>
+                            <p>{% if search %}Tente outro termo de busca{% else %}Crie sua primeira cotação{% endif %}</p>
+                            {% if not search %}
+                            <button type="button" class="erp-btn erp-btn--primary" style="margin-top: 16px;" onclick="novaCotacao()">
+                                ➕ Criar cotação
+                            </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- PAGINAÇÃO -->
+        {% if cotacoes.has_other_pages %}
+        <div class="pagination-bar">
+            <div class="pagination-info">
+                Mostrando {{ cotacoes.start_index }}-{{ cotacoes.end_index }} de {{ cotacoes.paginator.count }}
+            </div>
+            <div class="pagination-btns">
+                {% if cotacoes.has_previous %}
+                    <a href="?page={{ cotacoes.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}" 
+                       class="pagination-btn">←</a>
+                {% else %}
+                    <button class="pagination-btn" disabled>←</button>
+                {% endif %}
+                
+                {% for num in cotacoes.paginator.page_range %}
+                    {% if num >= cotacoes.number|add:'-2' and num <= cotacoes.number|add:'2' %}
+                        {% if num == cotacoes.number %}
+                            <span class="pagination-btn active">{{ num }}</span>
+                        {% else %}
+                            <a href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}" 
+                               class="pagination-btn">{{ num }}</a>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+                
+                {% if cotacoes.has_next %}
+                    <a href="?page={{ cotacoes.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}" 
+                       class="pagination-btn">→</a>
+                {% else %}
+                    <button class="pagination-btn" disabled>→</button>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ==================== MODO WIZARD ==================== -->
+<div id="modo-wizard" class="wizard-container">
+    
+    <!-- WIZARD HEADER -->
+    <div class="wizard-header">
+        <div class="wizard-header__top">
+            <div class="wizard-header__title">
+                <h2 id="wizard-titulo">Nova Cotação</h2>
+                <p>Preencha as informações para criar uma cotação comparativa</p>
+            </div>
+            <button type="button" class="erp-btn erp-btn--secondary" onclick="voltarParaLista()">
+                ← Voltar para Lista
+            </button>
+        </div>
+
+        <!-- STEPPER - ORDEM CORRIGIDA: Dados → Fornecedores → Itens → Comparar → Pedidos -->
+        <div class="wizard-stepper">
+            <div class="step active" id="step-1-indicator">
+                <span class="step__number">1</span>
+                <span>Dados</span>
+            </div>
+            <div class="step-divider" id="divider-1"></div>
+            <!-- STEP 2: FORNECEDORES -->
+            <div class="step" id="step-2-indicator">
+                <span class="step__number">2</span>
+                <span>Fornecedores</span>
+            </div>
+            <div class="step-divider" id="divider-2"></div>
+            <!-- STEP 3: ITENS -->
+            <div class="step" id="step-3-indicator">
+                <span class="step__number">3</span>
+                <span>Itens</span>
+            </div>
+            <div class="step-divider" id="divider-3"></div>
+            <div class="step" id="step-4-indicator">
+                <span class="step__number">4</span>
+                <span>Comparar</span>
+            </div>
+            <div class="step-divider" id="divider-4"></div>
+            <div class="step" id="step-5-indicator">
+                <span class="step__number">5</span>
+                <span>Pedidos</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ETAPA 1: DADOS DA COTAÇÃO -->
+    <div class="wizard-content active" id="step-1">
+        <h3 class="form-section__title">📋 Informações Básicas</h3>
+        
+        <div class="form-row">
+            <div class="form-group full-width">
+                <label class="form-label" for="cotacao-titulo">
+                    Título da Cotação <span class="required">*</span>
+                </label>
+                <input type="text" id="cotacao-titulo" class="form-input" 
+                       placeholder="Ex: Cotação de Material de Escritório - Março/2026">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label" for="cotacao-setor">
+                    Setor/Departamento <span class="required">*</span>
+                </label>
+                <select id="cotacao-setor" class="form-select">
+                    <option value="">Selecione...</option>
+                    <option value="TI">Tecnologia da Informação</option>
+                    <option value="ADM">Administração</option>
+                    <option value="RH">Recursos Humanos</option>
+                    <option value="FIN">Financeiro</option>
+                    <option value="OP">Operacional</option>
+                    <option value="VENDAS">Vendas</option>
+                    <option value="MARKETING">Marketing</option>
+                    <option value="OUTRO">Outro</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="cotacao-data-limite">
+                    Data Limite para Resposta <span class="required">*</span>
+                </label>
+                <input type="date" id="cotacao-data-limite" class="form-input">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group full-width">
+                <label class="form-label" for="cotacao-observacoes">Observações</label>
+                <textarea id="cotacao-observacoes" class="form-textarea" 
+                          placeholder="Informações adicionais para os fornecedores..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- ETAPA 2: FORNECEDORES -->
+    <div class="wizard-content" id="step-2">
+        <h3 class="form-section__title">🏢 Selecionar Fornecedores</h3>
+        
+        <div class="form-row" style="margin-bottom: 16px;">
+            <div class="form-group full-width">
+                <div class="search-box" style="max-width: 100%;">
+                    <span class="search-box__icon">🔍</span>
+                    <input type="text" id="buscar-fornecedor" placeholder="Buscar fornecedor por nome ou CNPJ..."
+                           onkeyup="filtrarFornecedores()">
+                </div>
+            </div>
+        </div>
+
+        <div class="fornecedores-grid" id="fornecedores-grid">
+            {% for fornecedor in fornecedores %}
+            <div class="fornecedor-card" data-id="{{ fornecedor.id }}" onclick="toggleFornecedor(this)">
+                <div class="fornecedor-card__nome">{{ fornecedor.nome_razao_social }}</div>
+                <div class="fornecedor-card__doc">{{ fornecedor.cpf_cnpj|format_cpf_cnpj }}</div>
+            </div>
+            {% empty %}
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-tertiary);">
+                <div style="font-size: 48px; margin-bottom: 16px;">🏢</div>
+                <p>Nenhum fornecedor cadastrado</p>
+                <a href="{% url 'ERP_ServicesBI:fornecedor_form' %}" class="erp-btn erp-btn--primary" style="margin-top: 16px;">
+                    ➕ Cadastrar Fornecedor
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div style="margin-top: 20px; padding: 16px; background: var(--info-light); border-radius: 10px; display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 20px;">💡</span>
+            <span style="font-size: 13px; color: var(--info-700);">
+                <strong>Fornecedores selecionados:</strong> <span id="contador-fornecedores">0</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- ETAPA 3: ITENS + IMPORTAR COTAÇÕES -->
+    <div class="wizard-content" id="step-3">
+        <h3 class="form-section__title">📦 Produtos/Serviços a Cotar</h3>
+        
+        <table class="itens-table" id="tabela-itens">
+            <thead>
+                <tr>
+                    <th width="50">#</th>
+                    <th>Produto/Serviço <span class="required">*</span></th>
+                    <th width="120">Unidade</th>
+                    <th width="120">Quantidade <span class="required">*</span></th>
+                    <th width="50"></th>
+                </tr>
+            </thead>
+            <tbody id="itens-tbody">
+                <tr class="item-row">
+                    <td class="item-numero">1</td>
+                    <td><input type="text" class="item-produto" placeholder="Digite o nome do produto"></td>
+                    <td><input type="text" class="item-unidade" placeholder="UN" value="UN"></td>
+                    <td><input type="number" class="item-quantidade" placeholder="0" min="1" step="0.01" value="1"></td>
+                    <td><button type="button" class="btn-acao btn-acao--excluir" onclick="removerItem(this)">🗑️</button></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <button type="button" class="btn-add-item" onclick="adicionarItem()">
+            <span>➕</span> Adicionar Item
+        </button>
+
+        <!-- BOTÕES DE IMPORTAR COTAÇÃO POR FORNECEDOR -->
+        <h3 class="form-section__title" style="margin-top: 32px;">📥 Importar Cotações dos Fornecedores</h3>
+        
+        <div class="fornecedores-grid" id="fornecedores-importar-grid">
+            <!-- Cards serão gerados dinamicamente pelo JavaScript -->
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-tertiary);">
+                <div style="font-size: 48px; margin-bottom: 16px;">📎</div>
+                <p>Selecione fornecedores no passo anterior para importar as cotações</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ETAPA 4: COMPARATIVO -->
+    <div class="wizard-content" id="step-4">
+        <h3 class="form-section__title">⚖️ Comparativo de Preços</h3>
+        
+        <div id="comparativo-container">
+            <p style="text-align: center; color: var(--text-tertiary); padding: 40px;">
+                Aguardando respostas dos fornecedores...
+            </p>
+        </div>
+
+        <div class="sugestao-card" id="sugestao-card" style="display: none;">
+            <div class="sugestao-card__title">🎯 Sugestão de Melhor Fornecedor</div>
+            <div class="sugestao-card__text" id="sugestao-texto">
+                Baseado em preço, prazo e histórico.
+            </div>
+        </div>
+    </div>
+
+    <!-- ETAPA 5: PEDIDOS -->
+    <div class="wizard-content" id="step-5">
+        <h3 class="form-section__title">🛍️ Gerar Pedidos de Compra</h3>
+        
+        <div id="pedidos-container">
+            <p style="text-align: center; color: var(--text-tertiary); padding: 40px;">
+                Selecione os fornecedores vencedores para gerar os pedidos.
+            </p>
+        </div>
+
+        <div class="pedidos-gerados" id="pedidos-gerados" style="display: none;">
+            <h4 style="margin-bottom: 16px; color: var(--text-primary);">Pedidos a serem gerados:</h4>
+            <div id="lista-pedidos-gerados"></div>
+        </div>
+    </div>
+
+    <!-- WIZARD ACTIONS -->
+    <div class="wizard-actions">
+        <button type="button" class="erp-btn erp-btn--secondary" id="btn-anterior" onclick="etapaAnterior()" style="display: none;">
+            ← Anterior
+        </button>
+        <div class="wizard-actions__right">
+            <button type="button" class="erp-btn erp-btn--secondary" onclick="salvarRascunho()">
+                💾 Salvar Rascunho
+            </button>
+            <button type="button" class="erp-btn erp-btn--primary" id="btn-proximo" onclick="proximaEtapa()">
+                Próximo →
+            </button>
+            <button type="button" class="erp-btn erp-btn--success" id="btn-finalizar" onclick="finalizarCotacao()" style="display: none;">
+                ✅ Finalizar Cotação
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE EXCLUSÃO -->
+<div class="modal-overlay" id="modalExclusao">
+    <div class="modal-exclusao">
+        <div class="modal-exclusao__header">
+            <div class="modal-exclusao__title">
+                ⚠️ Confirmar Exclusão
+            </div>
+            <button type="button" class="modal-exclusao__close" onclick="fecharModalExclusao()">×</button>
+        </div>
+        <div class="modal-exclusao__body">
+            <div class="modal-exclusao__icon">🗑️</div>
+            <div class="modal-exclusao__text">Tem certeza que deseja excluir?</div>
+            <div class="modal-exclusao__subtext">Você está prestes a excluir a cotação:</div>
+            
+            <div style="background: var(--bg-tertiary); border-radius: 12px; padding: 16px 20px; margin-bottom: 20px;">
+                <div style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;" id="modalCotacaoNumero"></div>
+                <div style="font-size: 13px; color: var(--text-secondary);" id="modalCotacaoTitulo"></div>
+            </div>
+            
+            <div style="background: var(--danger-light); border: 1px solid var(--danger-200); border-radius: 10px; padding: 12px 16px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; color: var(--danger-700);">
+                <span>🚨</span>
+                <strong>Atenção:</strong> Esta ação não pode ser desfeita!
+            </div>
+        </div>
+        <div class="modal-exclusao__footer">
+            <button type="button" class="erp-btn erp-btn--secondary" onclick="fecharModalExclusao()">
+                Cancelar
+            </button>
+            <button type="button" class="erp-btn erp-btn--danger" onclick="executarExclusao()">
+                <span>🗑️</span> Sim, Excluir
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE IMPORTAR COTAÇÃO -->
+<div class="modal-overlay" id="modalImportar">
+    <div class="modal-exclusao" style="max-width: 500px;">
+        <div class="modal-exclusao__header" style="background: var(--primary-600);">
+            <div class="modal-exclusao__title">
+                📥 Importar Cotação
+            </div>
+            <button type="button" class="modal-exclusao__close" onclick="fecharModalImportar()">×</button>
+        </div>
+        <div class="modal-exclusao__body">
+            <div id="modalImportarFornecedorNome" style="font-weight: 600; margin-bottom: 20px; font-size: 16px;"></div>
+            
+            <button type="button" class="btn-importar" onclick="document.getElementById('arquivo-cotacao').click()" style="margin-bottom: 20px;">
+                <span class="icon-big">📎</span>
+                <span>Clique para anexar arquivo<br><small>PDF, Excel ou CSV</small></span>
+            </button>
+            
+            <input type="file" id="arquivo-cotacao" style="display: none;" accept=".pdf,.csv,.xlsx,.xls" onchange="mostrarArquivoSelecionado(this)">
+            
+            <div id="arquivo-selecionado-info" style="margin-bottom: 20px; padding: 12px; background: var(--success-light); border-radius: 8px; display: none;">
+                <span style="color: var(--success-700); font-weight: 500;">✅ Arquivo selecionado: <span id="nome-arquivo"></span></span>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">📅 Prazo de Entrega (dias)</label>
+                    <input type="number" id="import-prazo" class="form-input" min="0" placeholder="Ex: 5">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">🏷️ Desconto (%)</label>
+                    <input type="number" id="import-desconto" class="form-input" min="0" max="100" step="0.01" placeholder="Ex: 10">
+                </div>
+            </div>
+        </div>
+        <div class="modal-exclusao__footer">
+            <button type="button" class="erp-btn erp-btn--secondary" onclick="fecharModalImportar()">
+                Cancelar
+            </button>
+            <button type="button" class="erp-btn erp-btn--primary" onclick="confirmarImportacao()">
+                📥 Importar Cotação
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ============================================================================
+// VARIÁVEIS GLOBAIS
+// ============================================================================
+let etapaAtual = 1;
+let cotacaoId = null;
+let fornecedoresSelecionados = new Set();
+let itensCotacao = [];
+let respostasFornecedores = {};
+let fornecedorIdImportar = null;
+
+// ============================================================================
+// NAVEGAÇÃO MODO LISTA ↔ WIZARD
+// ============================================================================
+
+function novaCotacao() {
+    cotacaoId = null;
+    etapaAtual = 1;
+    fornecedoresSelecionados.clear();
+    itensCotacao = [];
+    respostasFornecedores = {};
+    
+    // Resetar formulário
+    document.getElementById('cotacao-titulo').value = '';
+    document.getElementById('cotacao-setor').value = '';
+    document.getElementById('cotacao-data-limite').value = '';
+    document.getElementById('cotacao-observacoes').value = '';
+    
+    // Resetar tabela de itens
+    document.getElementById('itens-tbody').innerHTML = `
+        <tr class="item-row">
+            <td class="item-numero">1</td>
+            <td><input type="text" class="item-produto" placeholder="Digite o nome do produto"></td>
+            <td><input type="text" class="item-unidade" placeholder="UN" value="UN"></td>
+            <td><input type="number" class="item-quantidade" placeholder="0" min="1" step="0.01"></td>
+            <td><button type="button" class="btn-acao btn-acao--excluir" onclick="removerItem(this)">🗑️</button></td>
+        </tr>
+    `;
+    
+    // Resetar fornecedores
+    document.querySelectorAll('.fornecedor-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    atualizarContadorFornecedores();
+    
+    // Limpar cards de importação
+    document.getElementById('fornecedores-importar-grid').innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-tertiary);">
+            <div style="font-size: 48px; margin-bottom: 16px;">📎</div>
+            <p>Selecione fornecedores no passo anterior para importar as cotações</p>
+        </div>
+    `;
+    
+    // Atualizar título
+    document.getElementById('wizard-titulo').textContent = 'Nova Cotação';
+    
+    // Mostrar wizard, esconder lista
+    document.getElementById('modo-lista').style.display = 'none';
+    document.getElementById('modo-wizard').classList.add('active');
+    
+    atualizarStepper();
+    atualizarBotoes();
+}
+
+function editarCotacao(id) {
+    cotacaoId = id;
+    
+    // Carregar dados da cotação via AJAX
+    fetch(`/api/cotacao/${id}/dados/`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                // Preencher dados
+                document.getElementById('cotacao-titulo').value = data.titulo;
+                document.getElementById('cotacao-setor').value = data.setor;
+                document.getElementById('cotacao-data-limite').value = data.data_limite;
+                document.getElementById('cotacao-observacoes').value = data.observacoes || '';
+                
+                // Preencher itens
+                if (data.itens && data.itens.length > 0) {
+                    const tbody = document.getElementById('itens-tbody');
+                    tbody.innerHTML = '';
+                    data.itens.forEach((item, index) => {
+                        tbody.innerHTML += `
+                            <tr class="item-row">
+                                <td class="item-numero">${index + 1}</td>
+                                <td><input type="text" class="item-produto" value="${item.produto}" placeholder="Digite o nome do produto"></td>
+                                <td><input type="text" class="item-unidade" value="${item.unidade}" placeholder="UN"></td>
+                                <td><input type="number" class="item-quantidade" value="${item.quantidade}" placeholder="0" min="1" step="0.01"></td>
+                                <td><button type="button" class="btn-acao btn-acao--excluir" onclick="removerItem(this)">🗑️</button></td>
+                            </tr>
+                        `;
+                    });
+                }
+                
+                // Selecionar fornecedores
+                if (data.fornecedores) {
+                    data.fornecedores.forEach(fornId => {
+                        const card = document.querySelector(`.fornecedor-card[data-id="${fornId}"]`);
+                        if (card) {
+                            card.classList.add('selected');
+                            fornecedoresSelecionados.add(parseInt(fornId));
+                        }
+                    });
+                    atualizarContadorFornecedores();
+                }
+                
+                document.getElementById('wizard-titulo').textContent = `Editar Cotação ${data.numero}`;
+                
+                // Definir etapa baseada no status
+                if (data.status === 'RASCUNHO') {
+                    etapaAtual = 1;
+                } else if (data.status === 'ENVIADA') {
+                    etapaAtual = 3;
+                } else if (data.status === 'RESPONDIDA') {
+                    etapaAtual = 4;
+                }
+                
+                document.getElementById('modo-lista').style.display = 'none';
+                document.getElementById('modo-wizard').classList.add('active');
+                atualizarStepper();
+                atualizarBotoes();
+                
+                // 🔥 CORREÇÃO: Gerar cards de importação se estiver no step 3 ou superior
+                if (etapaAtual >= 3) {
+                    gerarCardsImportacao();
+                }
+                
+                // Se estiver na etapa 4, carregar comparativo
+                if (etapaAtual === 4) {
+                    carregarComparativo();
+                }
+            }
+        })
+        .catch(err => {
+            mostrarToast('Erro ao carregar cotação: ' + err.message, 'danger');
+        });
+}
+
+function visualizarCotacao(id) {
+    // Modo visualização - só permite ver, não editar
+    editarCotacao(id);
+    // Desabilitar todos os inputs
+    document.querySelectorAll('#modo-wizard input, #modo-wizard select, #modo-wizard textarea').forEach(el => {
+        el.disabled = true;
+    });
+    document.querySelectorAll('.btn-add-item, .fornecedor-card, .btn-acao--excluir, .btn-importar').forEach(el => {
+        el.style.pointerEvents = 'none';
+        el.style.opacity = '0.5';
+    });
+}
+
+function voltarParaLista() {
+    document.getElementById('modo-wizard').classList.remove('active');
+    document.getElementById('modo-lista').style.display = 'block';
+    
+    // Reabilitar inputs se estavam desabilitados
+    document.querySelectorAll('#modo-wizard input, #modo-wizard select, #modo-wizard textarea').forEach(el => {
+        el.disabled = false;
+    });
+    document.querySelectorAll('.btn-add-item, .fornecedor-card, .btn-acao--excluir, .btn-importar').forEach(el => {
+        el.style.pointerEvents = '';
+        el.style.opacity = '';
+    });
+    
+    // Recarregar página para atualizar lista
+    location.reload();
+}
+
+// ============================================================================
+// NAVEGAÇÃO DO WIZARD
+// ============================================================================
+
+function proximaEtapa() {
+    // 🔥 CORREÇÃO CRÍTICA: No passo 3, salvar antes de avançar
+    if (etapaAtual === 3) {
+        if (!validarEtapaAtual()) return;
+        
+        // Salva como rascunho e só avança se der certo
+        salvarCotacao('RASCUNHO', function(id) {
+            if (id) {
+                console.log('✅ Cotação salva, avançando para etapa', etapaAtual + 1);
+                etapaAtual++;
+                atualizarStepper();
+                atualizarBotoes();
+                
+                if (etapaAtual === 4) {
+                    carregarComparativo();
+                }
+            }
+        });
+        return; // Importante: retorna aqui, o callback continua o fluxo
+    }
+    
+    // Para outros passos, apenas valida e avança
+    if (!validarEtapaAtual()) return;
+    
+    if (etapaAtual < 5) {
+        etapaAtual++;
+        atualizarStepper();
+        atualizarBotoes();
+        
+        // Ações específicas por etapa
+        if (etapaAtual === 3) {
+            gerarCardsImportacao();
+        } else if (etapaAtual === 4) {
+            carregarComparativo();
+        } else if (etapaAtual === 5) {
+            prepararPedidos();
+        }
+    }
+}
+
+function etapaAnterior() {
+    if (etapaAtual > 1) {
+        etapaAtual--;
+        atualizarStepper();
+        atualizarBotoes();
+    }
+}
+
+function atualizarStepper() {
+    // Atualizar indicadores visuais
+    for (let i = 1; i <= 5; i++) {
+        const step = document.getElementById(`step-${i}-indicator`);
+        const divider = document.getElementById(`divider-${i}`);
+        
+        step.classList.remove('active', 'completed');
+        
+        if (i < etapaAtual) {
+            step.classList.add('completed');
+            if (divider) divider.classList.add('completed');
+        } else if (i === etapaAtual) {
+            step.classList.add('active');
+        }
+    }
+    
+    // Mostrar/esconder conteúdo das etapas
+    document.querySelectorAll('.wizard-content').forEach((el, index) => {
+        el.classList.remove('active');
+        if (index + 1 === etapaAtual) {
+            el.classList.add('active');
+        }
+    });
+}
+
+function atualizarBotoes() {
+    const btnAnterior = document.getElementById('btn-anterior');
+    const btnProximo = document.getElementById('btn-proximo');
+    const btnFinalizar = document.getElementById('btn-finalizar');
+    
+    btnAnterior.style.display = etapaAtual > 1 ? 'block' : 'none';
+    
+    if (etapaAtual === 5) {
+        btnProximo.style.display = 'none';
+        btnFinalizar.style.display = 'block';
+    } else {
+        btnProximo.style.display = 'block';
+        btnFinalizar.style.display = 'none';
+    }
+}
+
+function validarEtapaAtual() {
+    switch (etapaAtual) {
+        case 1:
+            const titulo = document.getElementById('cotacao-titulo').value.trim();
+            const setor = document.getElementById('cotacao-setor').value;
+            const dataLimite = document.getElementById('cotacao-data-limite').value;
+            
+            if (!titulo) {
+                mostrarToast('Preencha o título da cotação', 'warning');
+                return false;
+            }
+            if (!setor) {
+                mostrarToast('Selecione o setor', 'warning');
+                return false;
+            }
+            if (!dataLimite) {
+                mostrarToast('Defina a data limite', 'warning');
+                return false;
+            }
+            return true;
+            
+        case 2:
+            // ETAPA 2: FORNECEDORES
+            if (fornecedoresSelecionados.size === 0) {
+                mostrarToast('Selecione pelo menos um fornecedor', 'warning');
+                return false;
+            }
+            return true;
+            
+        case 3:
+            // ETAPA 3: ITENS
+            const itens = document.querySelectorAll('.item-row');
+            let temItemValido = false;
+            
+            itens.forEach((row, index) => {
+                const produto = row.querySelector('.item-produto').value.trim();
+                const quantidade = parseFloat(row.querySelector('.item-quantidade').value) || 0;
+                
+                // Debug no console
+                console.log(`Item ${index + 1}: produto="${produto}", quantidade=${quantidade}`);
+                
+                if (produto && quantidade > 0) {
+                    temItemValido = true;
+                }
+            });
+            
+            console.log('Tem item válido?', temItemValido);
+            
+            if (!temItemValido) {
+                mostrarToast('Adicione pelo menos um item com nome e quantidade maior que 0', 'warning');
+                return false;
+            }
+            return true;
+            
+        default:
+            return true;
+    }
+}
+
+// ============================================================================
+// ETAPA 2: FORNECEDORES
+// ============================================================================
+
+function toggleFornecedor(card) {
+    const id = parseInt(card.dataset.id);
+    
+    if (card.classList.contains('selected')) {
+        card.classList.remove('selected');
+        fornecedoresSelecionados.delete(id);
+    } else {
+        card.classList.add('selected');
+        fornecedoresSelecionados.add(id);
+    }
+    
+    atualizarContadorFornecedores();
+}
+
+function atualizarContadorFornecedores() {
+    document.getElementById('contador-fornecedores').textContent = fornecedoresSelecionados.size;
+}
+
+function filtrarFornecedores() {
+    const termo = document.getElementById('buscar-fornecedor').value.toLowerCase();
+    
+    document.querySelectorAll('.fornecedor-card').forEach(card => {
+        const nome = card.querySelector('.fornecedor-card__nome').textContent.toLowerCase();
+        const doc = card.querySelector('.fornecedor-card__doc').textContent.toLowerCase();
+        
+        if (nome.includes(termo) || doc.includes(termo)) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+// ============================================================================
+// ETAPA 3: ITENS + IMPORTAR COTAÇÕES
+// ============================================================================
+
+function adicionarItem() {
+    const tbody = document.getElementById('itens-tbody');
+    const numero = tbody.children.length + 1;
+    
+    const novaLinha = document.createElement('tr');
+    novaLinha.className = 'item-row';
+    novaLinha.innerHTML = `
+        <td class="item-numero">${numero}</td>
+        <td><input type="text" class="item-produto" placeholder="Digite o nome do produto"></td>
+        <td><input type="text" class="item-unidade" placeholder="UN" value="UN"></td>
+        <td><input type="number" class="item-quantidade" placeholder="0" min="1" step="0.01"></td>
+        <td><button type="button" class="btn-acao btn-acao--excluir" onclick="removerItem(this)">🗑️</button></td>
+    `;
+    
+    tbody.appendChild(novaLinha);
+    atualizarNumerosItens();
+}
+
+function removerItem(btn) {
+    const tbody = document.getElementById('itens-tbody');
+    if (tbody.children.length <= 1) {
+        mostrarToast('A cotação deve ter pelo menos um item', 'warning');
+        return;
+    }
+    
+    btn.closest('tr').remove();
+    atualizarNumerosItens();
+}
+
+function atualizarNumerosItens() {
+    document.querySelectorAll('.item-numero').forEach((el, index) => {
+        el.textContent = index + 1;
+    });
+}
+
+// Gerar cards de importação para cada fornecedor selecionado
+function gerarCardsImportacao() {
+    const container = document.getElementById('fornecedores-importar-grid');
+    
+    if (fornecedoresSelecionados.size === 0) {
+        container.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-tertiary);">
+                <div style="font-size: 48px; margin-bottom: 16px;">📎</div>
+                <p>Selecione fornecedores no passo anterior para importar as cotações</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // 🔥 CORREÇÃO: Se tem cotação salva, busca do backend quais já importaram
+    if (cotacaoId) {
+        fetch(`/api/cotacao/${cotacaoId}/fornecedores-importados/`)
+            .then(r => r.json())
+            .then(data => {
+                const importados = data.success ? data.importados : [];
+                renderizarCards(container, importados);
+            })
+            .catch(err => {
+                console.error('Erro ao buscar importados:', err);
+                // Fallback: mostra todos como pendentes
+                renderizarCards(container, []);
+            });
+    } else {
+        // Cotação nova, todos pendentes
+        renderizarCards(container, []);
+    }
+}
+
+// Função auxiliar para renderizar os cards
+function renderizarCards(container, importados) {
+    let html = '';
+    
+    fornecedoresSelecionados.forEach(fornId => {
+        const card = document.querySelector(`.fornecedor-card[data-id="${fornId}"]`);
+        const nome = card ? card.querySelector('.fornecedor-card__nome').textContent : `Fornecedor ${fornId}`;
+        
+        // Verifica se já foi importado (como número)
+        const jaImportado = importados.includes(fornId) || importados.includes(String(fornId));
+        
+        if (jaImportado) {
+            // Card já importado (VERDE)
+            html += `
+                <div class="importar-fornecedor-card" 
+                     data-fornecedor-id="${fornId}"
+                     style="border: 2px solid var(--success-500) !important; 
+                            background: var(--success-light) !important; 
+                            box-shadow: 0 0 0 2px var(--success-300) !important;
+                            border-radius: 12px;
+                            padding: 20px;
+                            text-align: center;">
+                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <span>🏢</span>
+                        <span>${nome}</span>
+                        <span style="background: var(--success-500); color: white; font-size: 10px; padding: 2px 8px; border-radius: 10px; margin-left: 8px; font-weight: 600;">IMPORTADO</span>
+                    </div>
+                    <button type="button" disabled 
+                            style="display: inline-flex; align-items: center; justify-content: center; gap: 12px; padding: 20px 32px; border: 2px solid var(--success-500); border-radius: 12px; background: var(--success-50); color: var(--success-700); font-size: 16px; font-weight: 600; cursor: default; width: 100%;">
+                        <span style="font-size: 32px;">✅</span>
+                        <span>Cotação Importada!</span>
+                    </button>
+                </div>
+            `;
+        } else {
+            // Card normal (pendente)
+            html += `
+                <div class="importar-fornecedor-card" data-fornecedor-id="${fornId}" style="background: var(--input-bg-light); border: 2px solid var(--border-color); border-radius: 12px; padding: 20px; text-align: center;">
+                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <span>🏢</span>
+                        <span>${nome}</span>
+                    </div>
+                    <button type="button" class="btn-importar" onclick="abrirModalImportar(${fornId})" style="display: inline-flex; align-items: center; justify-content: center; gap: 12px; padding: 20px 32px; border: 2px dashed var(--primary-400); border-radius: 12px; background: var(--primary-50); color: var(--primary-700); font-size: 16px; font-weight: 600; cursor: pointer; width: 100%;">
+                        <span style="font-size: 32px;">📎</span>
+                        <span>Anexar Cotação<br><small>PDF, Excel ou CSV</small></span>
+                    </button>
+                </div>
+            `;
+        }
+    });
+    
+    container.innerHTML = html;
+    console.log(`✅ Cards renderizados: ${fornecedoresSelecionados.size}, Importados: ${importados.length}`);
+}
+// Modal de importar cotação
+function abrirModalImportar(fornecedorId) {
+    // 🔥 CORREÇÃO: Verifica se tem cotação salva antes de abrir
+    if (!cotacaoId) {
+        mostrarToast('Salve a cotação como rascunho antes de importar', 'warning');
+        return;
+    }
+    
+    fornecedorIdImportar = fornecedorId;
+    const card = document.querySelector(`.fornecedor-card[data-id="${fornecedorId}"]`);
+    const nome = card ? card.querySelector('.fornecedor-card__nome').textContent : `Fornecedor ${fornecedorId}`;
+    
+    document.getElementById('modalImportarFornecedorNome').textContent = `🏢 ${nome}`;
+    document.getElementById('modalImportar').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function fecharModalImportar() {
+    document.getElementById('modalImportar').classList.remove('active');
+    document.body.style.overflow = '';
+    fornecedorIdImportar = null;
+    
+    // Limpar formulário
+    document.getElementById('arquivo-cotacao').value = '';
+    document.getElementById('arquivo-selecionado-info').style.display = 'none';
+    document.getElementById('import-prazo').value = '';
+    document.getElementById('import-desconto').value = '';
+}
+
+function mostrarArquivoSelecionado(input) {
+    if (input.files && input.files[0]) {
+        document.getElementById('nome-arquivo').textContent = input.files[0].name;
+        document.getElementById('arquivo-selecionado-info').style.display = 'block';
+    }
+}
+
+function confirmarImportacao() {
+    const arquivo = document.getElementById('arquivo-cotacao').files[0];
+    const prazo = document.getElementById('import-prazo').value;
+    const desconto = document.getElementById('import-desconto').value;
+    
+    if (!arquivo) {
+        mostrarToast('Selecione um arquivo para importar', 'warning');
+        return;
+    }
+    
+    if (!cotacaoId) {
+        mostrarToast('Salve a cotação como rascunho antes de importar', 'warning');
+        fecharModalImportar();
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('arquivo', arquivo);
+    formData.append('fornecedor_id', fornecedorIdImportar);
+    formData.append('prazo_entrega', prazo);
+    formData.append('desconto', desconto);
+    
+    fetch(`/api/cotacao/${cotacaoId}/importar-cotacao/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: formData
+    })
+    .then(r => {
+        if (!r.ok) {
+            return r.text().then(text => {
+                throw new Error(`Erro ${r.status}: ${text.substring(0, 100)}`);
+            });
+        }
+        return r.json();
+    })
+    .then(data => {
+        if (data.success) {
+            mostrarToast('✅ ' + (data.message || 'Cotação importada com sucesso!'), 'success');
+            fecharModalImportar();
+            // 🔥 CORREÇÃO: Recarrega os cards para mostrar o verde
+            gerarCardsImportacao();
+        } else {
+            throw new Error(data.error || data.message || 'Erro desconhecido');
+        }
+    })
+    .catch(err => {
+        mostrarToast('❌ Erro ao importar: ' + err.message, 'danger');
+        console.error('Erro completo:', err);
+    });
+}
+// 🔥 CORREÇÃO: Função simplificada - agora só salva no localStorage
+// A atualização visual é feita chamando gerarCardsImportacao()
+function atualizarCardImportado(fornecedorId) {
+    // Salva no localStorage
+    if (!cotacaoId) return;
+    
+    const storageKey = `cotacao_${cotacaoId}_importados`;
+    let importados = [];
+    
+    try {
+        importados = JSON.parse(localStorage.getItem(storageKey) || '[]');
+    } catch (e) {
+        importados = [];
+    }
+    
+    const fornIdStr = String(fornecedorId);
+    if (!importados.includes(fornIdStr)) {
+        importados.push(fornIdStr);
+        localStorage.setItem(storageKey, JSON.stringify(importados));
+        console.log(`✅ Fornecedor ${fornecedorId} marcado como importado`);
+    }
+}
+
+// ============================================================================
+// ETAPA 4: COMPARATIVO
+// ============================================================================
+
+// SUBSTITUA a função carregarComparativo por esta versão com logs:
+
+function carregarComparativo() {
+    const container = document.getElementById('comparativo-container');
+    
+    console.log('🔍 Carregando comparativo para cotação:', cotacaoId);
+    
+    if (!cotacaoId) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state__icon">⚠️</div>
+                <div class="empty-state__title">Cotação não salva</div>
+                <p>Salve a cotação como rascunho primeiro</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Mostra loading
+    container.innerHTML = `
+        <div style="text-align: center; padding: 60px;">
+            <div style="font-size: 48px; margin-bottom: 16px;">⏳</div>
+            <p>Carregando comparativo...</p>
+        </div>
+    `;
+    
+    fetch(`/api/cotacao/${cotacaoId}/comparativo/`)
+        .then(r => {
+            console.log('📡 Resposta da API:', r.status);
+            if (!r.ok) {
+                return r.text().then(text => {
+                    throw new Error(`HTTP ${r.status}: ${text.substring(0, 200)}`);
+                });
+            }
+            return r.json();
+        })
+        .then(data => {
+            console.log('📊 Dados recebidos:', data);
+            
+            if (data.success && data.respostas && Object.keys(data.respostas).length > 0) {
+                respostasFornecedores = data.respostas;
+                renderizarComparativo(data.itens, data.respostas, data.fornecedores);
+            } else {
+                // Verifica se tem fornecedores importados no localStorage
+                const importados = JSON.parse(localStorage.getItem(`cotacao_${cotacaoId}_importados`) || '[]');
+                
+                if (importados.length > 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state__icon">📊</div>
+                            <div class="empty-state__title">Processando importações...</div>
+                            <p>Foram importadas ${importados.length} cotação(ões), mas os dados ainda estão sendo processados.</p>
+                            <button type="button" class="erp-btn erp-btn--primary" style="margin-top: 16px;" onclick="carregarComparativo()">
+                                🔄 Recarregar
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state__icon">📋</div>
+                            <div class="empty-state__title">Nenhuma cotação importada</div>
+                            <p>Volte ao passo anterior e importe as cotações dos fornecedores</p>
+                            <button type="button" class="erp-btn erp-btn--secondary" style="margin-top: 16px;" onclick="etapaAnterior()">
+                                ← Voltar para Itens
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+        })
+        .catch(err => {
+            console.error('❌ Erro ao carregar comparativo:', err);
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state__icon" style="color: var(--danger-500);">❌</div>
+                    <div class="empty-state__title">Erro ao carregar comparativo</div>
+                    <p style="color: var(--danger-600);">${err.message}</p>
+                    <button type="button" class="erp-btn erp-btn--primary" style="margin-top: 16px;" onclick="carregarComparativo()">
+                        🔄 Tentar novamente
+                    </button>
+                </div>
+            `;
+        });
+}
+
+function renderizarComparativo(itens, respostas, fornecedores) {
+    const container = document.getElementById('comparativo-container');
+    
+    let html = '<table class="comparativo-table"><thead><tr><th>Item</th>';
+    
+    fornecedores.forEach(f => {
+        html += `<th>${f.nome}<br><small>${f.condicao}</small></th>`;
+    });
+    
+    html += '</tr></thead><tbody>';
+    
+    itens.forEach(item => {
+        html += `<tr><td class="item-nome">${item.nome}<br><small>${item.quantidade} ${item.unidade}</small></td>`;
+        
+        let menorPreco = Infinity;
+        let precos = [];
+        
+        fornecedores.forEach(f => {
+            const resp = respostas[f.id] && respostas[f.id][item.id];
+            const preco = resp ? parseFloat(resp.preco) : 0;
+            if (preco > 0) {
+                precos.push({ forn: f.id, preco: preco });
+                if (preco < menorPreco) menorPreco = preco;
+            }
+        });
+        
+        fornecedores.forEach(f => {
+            const resp = respostas[f.id] && respostas[f.id][item.id];
+            const preco = resp ? parseFloat(resp.preco) : 0;
+            const prazo = resp ? resp.prazo : '-';
+            
+            let classe = '';
+            if (preco === menorPreco && preco > 0) classe = 'preco-menor';
+            else if (preco > 0) classe = 'preco-maior';
+            
+            html += `<td class="${classe}">
+                ${preco > 0 ? 'R$ ' + preco.toFixed(2) : '-'}<br>
+                <small>${prazo} dias</small>
+            </td>`;
+        });
+        
+        html += '</tr>';
+    });
+    
+    html += '</tbody></table>';
+    container.innerHTML = html;
+    
+    // Mostrar sugestão
+    calcularSugestao(itens, respostas, fornecedores);
+}
+
+function calcularSugestao(itens, respostas, fornecedores) {
+    // Algoritmo simples: melhor custo-benefício (preço + prazo)
+    let pontuacao = {};
+    
+    fornecedores.forEach(f => {
+        pontuacao[f.id] = { total: 0, itens: 0 };
+    });
+    
+    itens.forEach(item => {
+        let precos = [];
+        fornecedores.forEach(f => {
+            const resp = respostas[f.id] && respostas[f.id][item.id];
+            if (resp && parseFloat(resp.preco) > 0) {
+                precos.push({ forn: f.id, preco: parseFloat(resp.preco), prazo: parseInt(resp.prazo) || 0 });
+            }
+        });
+        
+        if (precos.length > 0) {
+            const menorPreco = Math.min(...precos.map(p => p.preco));
+            
+            precos.forEach(p => {
+                const pontosPreco = (menorPreco / p.preco) * 50;
+                const pontosPrazo = Math.max(0, 50 - (p.prazo * 2));
+                pontuacao[p.forn].total += pontosPreco + pontosPrazo;
+                pontuacao[p.forn].itens++;
+            });
+        }
+    });
+    
+    // Encontrar vencedor
+    let vencedor = null;
+    let melhorPontuacao = 0;
+    
+    for (const [fornId, pontos] of Object.entries(pontuacao)) {
+        const media = pontos.total / pontos.itens;
+        if (media > melhorPontuacao) {
+            melhorPontuacao = media;
+            vencedor = fornecedores.find(f => f.id == fornId);
+        }
+    }
+    
+    if (vencedor) {
+        document.getElementById('sugestao-card').style.display = 'block';
+        document.getElementById('sugestao-texto').innerHTML = `
+            <strong>${vencedor.nome}</strong> apresenta a melhor relação custo-benefício 
+            considerando preço e prazo de entrega. 
+            <br>Pontuação: ${melhorPontuacao.toFixed(1)}/100
+        `;
+    }
+}
+
+// ============================================================================
+// ETAPA 5: PEDIDOS
+// ============================================================================
+
+function prepararPedidos() {
+    const container = document.getElementById('pedidos-container');
+    
+    // Agrupar itens por fornecedor vencedor
+    let pedidos = {};
+    
+    // Lógica simplificada: por enquanto mostra todos os fornecedores selecionados
+    fornecedoresSelecionados.forEach(fornId => {
+        const card = document.querySelector(`.fornecedor-card[data-id="${fornId}"]`);
+        const nome = card ? card.querySelector('.fornecedor-card__nome').textContent : `Fornecedor ${fornId}`;
+        
+        pedidos[fornId] = {
+            fornecedor: nome,
+            itens: [],
+            total: 0
+        };
+    });
+    
+    let html = '<div style="display: grid; gap: 16px;">';
+    
+    for (const [fornId, pedido] of Object.entries(pedidos)) {
+        html += `
+            <div style="background: var(--input-bg-light); border-radius: 12px; padding: 20px; border: 2px solid var(--border-color);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div>
+                        <h4 style="font-weight: 600; color: var(--text-primary);">${pedido.fornecedor}</h4>
+                        <p style="font-size: 13px; color: var(--text-secondary);">Pedido será gerado automaticamente</p>
+                    </div>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" checked class="gerar-pedido-check" data-forn="${fornId}">
+                        <span style="font-size: 14px;">Gerar pedido</span>
+                    </label>
+                </div>
+                <div style="font-size: 13px; color: var(--text-secondary);">
+                    Total estimado: <strong style="color: var(--primary-600);">R$ 0,00</strong>
+                </div>
+            </div>
+        `;
+    }
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// ============================================================================
+// AÇÕES FINAIS
+// ============================================================================
+
+function salvarRascunho() {
+    salvarCotacao('RASCUNHO', function(id) {
+        if (id) {
+            console.log('✅ Rascunho salvo com ID:', id);
+        }
+    });
+}
+
+function finalizarCotacao() {
+    salvarCotacao('CONCLUIDA', function(id) {
+        if (id) {
+            setTimeout(() => voltarParaLista(), 1500);
+        }
+    });
+}
+
+// 🔥 CORREÇÃO CRÍTICA: Função reescrita com suporte a callback
+function salvarCotacao(status, callback) {
+    console.log('💾 Iniciando salvamento...', { status, cotacaoId });
+    
+    // Coletar dados do formulário
+    const dados = {
+        id: cotacaoId,
+        titulo: document.getElementById('cotacao-titulo').value.trim(),
+        setor: document.getElementById('cotacao-setor').value,
+        data_limite: document.getElementById('cotacao-data-limite').value,
+        observacoes: document.getElementById('cotacao-observacoes').value.trim(),
+        status: status,
+        itens: [],
+        fornecedores: Array.from(fornecedoresSelecionados)
+    };
+    
+    // Validação básica
+    if (!dados.titulo) {
+        mostrarToast('Preencha o título da cotação', 'warning');
+        if (callback) callback(null);
+        return;
+    }
+    if (!dados.setor) {
+        mostrarToast('Selecione o setor', 'warning');
+        if (callback) callback(null);
+        return;
+    }
+    if (!dados.data_limite) {
+        mostrarToast('Defina a data limite', 'warning');
+        if (callback) callback(null);
+        return;
+    }
+    
+    // 🔥 CORREÇÃO: Coletar itens da tabela corretamente
+    const linhas = document.querySelectorAll('#itens-tbody tr');
+    console.log('📋 Linhas encontradas:', linhas.length);
+    
+    linhas.forEach((row, index) => {
+        const produtoInput = row.querySelector('.item-produto');
+        const unidadeInput = row.querySelector('.item-unidade');
+        const quantidadeInput = row.querySelector('.item-quantidade');
+        
+        const produto = produtoInput ? produtoInput.value.trim() : '';
+        const unidade = unidadeInput ? unidadeInput.value.trim() : 'UN';
+        const quantidade = quantidadeInput ? parseFloat(quantidadeInput.value) || 0 : 0;
+        
+        console.log(`Item ${index + 1}:`, { produto, unidade, quantidade });
+        
+        // Só adiciona se tiver produto e quantidade > 0
+        if (produto && quantidade > 0) {
+            dados.itens.push({ 
+                produto: produto, 
+                unidade: unidade || 'UN', 
+                quantidade: quantidade 
+            });
+        }
+    });
+    
+    console.log('✅ Itens coletados:', dados.itens.length, dados.itens);
+    
+    // Se estiver no passo 3 e não tiver itens, avisa mas continua (para rascunho)
+    if (etapaAtual === 3 && dados.itens.length === 0 && status !== 'RASCUNHO') {
+        mostrarToast('Adicione pelo menos um item válido', 'warning');
+        if (callback) callback(null);
+        return;
+    }
+    
+    // Enviar para servidor
+    fetch('/api/cotacao/salvar/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(dados)
+    })
+    .then(r => {
+        if (!r.ok) {
+            return r.text().then(text => {
+                throw new Error(`HTTP ${r.status}: ${text.substring(0, 200)}`);
+            });
+        }
+        return r.json();
+    })
+    .then(data => {
+        console.log('📡 Resposta do servidor:', data);
+        
+        if (data.success) {
+            // 🔥 CORREÇÃO: Atualiza cotacaoId ANTES de qualquer coisa
+            cotacaoId = data.id;
+            console.log('✅ Cotação salva com ID:', cotacaoId);
+            
+            mostrarToast(data.message || 'Cotação salva com sucesso!', 'success');
+            
+            // 🔥 CORREÇÃO: Chama callback se existir
+            if (callback) {
+                callback(data.id);
+            }
+        } else {
+            throw new Error(data.message || 'Erro ao salvar');
+        }
+    })
+    .catch(err => {
+        console.error('❌ Erro ao salvar:', err);
+        mostrarToast('Erro ao salvar: ' + err.message, 'danger');
+        if (callback) callback(null);
+    });
+}
+
+// ============================================================================
+// MODAL DE EXCLUSÃO
+// ============================================================================
+
+let cotacaoIdExcluir = null;
+
+function abrirModalExclusao(id, numero, titulo) {
+    cotacaoIdExcluir = id;
+    document.getElementById('modalCotacaoNumero').textContent = numero;
+    document.getElementById('modalCotacaoTitulo').textContent = titulo;
+    document.getElementById('modalExclusao').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function fecharModalExclusao() {
+    document.getElementById('modalExclusao').classList.remove('active');
+    document.body.style.overflow = '';
+    cotacaoIdExcluir = null;
+}
+
+function executarExclusao() {
+    if (!cotacaoIdExcluir) return;
+    
+    fetch(`/api/cotacao/${cotacaoIdExcluir}/excluir/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            fecharModalExclusao();
+            
+            // Animação de remoção
+            const linha = document.getElementById(`linha-${cotacaoIdExcluir}`);
+            if (linha) {
+                linha.style.transition = 'all 0.4s ease';
+                linha.style.opacity = '0';
+                linha.style.transform = 'translateX(-30px)';
+                setTimeout(() => {
+                    linha.remove();
+                    if (document.querySelectorAll('.data-table tbody tr').length === 0) {
+                        location.reload();
+                    }
+                }, 400);
+            }
+            
+            mostrarToast(data.message, 'success');
+        } else {
+            throw new Error(data.message);
+        }
+    })
+    .catch(err => {
+        fecharModalExclusao();
+        mostrarToast(err.message, 'danger');
+    });
+}
+
+// Fechar modal ao clicar fora
+document.getElementById('modalExclusao').addEventListener('click', function(e) {
+    if (e.target === this) fecharModalExclusao();
+});
+
+// Fechar com ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        fecharModalExclusao();
+        fecharModalImportar();
+    }
+});
+
+// ============================================================================
+// UTILITÁRIOS
+// ============================================================================
+
+function mostrarToast(mensagem, tipo) {
+    const toast = document.createElement('div');
+    toast.className = `erp-alert erp-alert--${tipo}`;
+    toast.style.cssText = `
+        position: fixed;
+        top: 90px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        animation: slideIn 0.3s ease;
+        box-shadow: var(--shadow-lg);
+    `;
+    toast.innerHTML = mensagem;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
+}
+
+function getCookie(name) {
+    let v = null;
+    if (document.cookie) {
+        const c = document.cookie.split(';');
+        for (let i = 0; i < c.length; i++) {
+            const x = c[i].trim();
+            if (x.substring(0, name.length + 1) === (name + '=')) {
+                v = decodeURIComponent(x.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return v;
+}
+
+// CSS para animações do toast
+const s = document.createElement('style');
+s.textContent = `
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+`;
+document.head.appendChild(s);
+</script>
+{% endblock %}

@@ -164,7 +164,6 @@
         <button type="submit" class="erp-btn erp-btn--primary">
             <span>🔍</span> Filtrar
         </button>
-        <!-- ✅ CORRIGIDO: centrocusto_list → centro_custo_list -->
         <a href="{% url 'ERP_ServicesBI:centro_custo_list' %}" class="erp-btn erp-btn--secondary">
             <span>❌</span> Limpar
         </a>
@@ -174,8 +173,7 @@
 <!-- TABELA -->
 <div class="erp-table-card">
     <div class="erp-table-card__header">
-        <h3 class="erp-table-card__title">📋 Centros de Custo ({{ centros.count }})</h3>
-        <!-- ✅ CORRIGIDO: centrocusto_add → centro_custo_add -->
+        <h3 class="erp-table-card__title">📋 Centros de Custo ({{ total }})</h3>
         <a href="{% url 'ERP_ServicesBI:centro_custo_add' %}" class="erp-btn erp-btn--primary">
             <span>+</span> Novo Centro
         </a>
@@ -192,7 +190,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for centro in centros %}
+                {% for centro in page_obj %}
                 <tr>
                     <td class="erp-font-semibold">{{ centro.codigo|default:centro.id }}</td>
                     <td>{{ centro.nome }}</td>
@@ -202,11 +200,9 @@
                     <td style="color: var(--gray-500);">{{ centro.responsavel|default:"-" }}</td>
                     <td class="erp-text-center">
                         <div class="erp-actions">
-                            <!-- ✅ CORRIGIDO: centrocusto_edit → centro_custo_edit -->
                             <a href="{% url 'ERP_ServicesBI:centro_custo_edit' centro.pk %}" class="erp-btn-icon erp-btn-icon--edit" title="Editar">
                                 ✏️
                             </a>
-                            <!-- ✅ CORRIGIDO: centrocusto_delete → centro_custo_delete -->
                             <a href="{% url 'ERP_ServicesBI:centro_custo_delete' centro.pk %}" class="erp-btn-icon erp-btn-icon--delete" title="Excluir" data-confirm="Tem certeza que deseja excluir este centro de custo?">
                                 🗑️
                             </a>
@@ -220,7 +216,6 @@
                             <div class="erp-empty__icon">🏢</div>
                             <div class="erp-empty__title">Nenhum centro de custo cadastrado</div>
                             <p style="color: var(--gray-500); margin-bottom: 16px;">Cadastre seu primeiro centro de custo</p>
-                            <!-- ✅ CORRIGIDO: centrocusto_add → centro_custo_add -->
                             <a href="{% url 'ERP_ServicesBI:centro_custo_add' %}" class="erp-btn erp-btn--primary">
                                 <span>+</span> Novo Centro
                             </a>

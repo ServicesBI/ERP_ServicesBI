@@ -1,271 +1,1353 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}
     {% if fornecedor %}Editar{% else %}Novo{% endif %} Fornecedor - ERP ServicesBI
 {% endblock %}
 
-{% block content %}
-<div class="erp-page-header erp-mb-6">
-    <h1 class="erp-page-title">CADASTRO</h1>
-    <p class="erp-page-subtitle">{% if fornecedor %}Editar{% else %}Novo{% endif %} Fornecedor</p>
-</div>
+{% block extra_css %}
+<style>
+/* ============================================================================
+   FORNECEDOR FORM - MESMO PADRÃO DO CLIENTE
+   ============================================================================ */
 
-<div class="erp-card" style="max-width: 900px;">
+:root {
+    --input-bg-light: #f5f5f0;
+    --input-bg-dark: #1e3048;
+    --purple-100: #f3e8ff;
+    --purple-600: #9333ea;
+}
+
+.form-page-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.form-header__info h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.form-header__info p {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.form-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: var(--card-shadow);
+}
+
+.form-section {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.form-section:last-of-type {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.form-section__title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-section__title::before {
+    content: '';
+    width: 4px;
+    height: 18px;
+    background: var(--purple-600);
+    border-radius: 2px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.form-row:last-child {
+    margin-bottom: 0;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group.three-cols {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.form-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.form-label .required {
+    color: var(--danger-500);
+    margin-left: 2px;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+    padding: 12px 16px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: var(--input-bg-light);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: inherit;
+    width: 100%;
+    transition: all var(--transition-fast);
+}
+
+html[data-theme="dark"] .form-input,
+html[data-theme="dark"] .form-select,
+html[data-theme="dark"] .form-textarea {
+    background: var(--input-bg-dark);
+    border-color: var(--border-color);
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+    outline: none;
+    border-color: var(--primary-400);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    background: #ffffff;
+}
+
+html[data-theme="dark"] .form-input:focus,
+html[data-theme="dark"] .form-select:focus,
+html[data-theme="dark"] .form-textarea:focus {
+    background: var(--bg-primary);
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+    color: var(--text-tertiary);
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.form-select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    padding-right: 40px;
+}
+
+.form-checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--input-bg-light);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+html[data-theme="dark"] .form-checkbox-wrapper {
+    background: var(--input-bg-dark);
+}
+
+.form-checkbox-wrapper:hover {
+    background: #ffffff;
+    box-shadow: var(--shadow-sm);
+}
+
+html[data-theme="dark"] .form-checkbox-wrapper:hover {
+    background: var(--bg-primary);
+}
+
+.form-checkbox-wrapper input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--primary-600);
+    flex-shrink: 0;
+}
+
+.form-checkbox-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    user-select: none;
+}
+
+/* NOVO: Grupo de select com ações */
+.select-with-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.select-with-actions .form-select {
+    flex: 1;
+}
+
+/* Botões de ação do select */
+.btn-select-action {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--input-bg-light);
+    color: var(--text-tertiary);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+html[data-theme="dark"] .btn-select-action {
+    background: var(--input-bg-dark);
+}
+
+.btn-select-action:hover {
+    background: #ffffff;
+    border-color: var(--primary-400);
+    color: var(--primary-600);
+    transform: scale(1.05);
+}
+
+.btn-select-action.btn-add:hover {
+    background: var(--success-light);
+    border-color: var(--success-400);
+    color: var(--success-600);
+}
+
+.btn-select-action.btn-delete:hover {
+    background: var(--danger-light);
+    border-color: var(--danger-400);
+    color: var(--danger-600);
+}
+
+.btn-select-action:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.form-group.has-error .form-input,
+.form-group.has-error .form-select,
+.form-group.has-error .form-textarea {
+    border-color: var(--danger-500);
+    background: var(--danger-50);
+}
+
+.form-error {
+    color: var(--danger-600);
+    font-size: 12px;
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-color);
+}
+
+.btn-voltar {
+    padding: 12px 24px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all var(--transition-fast);
+    text-decoration: none;
+}
+
+.btn-voltar:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--gray-400);
+}
+
+.btn-salvar {
+    padding: 12px 32px;
+    border: none;
+    border-radius: 10px;
+    background: var(--purple-600);
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all var(--transition-fast);
+}
+
+.btn-salvar:hover {
+    background: #7c3aed;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);
+}
+
+.btn-salvar:active {
+    transform: translateY(0);
+}
+
+/* ============================================================================
+   MODAL PARA ADICIONAR ITENS
+   ============================================================================ */
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-form {
+    background: var(--card-bg);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.modal-form__header {
+    background: var(--purple-600);
+    color: #fff;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.modal-form__title {
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-form__close {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.modal-form__close:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.modal-form__body {
+    padding: 24px;
+}
+
+.modal-form__footer {
+    display: flex;
+    gap: 12px;
+    padding: 20px 24px;
+    border-top: 1px solid var(--border-color);
+    justify-content: flex-end;
+}
+
+/* Preview das parcelas */
+.preview-parcelas {
+    margin-top: 16px;
+    padding: 16px;
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    border: 1px dashed var(--border-color);
+}
+
+.preview-parcelas__title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.preview-parcelas__lista {
+    font-size: 13px;
+    color: var(--text-primary);
+    line-height: 1.8;
+}
+
+.preview-parcelas__item {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.preview-parcelas__item:last-child {
+    border-bottom: none;
+}
+
+.preview-parcelas__total {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 2px solid var(--border-color);
+    font-weight: 700;
+    color: var(--purple-600);
+    display: flex;
+    justify-content: space-between;
+}
+
+@media (max-width: 768px) {
+    .form-card {
+        padding: 24px;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-row.three-cols {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+    
+    .form-actions {
+        flex-direction: column-reverse;
+    }
+    
+    .btn-voltar,
+    .btn-salvar {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .select-with-actions {
+        flex-wrap: wrap;
+    }
+    
+    .select-with-actions .form-select {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-page-container">
+    <div class="form-header">
+        <div class="form-header__info">
+            <h1>{% if fornecedor %}Editar{% else %}Novo{% endif %} Fornecedor</h1>
+            <p>{% if fornecedor %}Altere os dados do fornecedor cadastrado{% else %}Preencha os dados para cadastrar um novo fornecedor{% endif %}</p>
+        </div>
+        <a href="{% url 'ERP_ServicesBI:fornecedor_manager' %}" class="btn-voltar">
+            ← Voltar para lista
+        </a>
+    </div>
+    
     {% if messages %}
         {% for message in messages %}
-            {% if message.tags == 'error' %}
-            <div class="erp-alert erp-alert--error erp-mb-4">
+            <div class="erp-alert erp-alert--{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} erp-mb-4">
                 {{ message }}
             </div>
-            {% else %}
-            <div class="erp-alert erp-alert--success erp-mb-4">
-                {{ message }}
-            </div>
-            {% endif %}
         {% endfor %}
     {% endif %}
-
-    <form method="post" id="fornecedorForm" class="erp-form">
-        {% csrf_token %}
-        
-        <!-- CHECKBOX ATIVO - ACIMA DOS DADOS BÁSICOS -->
-        <div class="erp-form-group erp-mb-4">
-            <label class="erp-checkbox" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: var(--gray-700);">
-                <input type="hidden" name="ativo" value="False">
-                <input type="checkbox" 
-                       name="ativo" 
-                       value="True"
-                       {% if fornecedor.ativo or not fornecedor %}checked{% endif %}
-                       style="width: 16px; height: 16px; cursor: pointer;">
-                <span><strong>Fornecedor Ativo</strong></span>
-            </label>
-        </div>
-        
-        <!-- MOSTRA ERROS DO FORMULÁRIO -->
-        {% if form.errors %}
-        <div class="erp-alert erp-alert--error erp-mb-4">
-            <strong>❌ Corrija os erros abaixo:</strong>
-            <ul style="margin-top: 8px; margin-bottom: 0; padding-left: 20px;">
-                {% for field in form %}
-                    {% for error in field.errors %}
-                    <li><strong>{{ field.label }}:</strong> {{ error }}</li>
-                    {% endfor %}
-                {% endfor %}
-                {% for error in form.non_field_errors %}
-                <li>{{ error }}</li>
-                {% endfor %}
-            </ul>
-        </div>
-        {% endif %}
-        
-        <h3 class="erp-section-title">Dados Básicos</h3>
-        
-        <!-- TIPO PESSOA -->
-        <div class="erp-form-row">
-            <div class="erp-form-group">
-                <label class="erp-label erp-label-required" for="tipo_pessoa">Tipo Pessoa</label>
-                <select name="tipo_pessoa" id="tipo_pessoa" class="erp-select" required>
-                    <option value="">Selecione...</option>
-                    <option value="F" {% if fornecedor.tipo_pessoa == 'F' %}selected{% endif %}>Física</option>
-                    <option value="J" {% if fornecedor.tipo_pessoa == 'J' %}selected{% endif %}>Jurídica</option>
-                </select>
-            </div>
-        </div>
-        
-        <div class="erp-form-row">
-            <!-- Nome/Razão Social -->
-            <div class="erp-form-group" style="flex: 2;">
-                <label class="erp-label erp-label-required" for="nome_razao_social">Nome / Razão Social</label>
-                <input type="text" name="nome_razao_social" id="nome_razao_social" 
-                       value="{{ fornecedor.nome_razao_social|default:'' }}" 
-                       class="erp-input"
-                       placeholder="Digite o nome ou razão social"
-                       required>
+    
+    <div class="form-card">
+        <form method="post" id="fornecedorForm" novalidate>
+            {% csrf_token %}
+            
+            <!-- Checkbox Ativo -->
+            <div class="form-row" style="margin-bottom: 28px;">
+                <div class="form-group full-width">
+                    <input type="hidden" name="ativo" value="False">
+                    <label class="form-checkbox-wrapper">
+                        <input type="checkbox" name="ativo" id="id_ativo" value="True" 
+                               {% if fornecedor.ativo or not fornecedor %}checked{% endif %}>
+                        <span class="form-checkbox-text">Fornecedor Ativo</span>
+                    </label>
+                </div>
             </div>
             
-            <!-- Nome Fantasia -->
-            <div class="erp-form-group" style="flex: 1;">
-                <label class="erp-label" for="nome_fantasia">Nome Fantasia</label>
-                <input type="text" name="nome_fantasia" id="nome_fantasia" 
-                       value="{{ fornecedor.nome_fantasia|default:'' }}" 
-                       class="erp-input"
-                       placeholder="Nome fantasia (opcional)">
-            </div>
-        </div>
-
-        <div class="erp-form-row">
-            <!-- CPF/CNPJ -->
-            <div class="erp-form-group">
-                <label class="erp-label erp-label-required" for="cpf_cnpj">CPF/CNPJ</label>
-                <input type="text" name="cpf_cnpj" id="cpf_cnpj" 
-                       value="{{ fornecedor.cpf_cnpj|default:'' }}" 
-                       class="erp-input"
-                       placeholder="00.000.000/0000-00"
-                       maxlength="18"
-                       required>
-            </div>
-            
-            <!-- RG/Inscrição Estadual -->
-            <div class="erp-form-group">
-                <label class="erp-label" for="rg_inscricao_estadual">RG/Inscrição Estadual</label>
-                <input type="text" name="rg_inscricao_estadual" id="rg_inscricao_estadual" 
-                       value="{{ fornecedor.rg_inscricao_estadual|default:'' }}" 
-                       class="erp-input"
-                       placeholder="Inscrição estadual">
-            </div>
-            
-            <!-- Telefone -->
-            <div class="erp-form-group">
-                <label class="erp-label" for="telefone">Telefone</label>
-                <input type="text" name="telefone" id="telefone" 
-                       value="{{ fornecedor.telefone|default:'' }}" 
-                       class="erp-input"
-                       placeholder="(00) 00000-0000"
-                       maxlength="15">
-            </div>
-        </div>
-
-        <h3 class="erp-section-title erp-mt-6">Endereço</h3>
-        
-        <div class="erp-form-row">
-            <!-- CEP -->
-            <div class="erp-form-group" style="flex: 0 0 150px;">
-                <label class="erp-label" for="cep">CEP</label>
-                <input type="text" name="cep" id="cep" 
-                       value="{{ fornecedor.cep|default:'' }}" 
-                       class="erp-input"
-                       placeholder="00000-000"
-                       maxlength="9">
-            </div>
-            
-            <!-- Endereço -->
-            <div class="erp-form-group" style="flex: 2;">
-                <label class="erp-label" for="endereco">Endereço</label>
-                <input type="text" name="endereco" id="endereco" 
-                       value="{{ fornecedor.endereco|default:'' }}" 
-                       class="erp-input"
-                       placeholder="Rua, Avenida, etc.">
-            </div>
-            
-            <!-- Número -->
-            <div class="erp-form-group" style="flex: 0 0 120px;">
-                <label class="erp-label" for="numero">Número</label>
-                <input type="text" name="numero" id="numero" 
-                       value="{{ fornecedor.numero|default:'' }}" 
-                       class="erp-input"
-                       placeholder="Nº">
-            </div>
-        </div>
-
-        <div class="erp-form-row">
-            <!-- Bairro -->
-            <div class="erp-form-group">
-                <label class="erp-label" for="bairro">Bairro</label>
-                <input type="text" name="bairro" id="bairro" 
-                       value="{{ fornecedor.bairro|default:'' }}" 
-                       class="erp-input"
-                       placeholder="Bairro">
-            </div>
-            
-            <!-- Cidade -->
-            <div class="erp-form-group">
-                <label class="erp-label" for="cidade">Cidade</label>
-                <input type="text" name="cidade" id="cidade" 
-                       value="{{ fornecedor.cidade|default:'' }}" 
-                       class="erp-input"
-                       placeholder="Cidade">
-            </div>
-            
-            <!-- Estado -->
-            <div class="erp-form-group" style="flex: 0 0 100px;">
-                <label class="erp-label" for="estado">UF</label>
-                <select name="estado" id="estado" class="erp-select">
-                    <option value="">UF</option>
-                    <option value="AC" {% if fornecedor.estado == 'AC' %}selected{% endif %}>AC</option>
-                    <option value="AL" {% if fornecedor.estado == 'AL' %}selected{% endif %}>AL</option>
-                    <option value="AP" {% if fornecedor.estado == 'AP' %}selected{% endif %}>AP</option>
-                    <option value="AM" {% if fornecedor.estado == 'AM' %}selected{% endif %}>AM</option>
-                    <option value="BA" {% if fornecedor.estado == 'BA' %}selected{% endif %}>BA</option>
-                    <option value="CE" {% if fornecedor.estado == 'CE' %}selected{% endif %}>CE</option>
-                    <option value="DF" {% if fornecedor.estado == 'DF' %}selected{% endif %}>DF</option>
-                    <option value="ES" {% if fornecedor.estado == 'ES' %}selected{% endif %}>ES</option>
-                    <option value="GO" {% if fornecedor.estado == 'GO' %}selected{% endif %}>GO</option>
-                    <option value="MA" {% if fornecedor.estado == 'MA' %}selected{% endif %}>MA</option>
-                    <option value="MT" {% if fornecedor.estado == 'MT' %}selected{% endif %}>MT</option>
-                    <option value="MS" {% if fornecedor.estado == 'MS' %}selected{% endif %}>MS</option>
-                    <option value="MG" {% if fornecedor.estado == 'MG' %}selected{% endif %}>MG</option>
-                    <option value="PA" {% if fornecedor.estado == 'PA' %}selected{% endif %}>PA</option>
-                    <option value="PB" {% if fornecedor.estado == 'PB' %}selected{% endif %}>PB</option>
-                    <option value="PR" {% if fornecedor.estado == 'PR' %}selected{% endif %}>PR</option>
-                    <option value="PE" {% if fornecedor.estado == 'PE' %}selected{% endif %}>PE</option>
-                    <option value="PI" {% if fornecedor.estado == 'PI' %}selected{% endif %}>PI</option>
-                    <option value="RJ" {% if fornecedor.estado == 'RJ' %}selected{% endif %}>RJ</option>
-                    <option value="RN" {% if fornecedor.estado == 'RN' %}selected{% endif %}>RN</option>
-                    <option value="RS" {% if fornecedor.estado == 'RS' %}selected{% endif %}>RS</option>
-                    <option value="RO" {% if fornecedor.estado == 'RO' %}selected{% endif %}>RO</option>
-                    <option value="RR" {% if fornecedor.estado == 'RR' %}selected{% endif %}>RR</option>
-                    <option value="SC" {% if fornecedor.estado == 'SC' %}selected{% endif %}>SC</option>
-                    <option value="SP" {% if fornecedor.estado == 'SP' %}selected{% endif %}>SP</option>
-                    <option value="SE" {% if fornecedor.estado == 'SE' %}selected{% endif %}>SE</option>
-                    <option value="TO" {% if fornecedor.estado == 'TO' %}selected{% endif %}>TO</option>
-                </select>
-            </div>
-        </div>
-
-        <h3 class="erp-section-title erp-mt-6">Contato e Outras Informações</h3>
-        
-        <div class="erp-form-row">
-            <!-- Email -->
-            <div class="erp-form-group">
-                <label class="erp-label" for="email">E-mail</label>
-                <input type="email" name="email" id="email" 
-                       value="{{ fornecedor.email|default:'' }}" 
-                       class="erp-input"
-                       placeholder="email@exemplo.com">
+            <!-- Seção: Dados Básicos -->
+            <div class="form-section">
+                <h2 class="form-section__title">Dados Básicos</h2>
+                
+                <div class="form-row">
+                    <div class="form-group {% if form.tipo_pessoa.errors %}has-error{% endif %}">
+                        <label class="form-label" for="id_tipo_pessoa">
+                            Tipo Pessoa <span class="required">*</span>
+                        </label>
+                        <select name="tipo_pessoa" id="id_tipo_pessoa" class="form-select" required>
+                            <option value="">Selecione...</option>
+                            <option value="F" {% if form.tipo_pessoa.value == 'F' or fornecedor.tipo_pessoa == 'F' %}selected{% endif %}>Física</option>
+                            <option value="J" {% if form.tipo_pessoa.value == 'J' or fornecedor.tipo_pessoa == 'J' %}selected{% endif %}>Jurídica</option>
+                        </select>
+                        {% if form.tipo_pessoa.errors %}
+                            <span class="form-error">⚠️ {{ form.tipo_pessoa.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group full-width {% if form.nome_razao_social.errors %}has-error{% endif %}">
+                        <label class="form-label" for="id_nome_razao_social">
+                            Nome / Razão Social <span class="required">*</span>
+                        </label>
+                        <input type="text" name="nome_razao_social" id="id_nome_razao_social" 
+                               class="form-input" 
+                               value="{% if form.nome_razao_social.value %}{{ form.nome_razao_social.value }}{% elif fornecedor %}{{ fornecedor.nome_razao_social }}{% endif %}"
+                               placeholder="Digite o nome ou razão social" required>
+                        {% if form.nome_razao_social.errors %}
+                            <span class="form-error">⚠️ {{ form.nome_razao_social.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group {% if form.nome_fantasia.errors %}has-error{% endif %}">
+                        <label class="form-label" for="id_nome_fantasia">Nome Fantasia</label>
+                        <input type="text" name="nome_fantasia" id="id_nome_fantasia" 
+                               class="form-input" 
+                               value="{% if form.nome_fantasia.value %}{{ form.nome_fantasia.value }}{% elif fornecedor %}{{ fornecedor.nome_fantasia }}{% endif %}"
+                               placeholder="Nome fantasia">
+                        {% if form.nome_fantasia.errors %}
+                            <span class="form-error">⚠️ {{ form.nome_fantasia.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group {% if form.cpf_cnpj.errors %}has-error{% endif %}">
+                        <label class="form-label" for="id_cpf_cnpj">
+                            CPF/CNPJ <span class="required">*</span>
+                        </label>
+                        <input type="text" name="cpf_cnpj" id="id_cpf_cnpj" 
+                               class="form-input" 
+                               value="{% if form.cpf_cnpj.value %}{{ form.cpf_cnpj.value }}{% elif fornecedor %}{{ fornecedor.cpf_cnpj }}{% endif %}"
+                               placeholder="00.000.000/0000-00" maxlength="18" required>
+                        {% if form.cpf_cnpj.errors %}
+                            <span class="form-error">⚠️ {{ form.cpf_cnpj.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group {% if form.rg_inscricao_estadual.errors %}has-error{% endif %}">
+                        <label class="form-label" for="id_rg_inscricao_estadual">RG/Inscrição Estadual</label>
+                        <input type="text" name="rg_inscricao_estadual" id="id_rg_inscricao_estadual" 
+                               class="form-input" 
+                               value="{% if form.rg_inscricao_estadual.value %}{{ form.rg_inscricao_estadual.value }}{% elif fornecedor %}{{ fornecedor.rg_inscricao_estadual }}{% endif %}"
+                               placeholder="Inscrição estadual">
+                        {% if form.rg_inscricao_estadual.errors %}
+                            <span class="form-error">⚠️ {{ form.rg_inscricao_estadual.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group {% if form.telefone.errors %}has-error{% endif %}">
+                        <label class="form-label" for="id_telefone">Telefone</label>
+                        <input type="text" name="telefone" id="id_telefone" 
+                               class="form-input" 
+                               value="{% if form.telefone.value %}{{ form.telefone.value }}{% elif fornecedor %}{{ fornecedor.telefone }}{% endif %}"
+                               placeholder="(00) 00000-0000" maxlength="15">
+                        {% if form.telefone.errors %}
+                            <span class="form-error">⚠️ {{ form.telefone.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group {% if form.email.errors %}has-error{% endif %}">
+                        <label class="form-label" for="id_email">E-mail</label>
+                        <input type="email" name="email" id="id_email" 
+                               class="form-input" 
+                               value="{% if form.email.value %}{{ form.email.value }}{% elif fornecedor %}{{ fornecedor.email }}{% endif %}"
+                               placeholder="email@exemplo.com">
+                        {% if form.email.errors %}
+                            <span class="form-error">⚠️ {{ form.email.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
             
-            <!-- Limite de Crédito -->
-            <div class="erp-form-group">
-                <label class="erp-label" for="limite_credito">Limite de Crédito</label>
-                <input type="text" name="limite_credito" id="limite_credito" 
-                       value="{{ fornecedor.limite_credito|default:'' }}" 
-                       class="erp-input"
-                       placeholder="R$ 0,00">
+            <!-- Seção: Endereço -->
+            <div class="form-section">
+                <h2 class="form-section__title">Endereço</h2>
+                
+                <div class="form-row">
+                    <div class="form-group {% if form.cep.errors %}has-error{% endif %}">
+                        <label class="form-label" for="id_cep">CEP</label>
+                        <input type="text" name="cep" id="id_cep" 
+                               class="form-input" 
+                               value="{% if form.cep.value %}{{ form.cep.value }}{% elif fornecedor %}{{ fornecedor.cep }}{% endif %}"
+                               placeholder="00000-000" maxlength="9">
+                        {% if form.cep.errors %}
+                            <span class="form-error">⚠️ {{ form.cep.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group full-width {% if form.endereco.errors %}has-error{% endif %}">
+                        <label class="form-label" for="id_endereco">Endereço</label>
+                        <input type="text" name="endereco" id="id_endereco" 
+                               class="form-input" 
+                               value="{% if form.endereco.value %}{{ form.endereco.value }}{% elif fornecedor %}{{ fornecedor.endereco }}{% endif %}"
+                               placeholder="Rua, Avenida, etc.">
+                        {% if form.endereco.errors %}
+                            <span class="form-error">⚠️ {{ form.endereco.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group {% if form.numero.errors %}has-error{% endif %}">
+                        <label class="form-label" for="id_numero">Número</label>
+                        <input type="text" name="numero" id="id_numero" 
+                               class="form-input" 
+                               value="{% if form.numero.value %}{{ form.numero.value }}{% elif fornecedor %}{{ fornecedor.numero }}{% endif %}"
+                               placeholder="Nº">
+                        {% if form.numero.errors %}
+                            <span class="form-error">⚠️ {{ form.numero.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group {% if form.bairro.errors %}has-error{% endif %}">
+                        <label class="form-label" for="id_bairro">Bairro</label>
+                        <input type="text" name="bairro" id="id_bairro" 
+                               class="form-input" 
+                               value="{% if form.bairro.value %}{{ form.bairro.value }}{% elif fornecedor %}{{ fornecedor.bairro }}{% endif %}"
+                               placeholder="Bairro">
+                        {% if form.bairro.errors %}
+                            <span class="form-error">⚠️ {{ form.bairro.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group {% if form.cidade.errors %}has-error{% endif %}">
+                        <label class="form-label" for="id_cidade">Cidade</label>
+                        <input type="text" name="cidade" id="id_cidade" 
+                               class="form-input" 
+                               value="{% if form.cidade.value %}{{ form.cidade.value }}{% elif fornecedor %}{{ fornecedor.cidade }}{% endif %}"
+                               placeholder="Cidade">
+                        {% if form.cidade.errors %}
+                            <span class="form-error">⚠️ {{ form.cidade.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group {% if form.estado.errors %}has-error{% endif %}">
+                        <label class="form-label" for="id_estado">Estado</label>
+                        <select name="estado" id="id_estado" class="form-select">
+                            <option value="">Selecione...</option>
+                            <option value="AC" {% if form.estado.value == 'AC' or fornecedor.estado == 'AC' %}selected{% endif %}>AC</option>
+                            <option value="AL" {% if form.estado.value == 'AL' or fornecedor.estado == 'AL' %}selected{% endif %}>AL</option>
+                            <option value="AP" {% if form.estado.value == 'AP' or fornecedor.estado == 'AP' %}selected{% endif %}>AP</option>
+                            <option value="AM" {% if form.estado.value == 'AM' or fornecedor.estado == 'AM' %}selected{% endif %}>AM</option>
+                            <option value="BA" {% if form.estado.value == 'BA' or fornecedor.estado == 'BA' %}selected{% endif %}>BA</option>
+                            <option value="CE" {% if form.estado.value == 'CE' or fornecedor.estado == 'CE' %}selected{% endif %}>CE</option>
+                            <option value="DF" {% if form.estado.value == 'DF' or fornecedor.estado == 'DF' %}selected{% endif %}>DF</option>
+                            <option value="ES" {% if form.estado.value == 'ES' or fornecedor.estado == 'ES' %}selected{% endif %}>ES</option>
+                            <option value="GO" {% if form.estado.value == 'GO' or fornecedor.estado == 'GO' %}selected{% endif %}>GO</option>
+                            <option value="MA" {% if form.estado.value == 'MA' or fornecedor.estado == 'MA' %}selected{% endif %}>MA</option>
+                            <option value="MT" {% if form.estado.value == 'MT' or fornecedor.estado == 'MT' %}selected{% endif %}>MT</option>
+                            <option value="MS" {% if form.estado.value == 'MS' or fornecedor.estado == 'MS' %}selected{% endif %}>MS</option>
+                            <option value="MG" {% if form.estado.value == 'MG' or fornecedor.estado == 'MG' %}selected{% endif %}>MG</option>
+                            <option value="PA" {% if form.estado.value == 'PA' or fornecedor.estado == 'PA' %}selected{% endif %}>PA</option>
+                            <option value="PB" {% if form.estado.value == 'PB' or fornecedor.estado == 'PB' %}selected{% endif %}>PB</option>
+                            <option value="PR" {% if form.estado.value == 'PR' or fornecedor.estado == 'PR' %}selected{% endif %}>PR</option>
+                            <option value="PE" {% if form.estado.value == 'PE' or fornecedor.estado == 'PE' %}selected{% endif %}>PE</option>
+                            <option value="PI" {% if form.estado.value == 'PI' or fornecedor.estado == 'PI' %}selected{% endif %}>PI</option>
+                            <option value="RJ" {% if form.estado.value == 'RJ' or fornecedor.estado == 'RJ' %}selected{% endif %}>RJ</option>
+                            <option value="RN" {% if form.estado.value == 'RN' or fornecedor.estado == 'RN' %}selected{% endif %}>RN</option>
+                            <option value="RS" {% if form.estado.value == 'RS' or fornecedor.estado == 'RS' %}selected{% endif %}>RS</option>
+                            <option value="RO" {% if form.estado.value == 'RO' or fornecedor.estado == 'RO' %}selected{% endif %}>RO</option>
+                            <option value="RR" {% if form.estado.value == 'RR' or fornecedor.estado == 'RR' %}selected{% endif %}>RR</option>
+                            <option value="SC" {% if form.estado.value == 'SC' or fornecedor.estado == 'SC' %}selected{% endif %}>SC</option>
+                            <option value="SP" {% if form.estado.value == 'SP' or fornecedor.estado == 'SP' %}selected{% endif %}>SP</option>
+                            <option value="SE" {% if form.estado.value == 'SE' or fornecedor.estado == 'SE' %}selected{% endif %}>SE</option>
+                            <option value="TO" {% if form.estado.value == 'TO' or fornecedor.estado == 'TO' %}selected{% endif %}>TO</option>
+                        </select>
+                        {% if form.estado.errors %}
+                            <span class="form-error">⚠️ {{ form.estado.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
-        </div>
-
-        <!-- Observações -->
-        <div class="erp-form-group">
-            <label class="erp-label" for="observacoes">Observações</label>
-            <textarea name="observacoes" id="observacoes" rows="3" class="erp-textarea"
-                      placeholder="Informações adicionais sobre o fornecedor...">{{ fornecedor.observacoes|default:'' }}</textarea>
-        </div>
-        
-        <!-- BOTÕES DE AÇÃO -->
-        <div class="erp-flex erp-gap-2 erp-mt-6">
-            <button type="submit" class="erp-btn erp-btn--primary">
-                <span>💾</span>
-                <span>Salvar</span>
-            </button>
-            <a href="{% url 'ERP_ServicesBI:fornecedor_list' %}" class="erp-btn erp-btn--outline" style="color: #fc4564; border-color: #fc4564;">
-                <span>Cancelar</span>
-            </a>
-        </div>
-    </form>
+            
+            <!-- Seção: Informações Comerciais -->
+            <div class="form-section">
+                <h2 class="form-section__title">Informações Comerciais</h2>
+                
+                <div class="form-row">
+                    <div class="form-group {% if form.limite_credito.errors %}has-error{% endif %}">
+                        <label class="form-label" for="id_limite_credito">Limite de Crédito</label>
+                        <input type="text" name="limite_credito" id="id_limite_credito" 
+                               class="form-input" 
+                               value="{% if form.limite_credito.value %}{{ form.limite_credito.value }}{% elif fornecedor %}{{ fornecedor.limite_credito }}{% endif %}"
+                               placeholder="R$ 0,00">
+                        {% if form.limite_credito.errors %}
+                            <span class="form-error">⚠️ {{ form.limite_credito.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Condição de Pagamento Padrão com ações -->
+                    <div class="form-group">
+                        <label class="form-label" for="id_condicao_pagamento_padrao">
+                            Condição de Pagamento Padrão
+                        </label>
+                        <div class="select-with-actions">
+                            <select name="condicao_pagamento_padrao" id="id_condicao_pagamento_padrao" class="form-select">
+                                <option value="">Selecione...</option>
+                                {% for condicao in form.condicao_pagamento_padrao.field.queryset %}
+                                    <option value="{{ condicao.id }}" 
+                                        {% if fornecedor and fornecedor.condicao_pagamento_padrao and fornecedor.condicao_pagamento_padrao.id == condicao.id %}selected{% endif %}>
+                                        {{ condicao.descricao }} {% if condicao.resumo %}({{ condicao.resumo }}){% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <button type="button" class="btn-select-action btn-add" onclick="abrirModalCondicao()" title="Adicionar Condição">
+                                ➕
+                            </button>
+                            <button type="button" class="btn-select-action btn-delete" onclick="excluirCondicao()" title="Excluir Condição Selecionada" id="btn-del-condicao" disabled>
+                                🗑️
+                            </button>
+                        </div>
+                        {% if form.condicao_pagamento_padrao.errors %}
+                            <span class="form-error">⚠️ {{ form.condicao_pagamento_padrao.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <!-- Forma de Pagamento Padrão com ações -->
+                    <div class="form-group">
+                        <label class="form-label" for="id_forma_pagamento_padrao">
+                            Forma de Pagamento Padrão
+                        </label>
+                        <div class="select-with-actions">
+                            <select name="forma_pagamento_padrao" id="id_forma_pagamento_padrao" class="form-select">
+                                <option value="">Selecione...</option>
+                                {% for forma in form.forma_pagamento_padrao.field.queryset %}
+                                    <option value="{{ forma.id }}"
+                                        {% if fornecedor and fornecedor.forma_pagamento_padrao and fornecedor.forma_pagamento_padrao.id == forma.id %}selected{% endif %}>
+                                        {{ forma.descricao }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <button type="button" class="btn-select-action btn-add" onclick="abrirModalForma()" title="Adicionar Forma">
+                                ➕
+                            </button>
+                            <button type="button" class="btn-select-action btn-delete" onclick="excluirForma()" title="Excluir Forma Selecionada" id="btn-del-forma" disabled>
+                                🗑️
+                            </button>
+                        </div>
+                        {% if form.forma_pagamento_padrao.errors %}
+                            <span class="form-error">⚠️ {{ form.forma_pagamento_padrao.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group full-width {% if form.observacoes.errors %}has-error{% endif %}">
+                        <label class="form-label" for="id_observacoes">Observações</label>
+                        <textarea name="observacoes" id="id_observacoes" 
+                                  class="form-textarea" 
+                                  placeholder="Informações adicionais sobre o fornecedor...">{% if form.observacoes.value %}{{ form.observacoes.value }}{% elif fornecedor %}{{ fornecedor.observacoes }}{% endif %}</textarea>
+                        {% if form.observacoes.errors %}
+                            <span class="form-error">⚠️ {{ form.observacoes.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Ações -->
+            <div class="form-actions">
+                <a href="{% url 'ERP_ServicesBI:fornecedor_manager' %}" class="btn-voltar">
+                    ← Cancelar
+                </a>
+                <button type="submit" class="btn-salvar">
+                    💾 Salvar Fornecedor
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
+<!-- MODAL: Adicionar Condição de Pagamento (COM PERIODICIDADE E PREVIEW) -->
+<div class="modal-overlay" id="modalCondicao">
+    <div class="modal-form">
+        <div class="modal-form__header">
+            <div class="modal-form__title">
+                ➕ Nova Condição de Pagamento
+            </div>
+            <button type="button" class="modal-form__close" onclick="fecharModalCondicao()">×</button>
+        </div>
+        <div class="modal-form__body">
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label" for="nova_condicao_descricao">Descrição *</label>
+                <input type="text" id="nova_condicao_descricao" class="form-input" placeholder="Ex: 30/60/90 dias">
+            </div>
+            
+            <div class="form-row" style="grid-template-columns: 1fr 1fr; margin-bottom: 16px;">
+                <div class="form-group">
+                    <label class="form-label" for="nova_condicao_parcelas">Parcelas *</label>
+                    <input type="number" id="nova_condicao_parcelas" class="form-input" placeholder="1" min="1" max="24" value="1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="nova_condicao_periodicidade">Periodicidade *</label>
+                    <select id="nova_condicao_periodicidade" class="form-select">
+                        <option value="diario">Diário</option>
+                        <option value="semanal">Semanal</option>
+                        <option value="quinzenal">Quinzenal</option>
+                        <option value="mensal" selected>Mensal</option>
+                        <option value="bimestral">Bimestral</option>
+                        <option value="trimestral">Trimestral</option>
+                        <option value="semestral">Semestral</option>
+                        <option value="anual">Anual</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" for="nova_condicao_dias_primeira">Dias 1ª Parcela *</label>
+                <input type="number" id="nova_condicao_dias_primeira" class="form-input" placeholder="0 (à vista)" min="0" value="0">
+                <small style="color: var(--text-tertiary); font-size: 11px; margin-top: 4px; display: block;">
+                    0 = à vista | 30 = 30 dias | 60 = 60 dias...
+                </small>
+            </div>
+            
+            <!-- Preview das parcelas -->
+            <div id="preview-parcelas" class="preview-parcelas" style="display: none;">
+                <div class="preview-parcelas__title">
+                    📅 Preview das Parcelas
+                </div>
+                <div id="preview-parcelas-lista" class="preview-parcelas__lista">
+                </div>
+            </div>
+        </div>
+        <div class="modal-form__footer">
+            <button type="button" class="btn-voltar" onclick="fecharModalCondicao()">Cancelar</button>
+            <button type="button" class="btn-salvar" onclick="salvarCondicao()">Salvar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Adicionar Forma de Pagamento -->
+<div class="modal-overlay" id="modalForma">
+    <div class="modal-form">
+        <div class="modal-form__header">
+            <div class="modal-form__title">
+                ➕ Nova Forma de Pagamento
+            </div>
+            <button type="button" class="modal-form__close" onclick="fecharModalForma()">×</button>
+        </div>
+        <div class="modal-form__body">
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label" for="nova_forma_descricao">Descrição *</label>
+                <input type="text" id="nova_forma_descricao" class="form-input" placeholder="Ex: Cartão Visa">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" for="nova_forma_tipo">Tipo *</label>
+                <select id="nova_forma_tipo" class="form-select">
+                    <option value="">Selecione o tipo...</option>
+                    <option value="dinheiro">Dinheiro</option>
+                    <option value="pix">PIX</option>
+                    <option value="cartao_debito">Cartão de Débito</option>
+                    <option value="cartao_credito">Cartão de Crédito</option>
+                    <option value="boleto">Boleto</option>
+                    <option value="transferencia">Transferência Bancária</option>
+                    <option value="cheque">Cheque</option>
+                    <option value="outro">Outro</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-form__footer">
+            <button type="button" class="btn-voltar" onclick="fecharModalForma()">Cancelar</button>
+            <button type="button" class="btn-salvar" onclick="salvarForma()">Salvar</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
 <script>
-// Máscara CPF/CNPJ: 000.000.000-00 ou 00.000.000/0000-00
+// Máscaras de input
+document.addEventListener('DOMContentLoaded', function() {
+    // Tipo pessoa muda placeholder do CPF/CNPJ
+    const tipoPessoa = document.getElementById('id_tipo_pessoa');
+    const cpfCnpjInput = document.getElementById('id_cpf_cnpj');
+    
+    if (tipoPessoa && cpfCnpjInput) {
+        tipoPessoa.addEventListener('change', function() {
+            if (this.value === 'F') {
+                cpfCnpjInput.placeholder = '000.000.000-00';
+            } else if (this.value === 'J') {
+                cpfCnpjInput.placeholder = '00.000.000/0000-00';
+            }
+        });
+        
+        // Set initial placeholder
+        if (tipoPessoa.value === 'F') {
+            cpfCnpjInput.placeholder = '000.000.000-00';
+        }
+    }
+    
+    // CPF/CNPJ
+    if (cpfCnpjInput) {
+        cpfCnpjInput.addEventListener('input', function() {
+            mascaraCpfCnpj(this);
+        });
+        if (cpfCnpjInput.value) mascaraCpfCnpj(cpfCnpjInput);
+    }
+    
+    // Telefone
+    const telefoneInput = document.getElementById('id_telefone');
+    if (telefoneInput) {
+        telefoneInput.addEventListener('input', function() {
+            mascaraTelefone(this);
+        });
+        if (telefoneInput.value) mascaraTelefone(telefoneInput);
+    }
+    
+    // CEP
+    const cepInput = document.getElementById('id_cep');
+    if (cepInput) {
+        cepInput.addEventListener('input', function() {
+            mascaraCep(this);
+        });
+        if (cepInput.value) mascaraCep(cepInput);
+    }
+    
+    // Limite de Crédito (Moeda)
+    const limiteInput = document.getElementById('id_limite_credito');
+    if (limiteInput) {
+        limiteInput.addEventListener('input', function() {
+            mascaraMoeda(this);
+        });
+        if (limiteInput.value && limiteInput.value !== '0') {
+            let valor = limiteInput.value.replace('.', ',');
+            limiteInput.value = valor;
+            mascaraMoeda(limiteInput);
+        }
+    }
+    
+    // Habilitar/desabilitar botão de excluir conforme seleção
+    const selectCondicao = document.getElementById('id_condicao_pagamento_padrao');
+    const btnDelCondicao = document.getElementById('btn-del-condicao');
+    if (selectCondicao && btnDelCondicao) {
+        selectCondicao.addEventListener('change', function() {
+            btnDelCondicao.disabled = !this.value;
+        });
+        btnDelCondicao.disabled = !selectCondicao.value;
+    }
+    
+    const selectForma = document.getElementById('id_forma_pagamento_padrao');
+    const btnDelForma = document.getElementById('btn-del-forma');
+    if (selectForma && btnDelForma) {
+        selectForma.addEventListener('change', function() {
+            btnDelForma.disabled = !this.value;
+        });
+        btnDelForma.disabled = !selectForma.value;
+    }
+    
+    // Preview das parcelas em tempo real
+    const parcelasInput = document.getElementById('nova_condicao_parcelas');
+    const periodicidadeInput = document.getElementById('nova_condicao_periodicidade');
+    const diasPrimeiraInput = document.getElementById('nova_condicao_dias_primeira');
+    
+    if (parcelasInput) parcelasInput.addEventListener('input', atualizarPreviewParcelas);
+    if (periodicidadeInput) periodicidadeInput.addEventListener('change', atualizarPreviewParcelas);
+    if (diasPrimeiraInput) diasPrimeiraInput.addEventListener('input', atualizarPreviewParcelas);
+    
+    // Limpar máscaras antes de enviar
+    const form = document.getElementById('fornecedorForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            if (cpfCnpjInput && cpfCnpjInput.value) {
+                cpfCnpjInput.value = cpfCnpjInput.value.replace(/\D/g, '');
+            }
+            if (telefoneInput && telefoneInput.value) {
+                telefoneInput.value = telefoneInput.value.replace(/\D/g, '');
+            }
+            if (cepInput && cepInput.value) {
+                cepInput.value = cepInput.value.replace(/\D/g, '');
+            }
+            if (limiteInput && limiteInput.value) {
+                let limite = limiteInput.value.replace(/[^\d]/g, '');
+                if (limite) {
+                    limite = (parseInt(limite) / 100).toFixed(2);
+                    limiteInput.value = limite;
+                } else {
+                    limiteInput.value = '0.00';
+                }
+            }
+        });
+    }
+});
+
+// ============================================================================
+// PREVIEW DAS PARCELAS EM TEMPO REAL
+// ============================================================================
+
+function atualizarPreviewParcelas() {
+    const parcelas = parseInt(document.getElementById('nova_condicao_parcelas').value) || 0;
+    const periodicidade = document.getElementById('nova_condicao_periodicidade').value;
+    const diasPrimeira = parseInt(document.getElementById('nova_condicao_dias_primeira').value) || 0;
+    
+    const diasMap = {
+        'diario': 1,
+        'semanal': 7,
+        'quinzenal': 15,
+        'mensal': 30,
+        'bimestral': 60,
+        'trimestral': 90,
+        'semestral': 180,
+        'anual': 365
+    };
+    
+    const diasPeriodo = diasMap[periodicidade] || 30;
+    const previewDiv = document.getElementById('preview-parcelas');
+    const listaDiv = document.getElementById('preview-parcelas-lista');
+    
+    if (parcelas > 0) {
+        previewDiv.style.display = 'block';
+        let html = '';
+        let dias = diasPrimeira;
+        
+        for (let i = 1; i <= parcelas; i++) {
+            const data = new Date();
+            data.setDate(data.getDate() + dias);
+            const dataFormatada = data.toLocaleDateString('pt-BR');
+            const percentual = (100 / parcelas).toFixed(2);
+            
+            html += `
+                <div class="preview-parcelas__item">
+                    <span>Parcela ${i}: ${dias} dias</span>
+                    <span>${dataFormatada} (${percentual}%)</span>
+                </div>
+            `;
+            dias += diasPeriodo;
+        }
+        
+        html += `
+            <div class="preview-parcelas__total">
+                <span>Prazo Total</span>
+                <span>${dias - diasPeriodo} dias</span>
+            </div>
+        `;
+        
+        listaDiv.innerHTML = html;
+    } else {
+        previewDiv.style.display = 'none';
+    }
+}
+
+// ============================================================================
+// MODAL CONDIÇÃO DE PAGAMENTO
+// ============================================================================
+
+function abrirModalCondicao() {
+    document.getElementById('modalCondicao').classList.add('active');
+    document.getElementById('nova_condicao_descricao').focus();
+    document.body.style.overflow = 'hidden';
+    atualizarPreviewParcelas();
+}
+
+function fecharModalCondicao() {
+    document.getElementById('modalCondicao').classList.remove('active');
+    document.body.style.overflow = '';
+    document.getElementById('nova_condicao_descricao').value = '';
+    document.getElementById('nova_condicao_parcelas').value = '1';
+    document.getElementById('nova_condicao_periodicidade').value = 'mensal';
+    document.getElementById('nova_condicao_dias_primeira').value = '0';
+    document.getElementById('preview-parcelas').style.display = 'none';
+}
+
+function salvarCondicao() {
+    const descricao = document.getElementById('nova_condicao_descricao').value.trim();
+    const parcelas = document.getElementById('nova_condicao_parcelas').value;
+    const periodicidade = document.getElementById('nova_condicao_periodicidade').value;
+    const diasPrimeira = document.getElementById('nova_condicao_dias_primeira').value;
+    
+    if (!descricao) {
+        mostrarToast('Preencha a descrição', 'warning');
+        return;
+    }
+    
+    if (!parcelas || parseInt(parcelas) < 1) {
+        mostrarToast('Mínimo 1 parcela', 'warning');
+        return;
+    }
+    
+    fetch('/api/condicao-pagamento/criar/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            descricao: descricao,
+            parcelas: parseInt(parcelas),
+            periodicidade: periodicidade,
+            dias_primeira_parcela: parseInt(diasPrimeira) || 0
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const select = document.getElementById('id_condicao_pagamento_padrao');
+            const option = new Option(data.descricao_completa, data.id);
+            select.add(option);
+            select.value = data.id;
+            document.getElementById('btn-del-condicao').disabled = false;
+            
+            fecharModalCondicao();
+            mostrarToast('Condição criada! ' + data.resumo, 'success');
+        } else {
+            throw new Error(data.message);
+        }
+    })
+    .catch(err => {
+        mostrarToast('Erro: ' + err.message, 'danger');
+    });
+}
+
+function excluirCondicao() {
+    const select = document.getElementById('id_condicao_pagamento_padrao');
+    const id = select.value;
+    if (!id) return;
+    
+    const descricao = select.options[select.selectedIndex].text;
+    
+    if (!confirm(`Deseja realmente excluir "${descricao}"?`)) return;
+    
+    fetch(`/api/condicao-pagamento/${id}/excluir/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            select.remove(select.selectedIndex);
+            select.value = '';
+            document.getElementById('btn-del-condicao').disabled = true;
+            mostrarToast('Condição excluída!', 'success');
+        } else {
+            throw new Error(data.message);
+        }
+    })
+    .catch(err => {
+        mostrarToast('Erro ao excluir: ' + err.message, 'danger');
+    });
+}
+
+// ============================================================================
+// MODAL FORMA DE PAGAMENTO
+// ============================================================================
+
+function abrirModalForma() {
+    document.getElementById('modalForma').classList.add('active');
+    document.getElementById('nova_forma_descricao').focus();
+    document.body.style.overflow = 'hidden';
+}
+
+function fecharModalForma() {
+    document.getElementById('modalForma').classList.remove('active');
+    document.body.style.overflow = '';
+    document.getElementById('nova_forma_descricao').value = '';
+    document.getElementById('nova_forma_tipo').value = '';
+}
+
+function salvarForma() {
+    const descricao = document.getElementById('nova_forma_descricao').value.trim();
+    const tipo = document.getElementById('nova_forma_tipo').value;
+    
+    if (!descricao || !tipo) {
+        mostrarToast('Preencha a descrição e o tipo', 'warning');
+        return;
+    }
+    
+    fetch('/api/forma-pagamento/criar/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            descricao: descricao,
+            tipo: tipo
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const select = document.getElementById('id_forma_pagamento_padrao');
+            const option = new Option(data.descricao, data.id);
+            select.add(option);
+            select.value = data.id;
+            document.getElementById('btn-del-forma').disabled = false;
+            
+            fecharModalForma();
+            mostrarToast('Forma de pagamento criada!', 'success');
+        } else {
+            throw new Error(data.message);
+        }
+    })
+    .catch(err => {
+        mostrarToast('Erro: ' + err.message, 'danger');
+    });
+}
+
+function excluirForma() {
+    const select = document.getElementById('id_forma_pagamento_padrao');
+    const id = select.value;
+    if (!id) return;
+    
+    const descricao = select.options[select.selectedIndex].text;
+    
+    if (!confirm(`Deseja realmente excluir "${descricao}"?`)) return;
+    
+    fetch(`/api/forma-pagamento/${id}/excluir/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            select.remove(select.selectedIndex);
+            select.value = '';
+            document.getElementById('btn-del-forma').disabled = true;
+            mostrarToast('Forma excluída!', 'success');
+        } else {
+            throw new Error(data.message);
+        }
+    })
+    .catch(err => {
+        mostrarToast('Erro ao excluir: ' + err.message, 'danger');
+    });
+}
+
+// Fechar modais ao clicar fora
+document.getElementById('modalCondicao').addEventListener('click', function(e) {
+    if (e.target === this) fecharModalCondicao();
+});
+document.getElementById('modalForma').addEventListener('click', function(e) {
+    if (e.target === this) fecharModalForma();
+});
+
+// Fechar com ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        fecharModalCondicao();
+        fecharModalForma();
+    }
+});
+
+// ============================================================================
+// FUNÇÕES UTILITÁRIAS
+// ============================================================================
+
 function mascaraCpfCnpj(input) {
     let valor = input.value.replace(/\D/g, '');
+    const tipo = document.getElementById('id_tipo_pessoa').value;
     
-    if (valor.length <= 11) {
-        // CPF
+    if (tipo === 'F' || (tipo === '' && valor.length <= 11)) {
+        valor = valor.substring(0, 11);
         valor = valor.replace(/(\d{3})(\d)/, '$1.$2');
         valor = valor.replace(/(\d{3})(\d)/, '$1.$2');
         valor = valor.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
     } else {
-        // CNPJ
+        valor = valor.substring(0, 14);
         valor = valor.replace(/^(\d{2})(\d)/, '$1.$2');
         valor = valor.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
         valor = valor.replace(/\.(\d{3})(\d)/, '.$1/$2');
@@ -275,16 +1357,13 @@ function mascaraCpfCnpj(input) {
     input.value = valor;
 }
 
-// Máscara Telefone: (00) 00000-0000 ou (00) 0000-0000
 function mascaraTelefone(input) {
     let valor = input.value.replace(/\D/g, '');
     
     if (valor.length > 10) {
-        // Celular: (00) 00000-0000
         valor = valor.replace(/^(\d{2})(\d)/g, '($1) $2');
         valor = valor.replace(/(\d{5})(\d)/, '$1-$2');
     } else {
-        // Fixo: (00) 0000-0000
         valor = valor.replace(/^(\d{2})(\d)/g, '($1) $2');
         valor = valor.replace(/(\d{4})(\d)/, '$1-$2');
     }
@@ -292,14 +1371,12 @@ function mascaraTelefone(input) {
     input.value = valor;
 }
 
-// Máscara CEP: 00000-000
 function mascaraCep(input) {
     let valor = input.value.replace(/\D/g, '');
     valor = valor.replace(/^(\d{5})(\d)/, '$1-$2');
     input.value = valor;
 }
 
-// Máscara Moeda: R$ 0.000,00
 function mascaraMoeda(input) {
     let valor = input.value.replace(/\D/g, '');
     
@@ -317,88 +1394,48 @@ function mascaraMoeda(input) {
     input.value = 'R$ ' + inteiro + ',' + centavos;
 }
 
-// Limpar máscaras antes de enviar o formulário
-document.getElementById('fornecedorForm').addEventListener('submit', function(e) {
-    // Limpa limite de crédito (envia como número decimal)
-    const limiteInput = document.getElementById('limite_credito');
-    if (limiteInput) {
-        let valor = limiteInput.value.replace(/[^\d]/g, '');
-        if (valor) {
-            valor = (parseInt(valor) / 100).toFixed(2);
-            limiteInput.value = valor;
-        } else {
-            limiteInput.value = '0.00';
-        }
-    }
+function mostrarToast(mensagem, tipo) {
+    const toast = document.createElement('div');
+    toast.className = `erp-alert erp-alert--${tipo}`;
+    toast.style.cssText = `
+        position: fixed;
+        top: 90px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        animation: slideIn 0.3s ease;
+        box-shadow: var(--shadow-lg);
+    `;
+    toast.innerHTML = mensagem;
+    document.body.appendChild(toast);
     
-    // Limpa CPF/CNPJ (envia só números)
-    const cpfCnpjInput = document.getElementById('cpf_cnpj');
-    if (cpfCnpjInput) {
-        cpfCnpjInput.value = cpfCnpjInput.value.replace(/\D/g, '');
-    }
-    
-    // Limpa telefone (envia só números)
-    const telefoneInput = document.getElementById('telefone');
-    if (telefoneInput) {
-        telefoneInput.value = telefoneInput.value.replace(/\D/g, '');
-    }
-    
-    // Limpa CEP (envia só números)
-    const cepInput = document.getElementById('cep');
-    if (cepInput) {
-        cepInput.value = cepInput.value.replace(/\D/g, '');
-    }
-});
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
 
-// Aplicar máscaras aos campos
-document.addEventListener('DOMContentLoaded', function() {
-    // CPF/CNPJ
-    const cpfCnpjInput = document.getElementById('cpf_cnpj');
-    if (cpfCnpjInput) {
-        cpfCnpjInput.addEventListener('input', function() {
-            mascaraCpfCnpj(this);
-        });
-        if (cpfCnpjInput.value) {
-            mascaraCpfCnpj(cpfCnpjInput);
-        }
-    }
-    
-    // Telefone
-    const telefoneInput = document.getElementById('telefone');
-    if (telefoneInput) {
-        telefoneInput.addEventListener('input', function() {
-            mascaraTelefone(this);
-        });
-        if (telefoneInput.value) {
-            mascaraTelefone(telefoneInput);
-        }
-    }
-    
-    // CEP
-    const cepInput = document.getElementById('cep');
-    if (cepInput) {
-        cepInput.addEventListener('input', function() {
-            mascaraCep(this);
-        });
-        if (cepInput.value) {
-            mascaraCep(cepInput);
-        }
-    }
-    
-    // Limite de Crédito
-    const limiteInput = document.getElementById('limite_credito');
-    if (limiteInput) {
-        limiteInput.addEventListener('input', function() {
-            mascaraMoeda(this);
-        });
-        if (limiteInput.value && limiteInput.value !== '0' && limiteInput.value !== '0,00') {
-            let valorLimpo = limiteInput.value.replace(/[^\d]/g, '');
-            if (valorLimpo && valorLimpo !== '0') {
-                limiteInput.value = valorLimpo;
-                mascaraMoeda(limiteInput);
+function getCookie(name) {
+    let v = null;
+    if (document.cookie) {
+        const c = document.cookie.split(';');
+        for (let i = 0; i < c.length; i++) {
+            const x = c[i].trim();
+            if (x.substring(0, name.length + 1) === (name + '=')) {
+                v = decodeURIComponent(x.substring(name.length + 1));
+                break;
             }
         }
     }
-});
+    return v;
+}
+
+// CSS para animações do toast
+const s = document.createElement('style');
+s.textContent = `
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+`;
+document.head.appendChild(s);
 </script>
 {% endblock %}

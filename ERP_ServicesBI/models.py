@@ -5,6 +5,7 @@ Segurança: Thread-safe sequenciais
 Performance: Otimizado para PostgreSQL
 """
 from django.db import models, transaction
+from django.db.models import Sum, Count, Q
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
 from django.utils import timezone
@@ -65,7 +66,7 @@ class SequencialMixin(models.Model):
 
 
 # =============================================================================
-# MÓDULO: CADASTRO
+# MÓDULO: CADASTRO - CLIENTES
 # =============================================================================
 
 class Pessoa(models.Model):
@@ -109,15 +110,37 @@ class Cliente(Pessoa):
     limite_credito = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True, blank=True)
     observacoes = models.TextField(blank=True, null=True)
     
+    # NOVOS CAMPOS: Condição e Forma de Pagamento Padrão
+    condicao_pagamento_padrao = models.ForeignKey(
+        'CondicaoPagamento',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Condição de Pagamento Padrão',
+        related_name='clientes_condicao'
+    )
+    forma_pagamento_padrao = models.ForeignKey(
+        'FormaPagamento',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Forma de Pagamento Padrão',
+        related_name='clientes_forma'
+    )
+    
     class Meta:
         verbose_name = 'Cliente'
         verbose_name_plural = 'Clientes'
         ordering = ['nome_razao_social']
 
+# =============================================================================
+# MÓDULO: CONFIGURAÇÕES - VENDEDOR
+# =============================================================================
 
 class Vendedor(models.Model):
     """Cadastro de vendedores/comissionados do sistema"""
     
+    # Relacionamento com usuário (opcional)
     usuario = models.OneToOneField(
         User, 
         on_delete=models.PROTECT,
@@ -126,32 +149,97 @@ class Vendedor(models.Model):
         null=True,
         blank=True
     )
-    nome = models.CharField(max_length=255, verbose_name='Nome')
-    email = models.EmailField(blank=True, null=True, verbose_name='E-mail')
+    
+    # NOVO: Foto do vendedor
+    foto = models.ImageField(
+        upload_to='vendedores/fotos/%Y/%m/',
+        verbose_name='Foto',
+        null=True,
+        blank=True,
+        help_text='Formatos: JPG, PNG. Máx: 2MB'
+    )
+    
+    # Dados pessoais
+    nome = models.CharField(max_length=255, verbose_name='Nome Completo')
+    
+    # NOVO: Apelido/Nome curto
+    apelido = models.CharField(
+        max_length=50, 
+        blank=True, 
+        null=True,
+        verbose_name='Apelido',
+        help_text='Como prefere ser chamado'
+    )
+    
+    # NOVO: CPF (opcional)
+    cpf = models.CharField(
+        max_length=11,
+        blank=True,
+        null=True,
+        verbose_name='CPF',
+        help_text='Apenas números'
+    )
+    
+    # Contato
+    email = models.EmailField(verbose_name='E-mail')  # Obrigatório agora
     telefone = models.CharField(max_length=20, blank=True, null=True, verbose_name='Telefone')
-    percentual_comissao = models.DecimalField(
+    
+    # Comissão (renomeado de percentual_comissao para comissao_padrao)
+    comissao_padrao = models.DecimalField(
         max_digits=5, 
         decimal_places=2, 
         default=0,
-        verbose_name='% Comissão'
+        verbose_name='Comissão Padrão (%)',
+        help_text='Percentual padrão sobre vendas'
     )
+    
+    # Meta de vendas
     meta_vendas = models.DecimalField(
         max_digits=12, 
         decimal_places=2, 
         default=0,
-        verbose_name='Meta de Vendas'
+        blank=True,
+        null=True,
+        verbose_name='Meta de Vendas Mensal',
+        help_text='Meta em reais (opcional)'
     )
+    
+    # Status e observações
     ativo = models.BooleanField(default=True, verbose_name='Ativo')
     observacoes = models.TextField(blank=True, verbose_name='Observações')
-    criado_em = models.DateTimeField(auto_now_add=True)
+    
+    # Timestamps
+    criado_em = models.DateTimeField(auto_now_add=True, verbose_name='Criado em')
+    atualizado_em = models.DateTimeField(auto_now=True, verbose_name='Atualizado em')
     
     class Meta:
         verbose_name = 'Vendedor'
         verbose_name_plural = 'Vendedores'
         ordering = ['nome']
+        db_table = 'cadastro_vendedor'
     
     def __str__(self):
+        if self.apelido:
+            return f"{self.nome} ({self.apelido})"
         return self.nome
+    
+    def save(self, *args, **kwargs):
+        # Limpa CPF (remove não-dígitos)
+        if self.cpf:
+            self.cpf = ''.join(filter(str.isdigit, self.cpf))
+        
+        # Limpa telefone (remove não-dígitos)
+        if self.telefone:
+            self.telefone = ''.join(filter(str.isdigit, self.telefone))
+        
+        super().save(*args, **kwargs)
+    
+    @property
+    def foto_url(self):
+        """Retorna URL da foto ou placeholder"""
+        if self.foto and hasattr(self.foto, 'url'):
+            return self.foto.url
+        return None
     
     @property
     def total_vendas_mes(self):
@@ -167,8 +255,19 @@ class Vendedor(models.Model):
     @property
     def comissao_a_receber(self):
         """Calcula comissão baseada nas vendas"""
-        return (self.total_vendas_mes * self.percentual_comissao) / 100
+        return (self.total_vendas_mes * self.comissao_padrao) / 100
+    
+    @property
+    def meta_atingida(self):
+        """Retorna percentual da meta atingida"""
+        if self.meta_vendas and self.meta_vendas > 0:
+            return (self.total_vendas_mes / self.meta_vendas) * 100
+        return 0
 
+
+# =============================================================================
+# MÓDULO: CONFIGURAÇÕES - EMPRESA
+# =============================================================================
 
 class Empresa(models.Model):
     """Cadastro da empresa matriz/filial do sistema"""
@@ -194,12 +293,35 @@ class Empresa(models.Model):
     
     def __str__(self):
         return self.nome_fantasia
+    
 
+# =============================================================================
+# MÓDULO: CADASTRO - FORNECEDORES
+# =============================================================================
 
 class Fornecedor(Pessoa):
     """Cadastro de fornecedores do sistema"""
     nome_fantasia = models.CharField(max_length=255, blank=True, null=True)
+    limite_credito = models.DecimalField(max_digits=15, decimal_places=2, default=0, blank=True, null=True)
     observacoes = models.TextField(blank=True, null=True)
+    
+    # NOVOS CAMPOS: Condição e Forma de Pagamento Padrão
+    condicao_pagamento_padrao = models.ForeignKey(
+        'CondicaoPagamento',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Condição de Pagamento Padrão',
+        related_name='fornecedores_condicao'
+    )
+    forma_pagamento_padrao = models.ForeignKey(
+        'FormaPagamento',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Forma de Pagamento Padrão',
+        related_name='fornecedores_forma'
+    )
     
     class Meta:
         verbose_name = 'Fornecedor'
@@ -211,7 +333,11 @@ class Fornecedor(Pessoa):
         return self.cpf_cnpj if self.tipo_pessoa == 'J' else ''
 
 
-class Categoria(models.Model):
+# =============================================================================
+# MÓDULO: CADASTRO - PRODUTOS
+# =============================================================================
+
+class CategoriaProduto(models.Model):
     """Categorias para classificação de produtos"""
     nome = models.CharField(max_length=100, unique=True)
     descricao = models.TextField(blank=True, null=True)
@@ -219,9 +345,10 @@ class Categoria(models.Model):
     criado_em = models.DateTimeField(auto_now_add=True)
     
     class Meta:
-        verbose_name = 'Categoria'
-        verbose_name_plural = 'Categorias'
+        verbose_name = 'Categoria de Produto'
+        verbose_name_plural = 'Categorias de Produtos'
         ordering = ['nome']
+        db_table = 'cadastro_categoriaproduto'  # Evita conflito com outras categorias
     
     def __str__(self):
         return self.nome
@@ -239,7 +366,13 @@ class Produto(SequencialMixin, models.Model):
     
     codigo = models.CharField(max_length=20, unique=True, blank=True, null=True)
     descricao = models.CharField(max_length=255)
-    categoria = models.ForeignKey(Categoria, on_delete=models.SET_NULL, null=True, blank=True, related_name='produtos')
+    categoria = models.ForeignKey(
+        CategoriaProduto,  # ✅ ATUALIZADO
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='produtos'
+    )
     fornecedor = models.ForeignKey(Fornecedor, on_delete=models.SET_NULL, null=True, blank=True, related_name='produtos')
     unidade = models.CharField(max_length=2, choices=UNIDADE_CHOICES, default='UN')
     preco_custo = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True, blank=True)
@@ -266,12 +399,39 @@ class Produto(SequencialMixin, models.Model):
         return self.descricao
 
 
+# =============================================================================
+# MÓDULO: CADASTRO - CONDIÇÕES E FORMAS DE PAGAMENTO
+# =============================================================================
+
 class CondicaoPagamento(models.Model):
-    """Condições de pagamento (prazos e parcelas)"""
+    """Condições de pagamento (prazos e parcelas) - COM CÁLCULO AUTOMÁTICO"""
+    
+    PERIODICIDADE_CHOICES = [
+        ('diario', 'Diário'),
+        ('semanal', 'Semanal'),
+        ('quinzenal', 'Quinzenal'),
+        ('mensal', 'Mensal'),
+        ('bimestral', 'Bimestral'),
+        ('trimestral', 'Trimestral'),
+        ('semestral', 'Semestral'),
+        ('anual', 'Anual'),
+    ]
+    
     descricao = models.CharField(max_length=100, verbose_name='Descrição')
-    dias = models.IntegerField(default=0, verbose_name='Dias')
-    parcelas = models.IntegerField(default=1, verbose_name='Parcelas')
+    parcelas = models.IntegerField(default=1, verbose_name='Quantidade de Parcelas', validators=[MinValueValidator(1)])
+    periodicidade = models.CharField(
+        max_length=20, 
+        choices=PERIODICIDADE_CHOICES, 
+        default='mensal',
+        verbose_name='Periodicidade'
+    )
+    dias_primeira_parcela = models.IntegerField(
+        default=0, 
+        verbose_name='Dias 1ª Parcela',
+        help_text='Dias para a primeira parcela (0 = à vista)'
+    )
     ativo = models.BooleanField(default=True, verbose_name='Ativo')
+    criado_em = models.DateTimeField(auto_now_add=True)
     
     class Meta:
         verbose_name = 'Condição de Pagamento'
@@ -280,6 +440,57 @@ class CondicaoPagamento(models.Model):
     
     def __str__(self):
         return self.descricao
+    
+    @property
+    def dias_periodo(self):
+        """Retorna quantidade de dias de acordo com a periodicidade"""
+        dias_map = {
+            'diario': 1,
+            'semanal': 7,
+            'quinzenal': 15,
+            'mensal': 30,
+            'bimestral': 60,
+            'trimestral': 90,
+            'semestral': 180,
+            'anual': 365,
+        }
+        return dias_map.get(self.periodicidade, 30)
+    
+    def calcular_parcelas(self, data_base=None):
+        """
+        Calcula as datas de vencimento de cada parcela
+        Retorna lista de dicionários: [{'numero': 1, 'dias': 30, 'data_vencimento': date}]
+        """
+        from datetime import datetime, timedelta
+        
+        if data_base is None:
+            data_base = datetime.now().date()
+        
+        parcelas_calculadas = []
+        dias = self.dias_primeira_parcela
+        
+        for i in range(1, self.parcelas + 1):
+            data_vencimento = data_base + timedelta(days=dias)
+            parcelas_calculadas.append({
+                'numero': i,
+                'dias': dias,
+                'data_vencimento': data_vencimento,
+                'valor_percentual': round(100 / self.parcelas, 2),
+            })
+            
+            dias += self.dias_periodo
+        
+        return parcelas_calculadas
+    
+    @property
+    def prazo_total_dias(self):
+        """Retorna o prazo total em dias"""
+        return self.dias_primeira_parcela + (self.dias_periodo * (self.parcelas - 1))
+    
+    @property
+    def resumo(self):
+        """Retorna resumo da condição (ex: 6x Mensal - 180 dias)"""
+        return f"{self.parcelas}x {self.get_periodicidade_display()} - {self.prazo_total_dias} dias"
 
 
 class FormaPagamento(models.Model):
@@ -308,10 +519,12 @@ class FormaPagamento(models.Model):
     
     def __str__(self):
         return self.descricao
+    
 
 
+    
 # =============================================================================
-# MÓDULO: COMPRAS
+# MÓDULO: COMPRAS - COTAÇÃO MÃE
 # =============================================================================
 
 class CotacaoMae(models.Model):
@@ -384,6 +597,10 @@ class CotacaoMae(models.Model):
         return self.cotacoes_fornecedor.exclude(status='pendente').count()
 
 
+# =============================================================================
+# MÓDULO: COMPRAS - ITENS SOLICITADOS
+# =============================================================================
+
 class ItemSolicitado(models.Model):
     """
     Itens que o solicitante pediu na Cotação Mãe
@@ -439,6 +656,10 @@ class ItemSolicitado(models.Model):
         return self.produto.codigo if self.produto else ''
 
 
+# =============================================================================
+# MÓDULO: COMPRAS - COTAÇÃO FORNECEDOR (ATUALIZADO)
+# =============================================================================
+
 class CotacaoFornecedor(models.Model):
     """
     Cotação que cada fornecedor respondeu
@@ -493,6 +714,14 @@ class CotacaoFornecedor(models.Model):
     )
     
     condicao_pagamento = models.CharField(max_length=100, blank=True, verbose_name='Condição de Pagamento')
+    
+    # NOVO CAMPO: Forma de Pagamento
+    forma_pagamento = models.CharField(
+        max_length=100, 
+        blank=True, 
+        verbose_name='Forma de Pagamento'
+    )
+    
     prazo_entrega_dias = models.IntegerField(default=0, verbose_name='Prazo Entrega (dias)')
     disponibilidade_produtos = models.CharField(
         max_length=50,
@@ -500,7 +729,6 @@ class CotacaoFornecedor(models.Model):
         verbose_name='% Disponibilidade Produtos'
     )
     
-    # NOVO: Avaliação de confiabilidade
     nota_confiabilidade = models.IntegerField(
         default=5,
         validators=[MinValueValidator(1)],
@@ -552,6 +780,10 @@ class CotacaoFornecedor(models.Model):
         return self.itens.count()
 
 
+# =============================================================================
+# MÓDULO: COMPRAS - ITENS DA COTAÇÃO DO FORNECEDOR
+# =============================================================================
+
 class ItemCotacaoFornecedor(models.Model):
     """
     Cada item que o fornecedor cotou
@@ -583,17 +815,14 @@ class ItemCotacaoFornecedor(models.Model):
     prazo_entrega_item = models.IntegerField(null=True, blank=True, verbose_name='Prazo Específico (dias)')
     observacao = models.TextField(blank=True, verbose_name='Observação')
     
-    # Match automático
     match_automatico = models.BooleanField(default=False, verbose_name='Match Automático')
     match_score = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name='Score de Match')
     
-    # NOVO: Campos para seleção e sugestão
     melhor_preco = models.BooleanField(default=False, verbose_name='Melhor Preço')
     melhor_prazo = models.BooleanField(default=False, verbose_name='Melhor Prazo')
     sugerido = models.BooleanField(default=False, verbose_name='Sugerido pelo Sistema')
     selecionado = models.BooleanField(default=False, verbose_name='Selecionado para Compra')
     
-    # NOVO: Vinculação com pedido gerado
     pedido_compra = models.ForeignKey(
         'PedidoCompra',
         on_delete=models.SET_NULL,
@@ -619,6 +848,10 @@ class ItemCotacaoFornecedor(models.Model):
         super().save(*args, **kwargs)
 
 
+# =============================================================================
+# MÓDULO: COMPRAS - PEDIDO DE COMPRA
+# =============================================================================
+
 class PedidoCompra(SequencialMixin, models.Model):
     STATUS_CHOICES = [
         ('pendente', 'Pendente'),
@@ -632,7 +865,6 @@ class PedidoCompra(SequencialMixin, models.Model):
     numero = models.CharField(max_length=20, unique=True, blank=True)
     fornecedor = models.ForeignKey(Fornecedor, on_delete=models.PROTECT, related_name='pedidos_compra')
     
-    # NOVO: Vinculação com cotação de origem
     cotacao_mae = models.ForeignKey(
         CotacaoMae,
         on_delete=models.SET_NULL,
@@ -678,11 +910,14 @@ class PedidoCompra(SequencialMixin, models.Model):
         self.save(update_fields=['valor_total'])
 
 
+# =============================================================================
+# MÓDULO: COMPRAS - ITENS DO PEDIDO DE COMPRA
+# =============================================================================
+
 class ItemPedidoCompra(models.Model):
     pedido = models.ForeignKey(PedidoCompra, on_delete=models.CASCADE, related_name='itens')
     produto = models.ForeignKey(Produto, on_delete=models.PROTECT)
     
-    # NOVO: Vinculação com item da cotação
     item_cotacao_origem = models.ForeignKey(
         ItemCotacaoFornecedor,
         on_delete=models.SET_NULL,
@@ -710,6 +945,10 @@ class ItemPedidoCompra(models.Model):
             self.descricao = self.produto.descricao
         super().save(*args, **kwargs)
 
+
+# =============================================================================
+# MÓDULO: COMPRAS - NOTA FISCAL DE ENTRADA
+# =============================================================================
 
 class NotaFiscalEntrada(models.Model):
     STATUS_CHOICES = [
@@ -768,6 +1007,10 @@ class NotaFiscalEntrada(models.Model):
             )
 
 
+# =============================================================================
+# MÓDULO: COMPRAS - ITENS DA NOTA FISCAL DE ENTRADA
+# =============================================================================
+
 class ItemNotaFiscalEntrada(models.Model):
     nota_fiscal = models.ForeignKey(NotaFiscalEntrada, on_delete=models.CASCADE, related_name='itens')
     produto = models.ForeignKey(Produto, on_delete=models.PROTECT)
@@ -787,7 +1030,7 @@ class ItemNotaFiscalEntrada(models.Model):
 
 
 # =============================================================================
-# MÓDULO: VENDAS
+# MÓDULO: VENDAS - ORÇAMENTO
 # =============================================================================
 
 class Orcamento(SequencialMixin, models.Model):
@@ -831,6 +1074,10 @@ class Orcamento(SequencialMixin, models.Model):
         self.save(update_fields=['valor_total'])
 
 
+# =============================================================================
+# MÓDULO: VENDAS - ITENS DO ORÇAMENTO
+# =============================================================================
+
 class ItemOrcamento(models.Model):
     orcamento = models.ForeignKey(Orcamento, on_delete=models.CASCADE, related_name='itens')
     produto = models.ForeignKey(Produto, on_delete=models.PROTECT)
@@ -849,6 +1096,10 @@ class ItemOrcamento(models.Model):
         self.subtotal = self.preco_total
         super().save(*args, **kwargs)
 
+
+# =============================================================================
+# MÓDULO: VENDAS - PEDIDO DE VENDA
+# =============================================================================
 
 class PedidoVenda(SequencialMixin, models.Model):
     STATUS_CHOICES = [
@@ -891,6 +1142,10 @@ class PedidoVenda(SequencialMixin, models.Model):
         self.save(update_fields=['valor_total'])
 
 
+# =============================================================================
+# MÓDULO: VENDAS - ITENS DO PEDIDO DE VENDA
+# =============================================================================
+
 class ItemPedidoVenda(models.Model):
     pedido = models.ForeignKey(PedidoVenda, on_delete=models.CASCADE, related_name='itens')
     produto = models.ForeignKey(Produto, on_delete=models.PROTECT)
@@ -910,6 +1165,10 @@ class ItemPedidoVenda(models.Model):
         self.subtotal = self.preco_total
         super().save(*args, **kwargs)
 
+
+# =============================================================================
+# MÓDULO: VENDAS - NOTA FISCAL DE SAÍDA
+# =============================================================================
 
 class NotaFiscalSaida(models.Model):
     STATUS_CHOICES = [
@@ -980,6 +1239,10 @@ class NotaFiscalSaida(models.Model):
         )
 
 
+# =============================================================================
+# MÓDULO: VENDAS - ITENS DA NOTA FISCAL DE SAÍDA
+# =============================================================================
+
 class ItemNotaFiscalSaida(models.Model):
     nota_fiscal = models.ForeignKey(NotaFiscalSaida, on_delete=models.CASCADE, related_name='itens')
     produto = models.ForeignKey(Produto, on_delete=models.PROTECT)
@@ -999,7 +1262,7 @@ class ItemNotaFiscalSaida(models.Model):
 
 
 # =============================================================================
-# MÓDULO: FINANCEIRO
+# MÓDULO: FINANCEIRO - CATEGORIA FINANCEIRA
 # =============================================================================
 
 class CategoriaFinanceira(models.Model):
@@ -1009,30 +1272,26 @@ class CategoriaFinanceira(models.Model):
     ]
     
     GRUPO_DRE_CHOICES = [
-    # Receitas
-    ('receita_bruta', 'Receita Operacional Bruta'),
-    ('deducoes', 'Deduções da Receita'),
-    ('outras_receitas', 'Outras Receitas Operacionais'),
-    
-    # Custos
-    ('cmv', 'CMV - Custo das Mercadorias Vendidas'),
-    ('cpv', 'CPV - Custo dos Produtos Vendidos'),
-    ('csv', 'CSV - Custo dos Serviços Prestados'),
-    
-    # Despesas Operacionais
-    ('despesa_vendas', 'Despesas com Vendas'),
-    ('despesa_admin', 'Despesas Administrativas'),
-    ('despesa_pessoal', 'Despesas com Pessoal'),
-    ('depreciacao', 'Depreciação e Amortização'),
-    ('outras_despesas', 'Outras Despesas Operacionais'),
-    
-    # Resultado Financeiro
-    ('receita_financeira', 'Receitas Financeiras'),
-    ('despesa_financeira', 'Despesas Financeiras'),
-    
-    # Impostos sobre Lucro
-    ('impostos_lucro', 'Impostos sobre o Lucro (IR/CSLL)'),
-]
+        # Receitas
+        ('receita_bruta', 'Receita Operacional Bruta'),
+        ('deducoes', 'Deduções da Receita'),
+        ('outras_receitas', 'Outras Receitas Operacionais'),
+        # Custos
+        ('cmv', 'CMV - Custo das Mercadorias Vendidas'),
+        ('cpv', 'CPV - Custo dos Produtos Vendidos'),
+        ('csv', 'CSV - Custo dos Serviços Prestados'),
+        # Despesas Operacionais
+        ('despesa_vendas', 'Despesas com Vendas'),
+        ('despesa_admin', 'Despesas Administrativas'),
+        ('despesa_pessoal', 'Despesas com Pessoal'),
+        ('depreciacao', 'Depreciação e Amortização'),
+        ('outras_despesas', 'Outras Despesas Operacionais'),
+        # Resultado Financeiro
+        ('receita_financeira', 'Receitas Financeiras'),
+        ('despesa_financeira', 'Despesas Financeiras'),
+        # Impostos sobre Lucro
+        ('impostos_lucro', 'Impostos sobre o Lucro (IR/CSLL)'),
+    ]
     
     nome = models.CharField(max_length=100)
     tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
@@ -1050,6 +1309,10 @@ class CategoriaFinanceira(models.Model):
         return f"{self.codigo} - {self.nome}"
 
 
+# =============================================================================
+# MÓDULO: FINANCEIRO - CENTRO DE CUSTO
+# =============================================================================
+
 class CentroCusto(models.Model):
     TIPO_CHOICES = [
         ('administrativo', 'Administrativo'),
@@ -1058,6 +1321,7 @@ class CentroCusto(models.Model):
         ('financeiro', 'Financeiro'),
         ('rh', 'Recursos Humanos'),
         ('ti', 'Tecnologia'),
+        ('servicos', 'Serviços'),
         ('outros', 'Outros'),
     ]
     
@@ -1074,6 +1338,10 @@ class CentroCusto(models.Model):
     def __str__(self):
         return f"{self.nome} ({self.get_tipo_display()})"
 
+
+# =============================================================================
+# MÓDULO: FINANCEIRO - ORÇAMENTO FINANCEIRO
+# =============================================================================
 
 class OrcamentoFinanceiro(models.Model):
     PERIODO_CHOICES = [
@@ -1113,6 +1381,10 @@ class OrcamentoFinanceiro(models.Model):
         return f"{self.categoria} - {self.ano}/{periodo_str}"
 
 
+# =============================================================================
+# MÓDULO: FINANCEIRO - EXTRATO BANCÁRIO
+# =============================================================================
+
 class ExtratoBancario(models.Model):
     conta_bancaria = models.CharField(max_length=100)
     data_arquivo = models.DateField()
@@ -1130,6 +1402,10 @@ class ExtratoBancario(models.Model):
     def __str__(self):
         return f"Extrato {self.conta_bancaria} - {self.data_arquivo}"
 
+
+# =============================================================================
+# MÓDULO: FINANCEIRO - LANÇAMENTO DO EXTRATO
+# =============================================================================
 
 class LancamentoExtrato(models.Model):
     TIPO_CHOICES = [
@@ -1170,6 +1446,10 @@ class LancamentoExtrato(models.Model):
         self.conciliado = (self.status == 'conciliado')
         super().save(*args, **kwargs)
 
+
+# =============================================================================
+# MÓDULO: FINANCEIRO - CONTAS A RECEBER
+# =============================================================================
 
 class ContaReceber(models.Model):
     STATUS_CHOICES = [
@@ -1248,6 +1528,10 @@ class ContaReceber(models.Model):
         self.save()
 
 
+# =============================================================================
+# MÓDULO: FINANCEIRO - CONTAS A PAGAR
+# =============================================================================
+
 class ContaPagar(models.Model):
     STATUS_CHOICES = [
         ('pendente', 'Pendente'),
@@ -1324,9 +1608,11 @@ class ContaPagar(models.Model):
         
         self.save()
 
+
 # =============================================================================
-# MÓDULO: FLUXO DE CAIXA 
+# MÓDULO: FLUXO DE CAIXA
 # =============================================================================
+
 class MovimentoCaixa(models.Model):
     TIPO_CHOICES = [
         ('entrada', 'Entrada'),
@@ -1349,14 +1635,10 @@ class MovimentoCaixa(models.Model):
     
     def __str__(self):
         return f"{self.descricao} - {self.tipo} - R$ {self.valor}"
-    
-# =============================================================================
-# MÓDULO: CONCILIAÇÃO BANCÁRIA 
-# =============================================================================
-    
+
 
 # =============================================================================
-# MÓDULO: DRE - DEMONSTRAÇÃO DO RESULTADO DO EXERCÍCIO
+# MÓDULO: DRE - CONFIGURAÇÃO
 # =============================================================================
 
 class ConfiguracaoDRE(models.Model):
@@ -1453,6 +1735,10 @@ class ConfiguracaoDRE(models.Model):
     def __str__(self):
         return f"Config DRE - {self.empresa.nome_fantasia} ({self.get_regime_tributario_display()})"
 
+
+# =============================================================================
+# MÓDULO: DRE - LINHA DRE
+# =============================================================================
 
 class LinhaDRE(models.Model):
     """
@@ -1560,6 +1846,10 @@ class LinhaDRE(models.Model):
         return [g.strip() for g in self.grupos_dre.split(',')]
 
 
+# =============================================================================
+# MÓDULO: DRE - RELATÓRIO DRE
+# =============================================================================
+
 class RelatorioDRE(models.Model):
     """
     Relatório DRE gerado - armazena resultado para histórico/cache
@@ -1660,6 +1950,10 @@ class RelatorioDRE(models.Model):
         return (self.lucro_liquido / self.receita_liquida) * 100
 
 
+# =============================================================================
+# MÓDULO: DRE - ITENS DO RELATÓRIO
+# =============================================================================
+
 class ItemRelatorioDRE(models.Model):
     """
     Cada linha do relatório DRE com seu valor calculado
@@ -1718,7 +2012,7 @@ class ItemRelatorioDRE(models.Model):
 
 
 # =============================================================================
-# MÓDULO: ESTOQUE
+# MÓDULO: ESTOQUE - MOVIMENTAÇÃO
 # =============================================================================
 
 class MovimentacaoEstoque(models.Model):
@@ -1764,6 +2058,10 @@ class MovimentacaoEstoque(models.Model):
         self.produto.save(update_fields=['estoque_atual'])
 
 
+# =============================================================================
+# MÓDULO: ESTOQUE - INVENTÁRIO
+# =============================================================================
+
 class Inventario(SequencialMixin, models.Model):
     STATUS_CHOICES = [
         ('aberto', 'Aberto'),
@@ -1805,6 +2103,10 @@ class Inventario(SequencialMixin, models.Model):
                 item.produto.save(update_fields=['estoque_atual'])
 
 
+# =============================================================================
+# MÓDULO: ESTOQUE - ITENS DO INVENTÁRIO
+# =============================================================================
+
 class ItemInventario(models.Model):
     inventario = models.ForeignKey(Inventario, on_delete=models.CASCADE, related_name='itens')
     produto = models.ForeignKey(Produto, on_delete=models.PROTECT)
@@ -1825,6 +2127,10 @@ class ItemInventario(models.Model):
         self.quantidade_fisica = self.quantidade_contada
         super().save(*args, **kwargs)
 
+
+# =============================================================================
+# MÓDULO: ESTOQUE - TRANSFERÊNCIA
+# =============================================================================
 
 class TransferenciaEstoque(SequencialMixin, models.Model):
     STATUS_CHOICES = [
@@ -1864,6 +2170,10 @@ class TransferenciaEstoque(SequencialMixin, models.Model):
             self.deposito_destino = self.destino
         super().save(*args, **kwargs)
 
+
+# =============================================================================
+# MÓDULO: ESTOQUE - ITENS DA TRANSFERÊNCIA
+# =============================================================================
 
 class ItemTransferencia(models.Model):
     transferencia = models.ForeignKey(TransferenciaEstoque, on_delete=models.CASCADE, related_name='itens')

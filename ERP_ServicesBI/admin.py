@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
 from .models import (
-    Empresa, Cliente, Fornecedor, Produto, Categoria,
+    Empresa, Cliente, Fornecedor, Produto, CategoriaProduto,  # ← CORRIGIDO: Categoria → CategoriaProduto
     PedidoCompra, ItemPedidoCompra,
     NotaFiscalEntrada, ItemNotaFiscalEntrada,
     Orcamento, ItemOrcamento, PedidoVenda, ItemPedidoVenda,
@@ -40,8 +40,8 @@ class FornecedorAdmin(admin.ModelAdmin):
     list_filter = ['ativo', 'tipo_pessoa']
 
 
-@admin.register(Categoria)
-class CategoriaAdmin(admin.ModelAdmin):
+@admin.register(CategoriaProduto)  # ← CORRIGIDO: Categoria → CategoriaProduto
+class CategoriaProdutoAdmin(admin.ModelAdmin):  # ← CORRIGIDO: CategoriaAdmin → CategoriaProdutoAdmin
     list_display = ['nome', 'ativo']
     search_fields = ['nome']
 
@@ -224,7 +224,7 @@ class TransferenciaEstoqueAdmin(admin.ModelAdmin):
 
 
 # =============================================================================
-# COTAÇÃO COMPARATIVA (NOVO - SEM COTACAO ANTIGO)
+# COTAÇÃO COMPARATIVA
 # =============================================================================
 
 class ItemSolicitadoInline(admin.TabularInline):
