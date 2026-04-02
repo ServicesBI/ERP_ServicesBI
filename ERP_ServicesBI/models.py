@@ -2689,7 +2689,7 @@ class EntradaNFE(models.Model):
         blank=True, 
         default='', 
         verbose_name='Chave de Acesso'
-    )  # ✅ CORRIGIDO: default=''
+    )
     
     fornecedor = models.ForeignKey(
         Fornecedor,
@@ -2710,14 +2710,14 @@ class EntradaNFE(models.Model):
     deposito = models.ForeignKey(
         Deposito,
         on_delete=models.PROTECT,
-        null=True,  # ✅ CORRIGIDO: adicionado null=True
+        null=True,
         blank=True,
         related_name='entradas_nfe',
         verbose_name='Depósito de Destino'
     )
     
     data_emissao = models.DateField(
-        default=timezone.now,  # ✅ CORRIGIDO: adicionado default
+        default=timezone.now,
         verbose_name='Data de Emissão'
     )
     
@@ -2742,9 +2742,12 @@ class EntradaNFE(models.Model):
     
     observacoes = models.TextField(blank=True, verbose_name='Observações')
     
+    # ✅ CORRIGIDO: usuario agora pode ser nulo
     usuario = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
+        null=True,  # <-- ADICIONADO
+        blank=True,
         related_name='entradas_nfe',
         verbose_name='Usuário'
     )
