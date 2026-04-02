@@ -1,0 +1,999 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Conciliação Bancária - ERP ServicesBI{% endblock %}
+
+{% block extra_css %}
+<style>
+.dashboard-pbi {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+    min-height: calc(100vh - 60px);
+    background: var(--bg-secondary);
+}
+
+/* ===== HEADER ===== */
+.pbi-header {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.pbi-header__left { display: flex; flex-direction: column; gap: 2px; }
+
+.pbi-header__title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pbi-header__title-bar {
+    width: 4px;
+    height: 22px;
+    background: var(--info-500);
+    border-radius: 2px;
+}
+
+.pbi-header__meta {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.pbi-header__right { display: flex; align-items: center; gap: 8px; }
+
+.pbi-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    transition: all 0.15s;
+    text-decoration: none;
+}
+
+.pbi-btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
+.pbi-btn--primary { background: var(--primary-500); color: white; border-color: var(--primary-500); }
+.pbi-btn--primary:hover { background: var(--primary-600); color: white; }
+.pbi-btn--success { background: var(--success-500); color: white; border-color: var(--success-500); }
+.pbi-btn--warning { background: var(--warning-500); color: white; border-color: var(--warning-500); }
+.pbi-btn--secondary { background: var(--bg-secondary); color: var(--text-secondary); }
+
+/* ===== CARDS RESUMO ===== */
+.resumo-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 1200px) { .resumo-cards { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .resumo-cards { grid-template-columns: 1fr; } }
+
+.resumo-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--card-border);
+    border-left: 4px solid var(--border-color);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.resumo-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+.resumo-card--primary { border-left-color: var(--primary-500); }
+.resumo-card--success { border-left-color: var(--success-500); }
+.resumo-card--warning { border-left-color: var(--warning-500); }
+.resumo-card--danger { border-left-color: var(--danger-500); }
+
+.resumo-card__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 12px;
+}
+
+.resumo-card--primary .resumo-card__icon { background: rgba(59,130,246,0.1); }
+.resumo-card--success .resumo-card__icon { background: rgba(34,197,94,0.1); }
+.resumo-card--warning .resumo-card__icon { background: rgba(245,158,11,0.1); }
+.resumo-card--danger .resumo-card__icon { background: rgba(239,68,68,0.1); }
+
+.resumo-card__label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    font-weight: 700;
+}
+
+.resumo-card__value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.resumo-card__meta {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+/* ===== SLICER BAR ===== */
+.pbi-slicer-bar {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.pbi-slicer-bar__label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-tertiary);
+}
+
+.pbi-slicer-group { display: flex; align-items: center; gap: 6px; }
+.pbi-slicer-group label { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+
+.pbi-select, .pbi-input {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 13px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-width: 140px;
+}
+
+.pbi-select:focus, .pbi-input:focus { 
+    outline: none; 
+    border-color: var(--primary-500); 
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.15); 
+}
+
+.pbi-slicer-bar__spacer { flex: 1; }
+
+/* ===== CANVAS ===== */
+.pbi-canvas {
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* ===== PANEL ===== */
+.pbi-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.pbi-panel__header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.pbi-panel__title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pbi-panel__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--info-500);
+}
+
+.pbi-panel__body { padding: 0; }
+
+/* ===== TABELA ===== */
+.pbi-table-wrap { overflow-x: auto; }
+
+.pbi-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.pbi-table thead { background: var(--bg-tertiary); }
+
+.pbi-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-tertiary);
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+}
+
+.pbi-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.pbi-table tbody tr:hover { background: var(--bg-secondary); }
+.pbi-table tbody tr:last-child td { border-bottom: none; }
+
+.pbi-table__id { font-weight: 600; color: var(--text-primary); }
+.pbi-table__valor { text-align: right; font-variant-numeric: tabular-nums; }
+.pbi-table__center { text-align: center; }
+
+/* Badges */
+.pbi-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.pbi-badge--success { background: rgba(34,197,94,0.1); color: var(--success-500); }
+.pbi-badge--warning { background: rgba(245,158,11,0.1); color: var(--warning-500); }
+.pbi-badge--danger { background: rgba(239,68,68,0.1); color: var(--danger-500); }
+.pbi-badge--primary { background: rgba(59,130,246,0.1); color: var(--primary-500); }
+
+/* Ações */
+.pbi-table__actions {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+}
+
+.pbi-btn-icon {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.15s;
+    background: transparent;
+}
+
+.pbi-btn-icon:hover { transform: scale(1.1); }
+.pbi-btn-icon--edit { color: var(--primary-500); }
+.pbi-btn-icon--edit:hover { background: rgba(59,130,246,0.1); }
+.pbi-btn-icon--delete { color: var(--danger-500); }
+.pbi-btn-icon--delete:hover { background: rgba(239,68,68,0.1); }
+
+/* ===== PAGINAÇÃO ===== */
+.pbi-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    padding: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.pbi-pagination__btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 0.15s;
+}
+
+.pbi-pagination__btn:hover:not(:disabled):not(.active) {
+    border-color: var(--primary-500);
+    color: var(--primary-600);
+}
+
+.pbi-pagination__btn.active {
+    background: var(--primary-500);
+    color: white;
+    border-color: var(--primary-500);
+}
+
+.pbi-pagination__btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.pbi-pagination__info {
+    padding: 0 12px;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+/* ===== EMPTY ===== */
+.pbi-empty { padding: 48px 24px; text-align: center; color: var(--text-tertiary); }
+.pbi-empty__icon { font-size: 48px; margin-bottom: 16px; }
+.pbi-empty__title { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+
+/* ===== STATUS BAR ===== */
+.pbi-statusbar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 12px 24px;
+    background: var(--card-bg);
+    border-top: 1px solid var(--border-color);
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+.pbi-statusbar__item { display: flex; align-items: center; gap: 5px; }
+.pbi-statusbar__dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
+.pbi-statusbar__spacer { flex: 1; }
+
+/* ===== MODAIS ===== */
+.pbi-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.pbi-modal-overlay.active { display: flex; }
+
+.pbi-modal {
+    background: var(--card-bg);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 600px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: modalIn 0.2s ease;
+}
+
+@keyframes modalIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.pbi-modal__header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.pbi-modal__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.pbi-modal__close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+}
+
+.pbi-modal__body { padding: 24px; }
+.pbi-modal__footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+/* Upload area */
+.pbi-upload-area {
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    padding: 40px;
+    text-align: center;
+    background: var(--bg-secondary);
+    transition: all 0.15s;
+    cursor: pointer;
+}
+
+.pbi-upload-area:hover {
+    border-color: var(--primary-500);
+    background: rgba(59,130,246,0.05);
+}
+
+.pbi-upload-area__icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.pbi-upload-area__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.pbi-upload-area__text {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+}
+
+.pbi-upload-area__formats {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.pbi-format-badge {
+    padding: 4px 10px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.pbi-file-input {
+    display: none;
+}
+
+/* Preview do arquivo */
+.pbi-file-preview {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    margin-top: 16px;
+}
+
+.pbi-file-preview.active { display: flex; }
+
+.pbi-file-preview__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    background: var(--bg-primary);
+}
+
+.pbi-file-preview__info { flex: 1; }
+.pbi-file-preview__name {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+.pbi-file-preview__size {
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+/* OCR Status */
+.pbi-ocr-status {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: rgba(59,130,246,0.1);
+    border-radius: 8px;
+    margin-top: 16px;
+}
+
+.pbi-ocr-status.active { display: flex; }
+
+.pbi-ocr-status__spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--primary-500);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.pbi-ocr-status__text {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-pbi">
+
+    <!-- HEADER -->
+    <div class="pbi-header">
+        <div class="pbi-header__left">
+            <h1 class="pbi-header__title">
+                <div class="pbi-header__title-bar"></div>
+                Conciliação Bancária
+            </h1>
+            <div class="pbi-header__meta">
+                <span>🏦 Conciliação de extratos bancários</span>
+                <span>🕐 Atualizado: <strong id="updateTime">--:--</strong></span>
+            </div>
+        </div>
+        <div class="pbi-header__right">
+            <button class="pbi-btn pbi-btn--primary" onclick="abrirModalImportar()">📁 Importar Extrato</button>
+            <button class="pbi-btn" onclick="window.print()">🖨️ Imprimir</button>
+        </div>
+    </div>
+
+    <div class="pbi-canvas">
+
+        <!-- CARDS RESUMO -->
+        <div class="resumo-cards">
+            <div class="resumo-card resumo-card--primary">
+                <div class="resumo-card__icon">📄</div>
+                <div class="resumo-card__label">Extratos Importados</div>
+                <div class="resumo-card__value">{{ total_extratos|default:0 }}</div>
+                <div class="resumo-card__meta">Total no período</div>
+            </div>
+
+            <div class="resumo-card resumo-card--success">
+                <div class="resumo-card__icon">✅</div>
+                <div class="resumo-card__label">Conciliados</div>
+                <div class="resumo-card__value">{{ conciliados|default:0 }}</div>
+                <div class="resumo-card__meta">Lançamentos vinculados</div>
+            </div>
+
+            <div class="resumo-card resumo-card--warning">
+                <div class="resumo-card__icon">⏳</div>
+                <div class="resumo-card__label">Pendentes</div>
+                <div class="resumo-card__value">{{ pendentes|default:0 }}</div>
+                <div class="resumo-card__meta">Aguardando processamento</div>
+            </div>
+
+            <div class="resumo-card resumo-card--danger">
+                <div class="resumo-card__icon">⚠️</div>
+                <div class="resumo-card__label">Divergentes</div>
+                <div class="resumo-card__value">{{ divergentes|default:0 }}</div>
+                <div class="resumo-card__meta">Requerem atenção</div>
+            </div>
+        </div>
+
+        <!-- SLICER BAR -->
+        <div class="pbi-slicer-bar">
+            <span class="pbi-slicer-bar__label">Filtros</span>
+            
+            <div class="pbi-slicer-group">
+                <label>Mês</label>
+                <input type="month" class="pbi-input" id="mesFilter" value="{{ mes|default:'' }}">
+            </div>
+            
+            <div class="pbi-slicer-group">
+                <label>Status</label>
+                <select class="pbi-select" id="statusFilter">
+                    <option value="">Todos</option>
+                    <option value="pendente" {% if status == 'pendente' %}selected{% endif %}>Pendente</option>
+                    <option value="processando" {% if status == 'processando' %}selected{% endif %}>Processando</option>
+                    <option value="conciliado" {% if status == 'conciliado' %}selected{% endif %}>Conciliado</option>
+                    <option value="divergente" {% if status == 'divergente' %}selected{% endif %}>Divergente</option>
+                </select>
+            </div>
+            
+            <div class="pbi-slicer-bar__spacer"></div>
+            
+            <button class="pbi-btn pbi-btn--primary" onclick="aplicarFiltros()">🔍 Filtrar</button>
+            <a href="{% url 'ERP_ServicesBI:conciliacao_bancaria_list' %}" class="pbi-btn">↺ Limpar</a>
+        </div>
+
+        <!-- TABELA -->
+        <div class="pbi-panel">
+            <div class="pbi-panel__header">
+                <h5 class="pbi-panel__title">
+                    <div class="pbi-panel__dot"></div>
+                    Extratos Bancários ({{ total|default:page_obj.paginator.count }})
+                </h5>
+            </div>
+            <div class="pbi-panel__body">
+                <div class="pbi-table-wrap">
+                    <table class="pbi-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Conta Bancária</th>
+                                <th class="pbi-table__center">Período</th>
+                                <th class="pbi-table__valor">Saldo Inicial</th>
+                                <th class="pbi-table__valor">Saldo Final</th>
+                                <th class="pbi-table__center">Lançamentos</th>
+                                <th class="pbi-table__center">Status</th>
+                                <th class="pbi-table__center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for extrato in page_obj %}
+                            <tr>
+                                <td class="pbi-table__id">#{{ extrato.id }}</td>
+                                <td>
+                                    <div style="font-weight: 500;">{{ extrato.conta_bancaria|default:"Conta Principal" }}</div>
+                                    <div style="font-size: 12px; color: var(--text-tertiary);">{{ extrato.banco|default:"-" }}</div>
+                                </td>
+                                <td class="pbi-table__center">
+                                    {{ extrato.data_inicial|date:"d/m/Y" }}<br>
+                                    <span style="color: var(--text-tertiary); font-size: 11px;">até</span><br>
+                                    {{ extrato.data_final|date:"d/m/Y" }}
+                                </td>
+                                <td class="pbi-table__valor" style="color: var(--text-tertiary);">{{ extrato.saldo_inicial|currency_br }}</td>
+                                <td class="pbi-table__valor" style="color: var(--primary-500); font-weight: 600;">{{ extrato.saldo_final|currency_br }}</td>
+                                <td class="pbi-table__center">
+                                    <span style="background: var(--bg-secondary); padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                                        {{ extrato.total_lancamentos|default:0 }} lanç.
+                                    </span>
+                                </td>
+                                <td class="pbi-table__center">
+                                    {% if extrato.status == 'conciliado' %}
+                                        <span class="pbi-badge pbi-badge--success">✓ Conciliado</span>
+                                    {% elif extrato.status == 'processando' %}
+                                        <span class="pbi-badge pbi-badge--primary">⏳ Processando</span>
+                                    {% elif extrato.status == 'divergente' %}
+                                        <span class="pbi-badge pbi-badge--danger">⚠️ Divergente</span>
+                                    {% else %}
+                                        <span class="pbi-badge pbi-badge--warning">⏳ Pendente</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="pbi-table__actions">
+                                        <a href="{% url 'ERP_ServicesBI:conciliacao_bancaria_edit' extrato.id %}" class="pbi-btn-icon pbi-btn-icon--edit" title="Editar/Conciliar">
+                                            ✏️
+                                        </a>
+                                        <button class="pbi-btn-icon pbi-btn-icon--delete" onclick="confirmarExclusao({{ extrato.id }})" title="Excluir">
+                                            🗑️
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8">
+                                    <div class="pbi-empty">
+                                        <div class="pbi-empty__icon">📁</div>
+                                        <div class="pbi-empty__title">Nenhum extrato importado</div>
+                                        <p style="color: var(--text-tertiary); margin-bottom: 16px;">Importe seu primeiro extrato</p>
+                                        <button class="pbi-btn pbi-btn--primary" onclick="abrirModalImportar()">📁 Importar Extrato</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- PAGINAÇÃO -->
+                {% if page_obj.has_other_pages %}
+                <div class="pbi-pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% if mes %}&mes={{ mes }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="pbi-pagination__btn">←</a>
+                    {% else %}
+                        <button class="pbi-pagination__btn" disabled>←</button>
+                    {% endif %}
+                    
+                    <span class="pbi-pagination__info">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                    
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if mes %}&mes={{ mes }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="pbi-pagination__btn">→</a>
+                    {% else %}
+                        <button class="pbi-pagination__btn" disabled>→</button>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- STATUS BAR -->
+    <div class="pbi-statusbar">
+        <div class="pbi-statusbar__item">
+            <div class="pbi-statusbar__dot"></div>
+            Conectado
+        </div>
+        <div class="pbi-statusbar__item">📅 <span id="statusDate"></span></div>
+        <div class="pbi-statusbar__spacer"></div>
+        <div class="pbi-statusbar__item">ERP ServicesBI v1.0 · Conciliação Bancária</div>
+    </div>
+
+</div>
+
+<!-- MODAL: IMPORTAR EXTRATO -->
+<div class="pbi-modal-overlay" id="modalImportar">
+    <div class="pbi-modal">
+        <div class="pbi-modal__header">
+            <h3 class="pbi-modal__title">📁 Importar Extrato Bancário</h3>
+            <button class="pbi-modal__close" onclick="fecharModal('modalImportar')">&times;</button>
+        </div>
+        <form method="post" enctype="multipart/form-data" id="formImportar" action="{% url 'ERP_ServicesBI:conciliacao_bancaria_add' %}">
+            {% csrf_token %}
+            <div class="pbi-modal__body">
+                <!-- Conta Bancária -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 6px;">
+                        Conta Bancária *
+                    </label>
+                    <select name="conta_bancaria" required style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; background: var(--bg-primary);">
+                        <option value="">Selecione...</option>
+                        {% for conta in contas_bancarias %}
+                        <option value="{{ conta.id }}">
+                            {{ conta.nome }} - {{ conta.banco }} (Ag: {{ conta.agencia }} / CC: {{ conta.conta }})
+                        </option>
+                        {% empty %}
+                        <option value="principal">Conta Principal</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Descrição -->
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 6px;">
+                        Descrição
+                    </label>
+                    <input type="text" name="descricao" maxlength="100" placeholder="Ex: Extrato Janeiro 2024"
+                           style="width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; background: var(--bg-primary);">
+                </div>
+
+                <!-- Upload Area -->
+                <div class="pbi-upload-area" onclick="document.getElementById('arquivo').click()">
+                    <div class="pbi-upload-area__icon">📁</div>
+                    <div class="pbi-upload-area__title">Clique ou arraste o arquivo aqui</div>
+                    <div class="pbi-upload-area__text">
+                        Suportamos OFX, CSV, Excel, PDF e imagens<br>
+                        Para PDF e imagens, usamos OCR para extrair os dados
+                    </div>
+                    <div class="pbi-upload-area__formats">
+                        <span class="pbi-format-badge">.OFX</span>
+                        <span class="pbi-format-badge">.CSV</span>
+                        <span class="pbi-format-badge">.XLSX</span>
+                        <span class="pbi-format-badge">.PDF</span>
+                        <span class="pbi-format-badge">.JPG/PNG</span>
+                    </div>
+                </div>
+                <input type="file" id="arquivo" name="arquivo" class="pbi-file-input" accept=".ofx,.OFX,.csv,.CSV,.xlsx,.XLSX,.pdf,.PDF,.jpg,.JPG,.jpeg,.JPEG,.png,.PNG" required onchange="handleFileSelect(this)">
+
+                <!-- Preview do arquivo -->
+                <div class="pbi-file-preview" id="filePreview">
+                    <div class="pbi-file-preview__icon" id="fileIcon">📄</div>
+                    <div class="pbi-file-preview__info">
+                        <div class="pbi-file-preview__name" id="fileName">-</div>
+                        <div class="pbi-file-preview__size" id="fileSize">-</div>
+                    </div>
+                    <button type="button" class="pbi-btn-icon pbi-btn-icon--delete" onclick="limparArquivo()">🗑️</button>
+                </div>
+
+                <!-- OCR Status -->
+                <div class="pbi-ocr-status" id="ocrStatus">
+                    <div class="pbi-ocr-status__spinner"></div>
+                    <div class="pbi-ocr-status__text">Processando OCR... Aguarde enquanto extraímos os dados do arquivo.</div>
+                </div>
+
+                <!-- Info -->
+                <div style="background: var(--bg-secondary); border-radius: 8px; padding: 16px; margin-top: 16px;">
+                    <div style="display: flex; align-items: start; gap: 10px;">
+                        <span style="font-size: 20px;">💡</span>
+                        <div>
+                            <div style="font-weight: 600; color: var(--text-primary); font-size: 13px; margin-bottom: 4px;">Dica:</div>
+                            <div style="color: var(--text-secondary); font-size: 12px; line-height: 1.5;">
+                                Para melhores resultados com PDF/Imagem, certifique-se de que o documento está legível. 
+                                O sistema utiliza IA para reconhecer e extrair automaticamente as transações bancárias.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="pbi-modal__footer">
+                <button type="button" class="pbi-btn" onclick="fecharModal('modalImportar')">Cancelar</button>
+                <button type="submit" class="pbi-btn pbi-btn--primary" id="btnImportar">📤 Importar Extrato</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: CONFIRMAR EXCLUSÃO -->
+<div class="pbi-modal-overlay" id="modalExcluir">
+    <div class="pbi-modal pbi-modal--sm">
+        <div class="pbi-modal__header">
+            <h3 class="pbi-modal__title" style="color: var(--danger-500);">🗑️ Confirmar Exclusão</h3>
+            <button class="pbi-modal__close" onclick="fecharModal('modalExcluir')">&times;</button>
+        </div>
+        <form method="post" id="formExcluir" action="">
+            {% csrf_token %}
+            <div class="pbi-modal__body" style="text-align: center;">
+                <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+                <p style="color: var(--text-secondary); margin-bottom: 8px;">
+                    Tem certeza que deseja excluir este extrato?
+                </p>
+                <p style="color: var(--danger-500); font-size: 13px;">
+                    Esta ação não pode ser desfeita. Todos os lançamentos associados serão removidos.
+                </p>
+            </div>
+            <div class="pbi-modal__footer" style="justify-content: center;">
+                <button type="button" class="pbi-btn" onclick="fecharModal('modalExcluir')">Cancelar</button>
+                <button type="submit" class="pbi-btn pbi-btn--danger">🗑️ Sim, Excluir</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Inicialização
+document.addEventListener('DOMContentLoaded', function() {
+    const now = new Date();
+    document.getElementById('updateTime').textContent = now.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+    document.getElementById('statusDate').textContent = now.toLocaleDateString('pt-BR', { weekday:'short', day:'2-digit', month:'short', year:'numeric' });
+});
+
+// Modais
+function abrirModalImportar() {
+    document.getElementById('modalImportar').classList.add('active');
+}
+
+function fecharModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+    if (modalId === 'modalImportar') {
+        limparArquivo();
+    }
+}
+
+function confirmarExclusao(id) {
+    const url = "{% url 'ERP_ServicesBI:conciliacao_bancaria_delete' 0 %}".replace('0', id);
+    document.getElementById('formExcluir').action = url;
+    document.getElementById('modalExcluir').classList.add('active');
+}
+
+// Filtros
+function aplicarFiltros() {
+    const params = new URLSearchParams();
+    const mes = document.getElementById('mesFilter').value;
+    const status = document.getElementById('statusFilter').value;
+    
+    if (mes) params.append('mes', mes);
+    if (status) params.append('status', status);
+    
+    window.location.href = '?' + params.toString();
+}
+
+// Upload de arquivo
+function handleFileSelect(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    // Mostrar preview
+    const preview = document.getElementById('filePreview');
+    const name = document.getElementById('fileName');
+    const size = document.getElementById('fileSize');
+    const icon = document.getElementById('fileIcon');
+    
+    name.textContent = file.name;
+    size.textContent = formatarBytes(file.size);
+    preview.classList.add('active');
+
+    // Ícone baseado na extensão
+    const ext = file.name.split('.').pop().toLowerCase();
+    const icones = {
+        'ofx': '📄', 'csv': '📊', 'xlsx': '📊', 'xls': '📊',
+        'pdf': '📑', 'jpg': '🖼️', 'jpeg': '🖼️', 'png': '🖼️'
+    };
+    icon.textContent = icones[ext] || '📄';
+
+    // Se for PDF ou imagem, mostrar status de OCR
+    if (['pdf', 'jpg', 'jpeg', 'png'].includes(ext)) {
+        document.getElementById('ocrStatus').classList.add('active');
+        setTimeout(() => {
+            document.getElementById('ocrStatus').classList.remove('active');
+        }, 2000);
+    }
+}
+
+function limparArquivo() {
+    document.getElementById('arquivo').value = '';
+    document.getElementById('filePreview').classList.remove('active');
+    document.getElementById('ocrStatus').classList.remove('active');
+}
+
+function formatarBytes(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Drag and drop
+const uploadArea = document.querySelector('.pbi-upload-area');
+
+uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.style.borderColor = 'var(--primary-500)';
+    uploadArea.style.background = 'rgba(59,130,246,0.05)';
+});
+
+uploadArea.addEventListener('dragleave', () => {
+    uploadArea.style.borderColor = 'var(--border-color)';
+    uploadArea.style.background = 'var(--bg-secondary)';
+});
+
+uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.style.borderColor = 'var(--border-color)';
+    uploadArea.style.background = 'var(--bg-secondary)';
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        document.getElementById('arquivo').files = files;
+        handleFileSelect(document.getElementById('arquivo'));
+    }
+});
+
+// Fechar modal ao clicar fora
+document.querySelectorAll('.pbi-modal-overlay').forEach(modal => {
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            fecharModal(this.id);
+        }
+    });
+});
+</script>
+{% endblock %}

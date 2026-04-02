@@ -6,910 +6,764 @@
 
 {% block extra_css %}
 <style>
-/* ==========================================================================
-   HEADER DA PÁGINA - CORRIGIDO
-   ========================================================================== */
-.erp-page-header {
-    margin-bottom: 24px;
+.dashboard-pbi {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+    min-height: calc(100vh - 60px);
+    background: var(--bg-secondary);
 }
 
-.erp-page-header__title {
-    margin: 0;
-    font-size: 24px;
+/* ===== HEADER ===== */
+.pbi-header {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.pbi-header__left { display: flex; flex-direction: column; gap: 2px; }
+
+.pbi-header__title {
+    font-size: 18px;
     font-weight: 700;
     color: var(--text-primary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.erp-page-header__subtitle {
-    margin: 4px 0 0 0;
+.pbi-header__title-bar {
+    width: 4px;
+    height: 22px;
+    background: var(--primary-500);
+    border-radius: 2px;
+}
+
+.pbi-header__meta {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.pbi-header__right { display: flex; align-items: center; gap: 8px; }
+
+.pbi-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
     color: var(--text-secondary);
-    font-size: 14px;
+    transition: all 0.15s;
 }
 
-/* ==========================================================================
-   CARDS DE MÉTRICAS - CORRIGIDOS PARA DARK MODE
-   ========================================================================== */
-.metric-cards {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 24px;
-}
+.pbi-btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
+.pbi-btn--primary { background: var(--primary-500); color: white; border-color: var(--primary-500); }
+.pbi-btn--primary:hover { background: var(--primary-600); color: white; }
+.pbi-btn--success { background: var(--success-500); color: white; border-color: var(--success-500); }
+.pbi-btn--success:hover { background: var(--success-600); color: white; }
 
-@media (max-width: 1200px) {
-    .metric-cards {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 768px) {
-    .metric-cards {
-        grid-template-columns: 1fr;
-    }
-}
-
-.metric-card {
+/* ===== SLICER BAR ===== */
+.pbi-slicer-bar {
     background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--card-shadow);
-    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+    padding: 10px 24px;
     display: flex;
     align-items: center;
     gap: 16px;
-    transition: transform 0.2s, box-shadow 0.2s;
+    flex-wrap: wrap;
 }
 
-.metric-card:hover {
+.pbi-slicer-bar__label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-tertiary);
+}
+
+.pbi-slicer-group { display: flex; align-items: center; gap: 6px; }
+.pbi-slicer-group label { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+
+.pbi-select, .pbi-input {
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 13px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    cursor: pointer;
+    min-width: 130px;
+}
+
+.pbi-select:focus, .pbi-input:focus { 
+    outline: none; 
+    border-color: var(--primary-500); 
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.15); 
+}
+
+.pbi-slicer-divider { width: 1px; height: 20px; background: var(--border-color); }
+.pbi-slicer-bar__spacer { flex: 1; }
+
+/* ===== KPI CARDS COM BORDA SUPERIOR ===== */
+.pbi-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+}
+
+@media (max-width: 1100px) { .pbi-kpi-row { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px)  { .pbi-kpi-row { grid-template-columns: 1fr; } }
+
+.pbi-kpi {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    cursor: default;
+    transition: transform 0.15s, box-shadow 0.15s;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pbi-kpi:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
 }
 
-.metric-card__icon {
-    width: 56px;
-    height: 56px;
-    border-radius: var(--radius-lg);
+/* BORDA SUPERIOR COLORIDA */
+.pbi-kpi::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+}
+
+.pbi-kpi--success::before { background: var(--success-500); }
+.pbi-kpi--info::before { background: var(--info-500); }
+.pbi-kpi--warning::before { background: var(--warning-500); }
+.pbi-kpi--primary::before { background: var(--primary-500); }
+
+.pbi-kpi__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.pbi-kpi__label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-tertiary);
+}
+
+.pbi-kpi__icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 28px;
+    font-size: 18px;
     flex-shrink: 0;
 }
 
-.metric-card__icon--primary {
-    background: var(--primary-100);
+.pbi-kpi--success .pbi-kpi__icon { background: rgba(34,197,94,0.1); }
+.pbi-kpi--info .pbi-kpi__icon { background: rgba(14,165,233,0.1); }
+.pbi-kpi--warning .pbi-kpi__icon { background: rgba(245,158,11,0.1); }
+.pbi-kpi--primary .pbi-kpi__icon { background: rgba(59,130,246,0.1); }
+
+.pbi-kpi__value {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+}
+
+.pbi-kpi__sparkline-wrap {
+    height: 32px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.pbi-kpi__sparkline {
+    height: 32px !important;
+    max-height: 32px;
+    width: 100%;
+}
+
+.pbi-kpi__bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 2px;
+}
+
+.pbi-kpi__trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
+.pbi-kpi__trend--up { color: #16a34a; background: rgba(34,197,94,0.1); }
+.pbi-kpi__trend--down { color: #dc2626; background: rgba(239,68,68,0.1); }
+.pbi-kpi__trend--neutral { color: var(--text-secondary); background: var(--bg-secondary); }
+
+.pbi-kpi__subtitle {
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+/* ===== CANVAS ===== */
+.pbi-canvas {
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* ===== GRÁFICOS ===== */
+.pbi-charts-row { display: grid; gap: 14px; }
+.pbi-charts-row--3-1 { grid-template-columns: 3fr 1fr; }
+.pbi-charts-row--1-1 { grid-template-columns: 1fr 1fr; }
+.pbi-charts-row--full { grid-template-columns: 1fr; }
+
+@media (max-width: 900px) {
+    .pbi-charts-row--3-1, .pbi-charts-row--1-1 { grid-template-columns: 1fr; }
+}
+
+/* ===== PANEL ===== */
+.pbi-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: box-shadow 0.15s;
+}
+
+.pbi-panel:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+
+.pbi-panel__header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.pbi-panel__title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pbi-panel__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary-500);
+    flex-shrink: 0;
+}
+
+.pbi-panel__body { padding: 16px 20px; }
+.pbi-panel__body--no-pad { padding: 0; }
+
+.pbi-chart-container { position: relative; width: 100%; height: 320px; }
+.pbi-chart-container--sm { height: 260px; }
+
+/* ===== RANKING ===== */
+.pbi-ranking { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 2px; }
+
+.pbi-ranking__item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.pbi-ranking__item:last-child { border-bottom: none; }
+
+.pbi-ranking__pos {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+}
+
+.pbi-ranking__pos--1 { background: rgba(245,158,11,0.15); color: #d97706; }
+.pbi-ranking__pos--2 { background: rgba(100,116,139,0.15); color: #475569; }
+.pbi-ranking__pos--3 { background: rgba(249,115,22,0.15); color: #c2410c; }
+
+.pbi-ranking__info { flex: 1; min-width: 0; }
+
+.pbi-ranking__name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pbi-ranking__bar {
+    height: 3px;
+    background: var(--bg-tertiary);
+    border-radius: 2px;
+    margin-top: 6px;
+    overflow: hidden;
+}
+
+.pbi-ranking__bar-fill {
+    height: 100%;
+    background: var(--primary-500);
+    border-radius: 2px;
+    transition: width 0.6s ease;
+}
+
+.pbi-ranking__val {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+/* ===== TABELA ===== */
+.pbi-table-wrap { overflow-x: auto; }
+
+.pbi-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.pbi-table thead { background: var(--bg-tertiary); }
+
+.pbi-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-tertiary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.pbi-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.pbi-table tbody tr { transition: background 0.1s; }
+.pbi-table tbody tr:hover { background: var(--bg-secondary); }
+.pbi-table tbody tr:last-child td { border-bottom: none; }
+
+.pbi-table__valor {
+    font-weight: 700;
+    color: var(--text-primary);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.pbi-table__data { font-family: monospace; }
+.pbi-table__nf { font-family: monospace; font-weight: 600; }
+
+/* ===== PAGINAÇÃO ===== */
+.pbi-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    border-top: 1px solid var(--border-color);
+    font-size: 12px;
+}
+
+.pbi-pagination__info { color: var(--text-secondary); }
+
+.pbi-pagination__btns {
+    display: flex;
+    gap: 6px;
+}
+
+.pbi-pagination__btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+
+.pbi-pagination__btn:hover:not(:disabled):not(.active) {
+    border-color: var(--primary-500);
     color: var(--primary-600);
 }
 
-html[data-theme="dark"] .metric-card__icon--primary {
-    background: rgba(59, 130, 246, 0.2);
-    color: var(--primary-400);
-}
-
-.metric-card__icon--success {
-    background: var(--success-100);
-    color: var(--success-600);
-}
-
-html[data-theme="dark"] .metric-card__icon--success {
-    background: rgba(34, 197, 94, 0.2);
-    color: var(--success-400);
-}
-
-.metric-card__icon--warning {
-    background: var(--warning-100);
-    color: var(--warning-600);
-}
-
-html[data-theme="dark"] .metric-card__icon--warning {
-    background: rgba(245, 158, 11, 0.2);
-    color: var(--warning-400);
-}
-
-.metric-card__icon--danger {
-    background: var(--danger-100);
-    color: var(--danger-600);
-}
-
-html[data-theme="dark"] .metric-card__icon--danger {
-    background: rgba(239, 68, 68, 0.2);
-    color: var(--danger-400);
-}
-
-.metric-card__content {
-    flex: 1;
-    min-width: 0;
-}
-
-.metric-card__value {
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--text-primary);
-    line-height: 1.2;
-    margin-bottom: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.metric-card__label {
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--text-secondary);
-    margin-bottom: 4px;
-}
-
-.metric-card__sublabel {
-    font-size: 12px;
-    color: var(--text-tertiary);
-}
-
-.metric-card__trend {
-    font-size: 11px;
-    font-weight: 600;
-    margin-top: 4px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.metric-card__trend--up {
-    color: var(--success-500);
-}
-
-.metric-card__trend--down {
-    color: var(--danger-500);
-}
-
-/* ==========================================================================
-   CARD DE FILTROS - CORRIGIDO PARA DARK MODE
-   ========================================================================== */
-.filter-card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--card-shadow);
-    margin-bottom: 24px;
-    overflow: hidden;
-}
-
-.filter-card__header {
-    padding: 20px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.filter-form {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    align-items: end;
-}
-
-.filter-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    flex: 1;
-    min-width: 150px;
-}
-
-.filter-group label {
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--text-secondary);
-}
-
-.filter-group input,
-.filter-group select {
-    padding: 10px 14px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    font-size: 14px;
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    transition: all var(--transition-fast);
-}
-
-.filter-group input:focus,
-.filter-group select:focus {
-    outline: none;
-    border-color: var(--primary-500);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-}
-
-.filter-group input::placeholder {
-    color: var(--text-tertiary);
-}
-
-.filter-actions {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.filter-card__footer {
-    padding: 16px 20px;
-    background: var(--bg-secondary);
-    border-top: 1px solid var(--border-color);
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-html[data-theme="dark"] .filter-card__footer {
-    background: var(--bg-tertiary);
-}
-
-/* Botões de exportação */
-.btn-export {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 16px;
-    border-radius: var(--radius-md);
-    font-size: 14px;
-    font-weight: 500;
-    text-decoration: none;
-    transition: all var(--transition-fast);
-    border: 1px solid transparent;
-    cursor: pointer;
-}
-
-.btn-export--excel {
-    background: var(--success-100);
-    color: var(--success-700);
-    border-color: var(--success-200);
-}
-
-html[data-theme="dark"] .btn-export--excel {
-    background: rgba(34, 197, 94, 0.15);
-    color: var(--success-400);
-    border-color: rgba(34, 197, 94, 0.3);
-}
-
-.btn-export--excel:hover {
-    background: var(--success-200);
-}
-
-.btn-export--print {
-    background: var(--gray-100);
-    color: var(--gray-700);
-    border-color: var(--gray-200);
-}
-
-html[data-theme="dark"] .btn-export--print {
-    background: var(--gray-700);
-    color: var(--gray-300);
-    border-color: var(--gray-600);
-}
-
-.btn-export--print:hover {
-    background: var(--gray-200);
-}
-
-/* ==========================================================================
-   CARD DA TABELA - CORRIGIDO PARA DARK MODE
-   ========================================================================== */
-.table-card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--card-shadow);
-    overflow: hidden;
-    margin-bottom: 24px;
-}
-
-.table-card__header {
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
-}
-
-.table-card__title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 0;
-}
-
-.table-card__title::before {
-    content: '';
-    width: 4px;
-    height: 20px;
-    background: var(--primary-500);
-    border-radius: 2px;
-}
-
-.table-card__count {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    background: var(--bg-secondary);
-    padding: 6px 14px;
-    border-radius: var(--radius-full);
-}
-
-/* ==========================================================================
-   TABELA - CORRIGIDA PARA DARK MODE
-   ========================================================================== */
-.erp-table-container {
-    overflow-x: auto;
-}
-
-.erp-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-}
-
-.erp-table thead {
-    background: var(--bg-tertiary);
-}
-
-.erp-table th {
-    padding: 14px 16px;
-    text-align: left;
-    font-weight: 600;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--text-secondary);
-    border-bottom: 1px solid var(--border-color);
-    white-space: nowrap;
-}
-
-.erp-table td {
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--border-color);
-    color: var(--text-secondary);
-    vertical-align: middle;
-}
-
-.erp-table tbody tr {
-    transition: background var(--transition-fast);
-}
-
-.erp-table tbody tr:hover {
-    background: var(--bg-secondary);
-}
-
-.erp-table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-.erp-table__valor {
-    font-weight: 600;
-    color: var(--text-primary);
-    text-align: right;
-}
-
-/* Links na tabela */
-.erp-table a {
-    color: var(--text-secondary);
-    text-decoration: none;
-    font-weight: 500;
-}
-
-.erp-table a:hover {
-    color: var(--primary-500);
-    text-decoration: underline;
-}
-
-/* Ações na tabela */
-.table-actions {
-    display: flex;
-    gap: 8px;
-}
-
-/* ==========================================================================
-   GRÁFICOS - CORRIGIDOS PARA DARK MODE
-   ========================================================================== */
-.charts-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 16px;
-    margin-bottom: 24px;
-}
-
-@media (max-width: 992px) {
-    .charts-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-.chart-card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--card-shadow);
-    padding: 20px;
-}
-
-.chart-card--full {
-    grid-column: 1 / -1;
-}
-
-.chart-card__header {
-    margin-bottom: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.chart-card__title {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 0;
-}
-
-.chart-card__title::before {
-    content: '';
-    width: 4px;
-    height: 16px;
-    background: var(--primary-500);
-    border-radius: 2px;
-}
-
-.chart-container {
-    position: relative;
-    height: 300px;
-    width: 100%;
-}
-
-.chart-container--small {
-    height: 250px;
-}
-
-/* ==========================================================================
-   LISTAS DE RANKING (TOP FORNECEDORES/PRODUTOS)
-   ========================================================================== */
-.ranking-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.ranking-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.ranking-item:last-child {
-    border-bottom: none;
-}
-
-.ranking-item__pos {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 700;
-    flex-shrink: 0;
-}
-
-.ranking-item__pos--1 {
-    background: var(--warning-100);
-    color: var(--warning-700);
-}
-
-html[data-theme="dark"] .ranking-item__pos--1 {
-    background: rgba(245, 158, 11, 0.2);
-    color: var(--warning-400);
-}
-
-.ranking-item__pos--2 {
-    background: var(--gray-200);
-    color: var(--gray-700);
-}
-
-html[data-theme="dark"] .ranking-item__pos--2 {
-    background: var(--gray-700);
-    color: var(--gray-300);
-}
-
-.ranking-item__pos--3 {
-    background: var(--orange-100, #ffedd5);
-    color: var(--orange-700, #c2410c);
-}
-
-html[data-theme="dark"] .ranking-item__pos--3 {
-    background: rgba(249, 115, 22, 0.2);
-    color: #fb923c;
-}
-
-.ranking-item__pos--other {
-    background: var(--bg-tertiary);
-    color: var(--text-secondary);
-}
-
-.ranking-item__info {
-    flex: 1;
-    min-width: 0;
-}
-
-.ranking-item__name {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: 2px;
-}
-
-.ranking-item__meta {
-    font-size: 12px;
-    color: var(--text-tertiary);
-}
-
-.ranking-item__value {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-primary);
-    text-align: right;
-}
-
-/* ==========================================================================
-   EMPTY STATE - CORRIGIDO
-   ========================================================================== */
-.empty-state {
-    padding: 60px 24px;
-    text-align: center;
-    color: var(--text-secondary);
-}
-
-.empty-state__icon {
-    font-size: 64px;
-    margin-bottom: 20px;
-    opacity: 0.3;
-}
-
-.empty-state__title {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 8px;
-}
-
-.empty-state__text {
-    font-size: 14px;
-    color: var(--text-tertiary);
-}
-
-/* ==========================================================================
-   PAGINAÇÃO - CORRIGIDA
-   ========================================================================== */
-.pagination-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 20px;
-    border-top: 1px solid var(--border-color);
-    flex-wrap: wrap;
-    gap: 12px;
-}
-
-.pagination-info {
-    font-size: 13px;
-    color: var(--text-secondary);
-}
-
-.pagination {
-    display: flex;
-    gap: 6px;
-}
-
-.pagination__link {
-    padding: 8px 12px;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    text-decoration: none;
-    color: var(--text-primary);
-    font-size: 14px;
-    min-width: 36px;
-    text-align: center;
-    transition: all var(--transition-fast);
-}
-
-.pagination__link:hover {
-    background: var(--bg-secondary);
-    border-color: var(--primary-500);
-    color: var(--primary-500);
-}
-
-.pagination__link--active {
+.pbi-pagination__btn.active {
     background: var(--primary-500);
     color: white;
     border-color: var(--primary-500);
-    font-weight: 600;
 }
 
-.pagination__link--disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    pointer-events: none;
+.pbi-pagination__btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ===== STATUS BAR ===== */
+.pbi-statusbar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 8px 24px;
+    background: var(--card-bg);
+    border-top: 1px solid var(--border-color);
+    font-size: 11px;
     color: var(--text-tertiary);
+    flex-wrap: wrap;
 }
 
-/* ==========================================================================
-   RESPONSIVIDADE
-   ========================================================================== */
-@media (max-width: 768px) {
-    .filter-form {
-        flex-direction: column;
-    }
-    
-    .filter-group {
-        width: 100%;
-    }
-    
-    .filter-group input,
-    .filter-group select {
-        width: 100%;
-    }
-    
-    .table-card__header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .pagination-container {
-        flex-direction: column;
-        align-items: center;
-    }
-    
-    .charts-grid {
-        grid-template-columns: 1fr;
-    }
+.pbi-statusbar__item { display: flex; align-items: center; gap: 5px; }
+.pbi-statusbar__dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
+.pbi-statusbar__spacer { flex: 1; }
+
+/* ===== EMPTY ===== */
+.pbi-empty { padding: 40px 20px; text-align: center; color: var(--text-tertiary); }
+.pbi-empty__icon { font-size: 40px; opacity: 0.3; margin-bottom: 12px; }
+.pbi-empty__text { font-size: 13px; }
+
+/* ===== TOAST ===== */
+.toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+
+.toast {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 220px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    animation: toastIn 0.25s ease;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+@keyframes toastIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to   { opacity: 1; transform: translateX(0); }
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Header - CORRIGIDO: Título correto -->
-<div class="erp-page-header">
-    <h2 class="erp-page-header__title">RELATÓRIO</h2>
-    <p class="erp-page-header__subtitle">Relatório de Compras</p>
-</div>
+<div class="dashboard-pbi">
 
-<!-- Cards de Métricas -->
-<div class="metric-cards">
-    <!-- Total em Compras -->
-    <div class="metric-card">
-        <div class="metric-card__icon metric-card__icon--primary">
-            💰
-        </div>
-        <div class="metric-card__content">
-            <div class="metric-card__value" id="totalCompras">R$ 0,00</div>
-            <div class="metric-card__label">Total em Compras</div>
-            <div class="metric-card__trend metric-card__trend--down" id="trendCompras">
-                ↓ % vs período anterior
+    <!-- ==================== HEADER ==================== -->
+    <div class="pbi-header">
+        <div class="pbi-header__left">
+            <h1 class="pbi-header__title">
+                <div class="pbi-header__title-bar"></div>
+                Relatório de Compras
+            </h1>
+            <div class="pbi-header__meta">
+                <span>📅 Período: <strong id="periodText">Últimos 30 dias</strong></span>
+                <span>🕐 Atualizado: <strong id="updateTime">--:--</strong></span>
             </div>
+        </div>
+        <div class="pbi-header__right">
+            <button class="pbi-btn" onclick="location.reload()">🔄 Atualizar</button>
+            <button class="pbi-btn" onclick="window.print()">🖨️ Imprimir</button>
+            <button class="pbi-btn pbi-btn--success" onclick="exportarExcel()">📊 Excel</button>
         </div>
     </div>
 
-    <!-- NFs Recebidas -->
-    <div class="metric-card">
-        <div class="metric-card__icon metric-card__icon--success">
-            📄
+    <!-- ==================== SLICER BAR ==================== -->
+    <div class="pbi-slicer-bar">
+        <span class="pbi-slicer-bar__label">Filtros</span>
+        
+        <div class="pbi-slicer-group">
+            <label>Período</label>
+            <select class="pbi-select" id="filterPeriodo" onchange="aplicarFiltroPeriodo(this.value)">
+                <option value="30" selected>Últimos 30 dias</option>
+                <option value="90">Últimos 3 meses</option>
+                <option value="180">Últimos 6 meses</option>
+                <option value="365">Último ano</option>
+                <option value="custom">Personalizado</option>
+            </select>
         </div>
-        <div class="metric-card__content">
-            <div class="metric-card__value" id="totalNFs">0</div>
-            <div class="metric-card__label">NFs Recebidas</div>
-            <div class="metric-card__trend metric-card__trend--down" id="trendNFs">
-                ↓ % vs período anterior
-            </div>
+        
+        <div class="pbi-slicer-divider"></div>
+        
+        <div class="pbi-slicer-group">
+            <label>De</label>
+            <input type="date" class="pbi-input" id="dataInicio" value="{{ data_inicio|default:'' }}">
         </div>
-    </div>
-
-    <!-- Ticket Médio -->
-    <div class="metric-card">
-        <div class="metric-card__icon metric-card__icon--warning">
-            🎫
+        
+        <div class="pbi-slicer-group">
+            <label>Até</label>
+            <input type="date" class="pbi-input" id="dataFim" value="{{ data_fim|default:'' }}">
         </div>
-        <div class="metric-card__content">
-            <div class="metric-card__value" id="ticketMedio">R$ 0,00</div>
-            <div class="metric-card__label">Ticket Médio</div>
-            <div class="metric-card__sublabel">Média por NF</div>
+        
+        <div class="pbi-slicer-group">
+            <label>Fornecedor</label>
+            <select class="pbi-select" id="fornecedorSelect">
+                <option value="">Todos</option>
+                {% for forn in fornecedores %}
+                <option value="{{ forn.id }}" {% if fornecedor_selecionado == forn.id %}selected{% endif %}>
+                    {{ forn.nome_fantasia|default:forn.nome_razao_social }}
+                </option>
+                {% endfor %}
+            </select>
         </div>
-    </div>
-
-    <!-- Fornecedores Ativos -->
-    <div class="metric-card">
-        <div class="metric-card__icon metric-card__icon--danger">
-            🏢
-        </div>
-        <div class="metric-card__content">
-            <div class="metric-card__value" id="fornecedoresAtivos">0</div>
-            <div class="metric-card__label">Fornecedores Ativos</div>
-            <div class="metric-card__sublabel">No período</div>
-        </div>
-    </div>
-</div>
-
-<!-- Card de Filtros -->
-<div class="filter-card">
-    <div class="filter-card__header">
-        <form method="get" class="filter-form" id="filterForm">
-            <div class="filter-group">
-                <label>Data Inicial</label>
-                <input type="date" name="data_inicio" id="dataInicio" 
-                       value="{{ data_inicio|default:'' }}">
-            </div>
-            
-            <div class="filter-group">
-                <label>Data Final</label>
-                <input type="date" name="data_fim" id="dataFim" 
-                       value="{{ data_fim|default:'' }}">
-            </div>
-            
-            <div class="filter-group">
-                <label>Fornecedor</label>
-                <select name="fornecedor" id="fornecedorSelect">
-                    <option value="">Todos os fornecedores</option>
-                    {% for forn in fornecedores %}
-                    <option value="{{ forn.id }}" {% if fornecedor_selecionado == forn.id %}selected{% endif %}>
-                        {{ forn.nome_fantasia|default:forn.nome_razao_social }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <div class="filter-actions">
-                <button type="submit" class="erp-btn erp-btn--primary">
-                    <span>🔍</span> Filtrar
-                </button>
-                <button type="button" class="erp-btn erp-btn--secondary" onclick="limparFiltros()">
-                    <span>↺</span> Limpar
-                </button>
-            </div>
-        </form>
-    </div>
-    
-    <div class="filter-card__footer">
-        <button type="button" class="btn-export btn-export--print" onclick="imprimirRelatorio()">
-            <span>🖨️</span> Imprimir
+        
+        <div class="pbi-slicer-bar__spacer"></div>
+        
+        <button class="pbi-btn pbi-btn--primary" onclick="carregarDados()">
+            <span>🔍</span> Aplicar
         </button>
-        <button type="button" class="btn-export btn-export--excel" onclick="exportarExcel()">
-            <span>📊</span> Exportar Excel
+        <button class="pbi-btn" onclick="limparFiltros()">
+            <span>↺</span> Limpar
         </button>
     </div>
+
+    <div class="pbi-canvas">
+
+        <!-- ==================== KPI CARDS ==================== -->
+        <div class="pbi-kpi-row">
+            
+            <div class="pbi-kpi pbi-kpi--success">
+                <div class="pbi-kpi__top">
+                    <span class="pbi-kpi__label">Total em Compras</span>
+                    <div class="pbi-kpi__icon">💰</div>
+                </div>
+                <div class="pbi-kpi__value" id="totalCompras">R$ 0,00</div>
+                <div class="pbi-kpi__sparkline-wrap">
+                    <canvas class="pbi-kpi__sparkline" id="spark0"></canvas>
+                </div>
+                <div class="pbi-kpi__bottom">
+                    <span class="pbi-kpi__trend pbi-kpi__trend--down" id="trendCompras">
+                        ↓ 0%
+                    </span>
+                    <span class="pbi-kpi__subtitle">vs período anterior</span>
+                </div>
+            </div>
+
+            <div class="pbi-kpi pbi-kpi--info">
+                <div class="pbi-kpi__top">
+                    <span class="pbi-kpi__label">NFs Recebidas</span>
+                    <div class="pbi-kpi__icon">📄</div>
+                </div>
+                <div class="pbi-kpi__value" id="totalNFs">0</div>
+                <div class="pbi-kpi__sparkline-wrap">
+                    <canvas class="pbi-kpi__sparkline" id="spark1"></canvas>
+                </div>
+                <div class="pbi-kpi__bottom">
+                    <span class="pbi-kpi__trend pbi-kpi__trend--down" id="trendNFs">
+                        ↓ 0%
+                    </span>
+                    <span class="pbi-kpi__subtitle">vs período anterior</span>
+                </div>
+            </div>
+
+            <div class="pbi-kpi pbi-kpi--warning">
+                <div class="pbi-kpi__top">
+                    <span class="pbi-kpi__label">Ticket Médio</span>
+                    <div class="pbi-kpi__icon">🎫</div>
+                </div>
+                <div class="pbi-kpi__value" id="ticketMedio">R$ 0,00</div>
+                <div class="pbi-kpi__sparkline-wrap">
+                    <canvas class="pbi-kpi__sparkline" id="spark2"></canvas>
+                </div>
+                <div class="pbi-kpi__bottom">
+                    <span class="pbi-kpi__trend pbi-kpi__trend--neutral">— Média</span>
+                    <span class="pbi-kpi__subtitle">por nota fiscal</span>
+                </div>
+            </div>
+
+            <div class="pbi-kpi pbi-kpi--primary">
+                <div class="pbi-kpi__top">
+                    <span class="pbi-kpi__label">Fornecedores Ativos</span>
+                    <div class="pbi-kpi__icon">🏢</div>
+                </div>
+                <div class="pbi-kpi__value" id="fornecedoresAtivos">0</div>
+                <div class="pbi-kpi__sparkline-wrap">
+                    <canvas class="pbi-kpi__sparkline" id="spark3"></canvas>
+                </div>
+                <div class="pbi-kpi__bottom">
+                    <span class="pbi-kpi__trend pbi-kpi__trend--neutral">— No período</span>
+                    <span class="pbi-kpi__subtitle">distintos</span>
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- ==================== LINHA 1: Evolução + Top Fornecedores ==================== -->
+        <div class="pbi-charts-row pbi-charts-row--3-1">
+            
+            <div class="pbi-panel">
+                <div class="pbi-panel__header">
+                    <h5 class="pbi-panel__title">
+                        <div class="pbi-panel__dot"></div>
+                        Evolução de Compras
+                    </h5>
+                </div>
+                <div class="pbi-panel__body">
+                    <div class="pbi-chart-container" id="chartEvolucao"></div>
+                </div>
+            </div>
+
+            <div class="pbi-panel">
+                <div class="pbi-panel__header">
+                    <h5 class="pbi-panel__title">
+                        <div class="pbi-panel__dot" style="background: var(--success-500);"></div>
+                        Top Fornecedores
+                    </h5>
+                </div>
+                <div class="pbi-panel__body">
+                    <div class="pbi-chart-container pbi-chart-container--sm" id="chartFornecedores"></div>
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- ==================== LINHA 2: Top Produtos + Compras Recentes ==================== -->
+        <div class="pbi-charts-row pbi-charts-row--1-1">
+            
+            <div class="pbi-panel">
+                <div class="pbi-panel__header">
+                    <h5 class="pbi-panel__title">
+                        <div class="pbi-panel__dot" style="background: var(--warning-500);"></div>
+                        Top Produtos Comprados
+                    </h5>
+                </div>
+                <div class="pbi-panel__body">
+                    <ul class="pbi-ranking" id="rankingProdutos">
+                        <li class="pbi-empty">
+                            <div class="pbi-empty__icon">📦</div>
+                            <div class="pbi-empty__text">Carregando produtos...</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="pbi-panel">
+                <div class="pbi-panel__header">
+                    <h5 class="pbi-panel__title">
+                        <div class="pbi-panel__dot" style="background: var(--info-500);"></div>
+                        Compras Recentes
+                    </h5>
+                    <span style="font-size:12px; color:var(--text-tertiary);" id="totalRegistros">0 registros</span>
+                </div>
+                <div class="pbi-panel__body pbi-panel__body--no-pad">
+                    <div class="pbi-table-wrap">
+                        <table class="pbi-table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Fornecedor</th>
+                                    <th>NF</th>
+                                    <th style="text-align:center">Itens</th>
+                                    <th style="text-align:right">Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyCompras">
+                                <tr>
+                                    <td colspan="5">
+                                        <div class="pbi-empty">
+                                            <div class="pbi-empty__icon">📊</div>
+                                            <div class="pbi-empty__text">Carregando compras...</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Paginação -->
+                    <div class="pbi-pagination" id="paginacaoContainer" style="display: none;">
+                        <div class="pbi-pagination__info" id="paginationInfo"></div>
+                        <div class="pbi-pagination__btns" id="pagination"></div>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+
+    </div>
+
+    <!-- ==================== STATUS BAR ==================== -->
+    <div class="pbi-statusbar">
+        <div class="pbi-statusbar__item">
+            <div class="pbi-statusbar__dot"></div>
+            Conectado
+        </div>
+        <div class="pbi-statusbar__item">📅 <span id="statusDate"></span></div>
+        <div class="pbi-statusbar__spacer"></div>
+        <div class="pbi-statusbar__item">ERP ServicesBI v1.0 · Módulo Compras</div>
+    </div>
+
 </div>
 
-<!-- Tabela de Compras -->
-<div class="table-card">
-    <div class="table-card__header">
-        <h5 class="table-card__title">Detalhamento de Compras</h5>
-        <span class="table-card__count" id="totalRegistros">0 registros</span>
-    </div>
-    
-    <div class="erp-table-container">
-        <table class="erp-table" id="tabelaCompras">
-            <thead>
-                <tr>
-                    <th>Data Entrada</th>
-                    <th>Fornecedor</th>
-                    <th>NF</th>
-                    <th>Itens</th>
-                    <th class="erp-table__valor">Valor Total</th>
-                    <th>Produtos</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody id="tbodyCompras">
-                <!-- Dados carregados via JavaScript -->
-            </tbody>
-        </table>
-    </div>
-    
-    <div class="pagination-container" id="paginacaoContainer" style="display: none;">
-        <span class="pagination-info" id="paginationInfo"></span>
-        <div class="pagination" id="pagination"></div>
-    </div>
-    
-    <!-- Empty State -->
-    <div class="empty-state" id="emptyState">
-        <div class="empty-state__icon">📊</div>
-        <div class="empty-state__title">Nenhuma compra encontrada no período selecionado.</div>
-        <div class="empty-state__text">Tente ajustar os filtros de data ou fornecedor.</div>
-    </div>
-</div>
-
-<!-- Gráficos -->
-<div class="charts-grid">
-    <!-- Evolução Mensal -->
-    <div class="chart-card">
-        <div class="chart-card__header">
-            <h5 class="chart-card__title">Evolução Mensal de Compras</h5>
-        </div>
-        <div class="chart-container">
-            <canvas id="graficoEvolucao"></canvas>
-        </div>
-    </div>
-
-    <!-- Top 5 Fornecedores -->
-    <div class="chart-card">
-        <div class="chart-card__header">
-            <h5 class="chart-card__title">Top 5 Fornecedores</h5>
-        </div>
-        <div class="chart-container chart-container--small">
-            <canvas id="graficoFornecedores"></canvas>
-        </div>
-    </div>
-</div>
-
-<!-- Top 5 Produtos -->
-<div class="chart-card chart-card--full">
-    <div class="chart-card__header">
-        <h5 class="chart-card__title">Top 5 Produtos Mais Comprados</h5>
-    </div>
-    <div class="chart-container chart-container--small">
-        <canvas id="graficoProdutos"></canvas>
-    </div>
-</div>
+<div class="toast-container" id="toastContainer"></div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
 <script>
 // ============================================================================
 // VARIÁVEIS GLOBAIS
 // ============================================================================
 let comprasData = [];
 let charts = {};
-const itensPorPagina = 25;
+const itensPorPagina = 10;
 
 // ============================================================================
-// INICIALIZAÇÃO
+// UTILITÁRIOS
 // ============================================================================
-document.addEventListener('DOMContentLoaded', function() {
-    // Definir datas padrão (últimos 30 dias)
-    const hoje = new Date();
-    const trintaDiasAtras = new Date(hoje.getTime() - (30 * 24 * 60 * 60 * 1000));
-    
-    document.getElementById('dataFim').value = formatarDataInput(hoje);
-    document.getElementById('dataInicio').value = formatarDataInput(trintaDiasAtras);
-    
-    carregarDados();
-});
-
-// ============================================================================
-// FUNÇÕES DE FORMATAÇÃO
-// ============================================================================
-function formatarDataInput(date) {
-    return date.toISOString().split('T')[0];
-}
-
-function formatarDataBr(data) {
-    if (!data) return '-';
-    const d = new Date(data);
-    return d.toLocaleDateString('pt-BR');
-}
-
 function formatarMoeda(valor) {
     return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
@@ -919,6 +773,85 @@ function formatarMoeda(valor) {
 
 function formatarNumero(numero) {
     return new Intl.NumberFormat('pt-BR').format(numero || 0);
+}
+
+function formatarData(data) {
+    if (!data) return '-';
+    const d = new Date(data + 'T00:00:00');
+    return d.toLocaleDateString('pt-BR');
+}
+
+function getTemaCores() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    return {
+        texto: isDark ? '#94a3b8' : '#64748b',
+        grid: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+        tooltip: isDark ? '#1e293b' : '#ffffff',
+        tooltipTexto: isDark ? '#f1f5f9' : '#1e293b',
+        primaria: isDark ? '#60a5fa' : '#3b82f6',
+        sucesso: isDark ? '#34d399' : '#22c55e',
+        info: isDark ? '#38bdf8' : '#0ea5e9',
+        alerta: isDark ? '#fbbf24' : '#f59e0b'
+    };
+}
+
+// ============================================================================
+// INICIALIZAÇÃO
+// ============================================================================
+document.addEventListener('DOMContentLoaded', function() {
+    const hoje = new Date();
+    const trintaDiasAtras = new Date(hoje.getTime() - (30 * 24 * 60 * 60 * 1000));
+    
+    document.getElementById('dataFim').value = hoje.toISOString().split('T')[0];
+    document.getElementById('dataInicio').value = trintaDiasAtras.toISOString().split('T')[0];
+    
+    document.getElementById('updateTime').textContent = hoje.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+    document.getElementById('statusDate').textContent = hoje.toLocaleDateString('pt-BR', { weekday:'short', day:'2-digit', month:'short', year:'numeric' });
+    
+    setTimeout(() => {
+        initSparklines();
+        carregarDados();
+    }, 100);
+});
+
+// ============================================================================
+// SPARKLINES (Chart.js)
+// ============================================================================
+function initSparklines() {
+    const cores = ['#22c55e', '#0ea5e9', '#f59e0b', '#3b82f6'];
+    
+    for (let i = 0; i < 4; i++) {
+        const canvas = document.getElementById('spark' + i);
+        if (!canvas) continue;
+        
+        new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: ['', '', '', '', '', ''],
+                datasets: [{
+                    data: [0, 0, 0, 0, 0, 0],
+                    borderColor: cores[i],
+                    borderWidth: 1.5,
+                    pointRadius: 0,
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: cores[i] + '15'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                scales: { x: { display: false }, y: { display: false } },
+                animation: { duration: 600 }
+            }
+        });
+    }
+}
+
+function atualizarSparklines(dados) {
+    // Atualizar com dados reais quando disponíveis
+    // Implementação depende da estrutura de dados da API
 }
 
 // ============================================================================
@@ -934,22 +867,35 @@ function carregarDados() {
     if (dataFim) params.append('data_fim', dataFim);
     if (fornecedor) params.append('fornecedor', fornecedor);
     
-    fetch(`/api/relatorio/compras/?${params.toString()}`)
-        .then(response => response.json())
+    fetch(`/api/compras/relatorio/dados/?${params.toString()}`)
+        .then(r => r.json())
         .then(data => {
             comprasData = data.compras || [];
             atualizarMetricas(data.metricas);
             atualizarTabela();
             atualizarGraficos(data);
+            atualizarRankingProdutos(data.top_produtos);
+            atualizarPeriodoTexto(dataInicio, dataFim);
         })
         .catch(error => {
-            console.error('Erro ao carregar dados:', error);
-            mostrarErro('Erro ao carregar dados. Tente novamente.');
+            console.error('Erro:', error);
+            mostrarToast('Erro ao carregar dados', 'error');
         });
 }
 
+function atualizarPeriodoTexto(inicio, fim) {
+    const el = document.getElementById('periodText');
+    if (!inicio || !fim) {
+        el.textContent = 'Últimos 30 dias';
+        return;
+    }
+    const d1 = new Date(inicio);
+    const d2 = new Date(fim);
+    el.textContent = `${d1.toLocaleDateString('pt-BR')} até ${d2.toLocaleDateString('pt-BR')}`;
+}
+
 // ============================================================================
-// ATUALIZAR MÉTRICAS
+// MÉTRICAS
 // ============================================================================
 function atualizarMetricas(metricas) {
     document.getElementById('totalCompras').textContent = formatarMoeda(metricas?.total_compras || 0);
@@ -969,30 +915,34 @@ function atualizarTrend(elementId, variacao) {
     }
     
     const isPositivo = variacao >= 0;
-    el.className = `metric-card__trend metric-card__trend--${isPositivo ? 'up' : 'down'}`;
-    el.innerHTML = `${isPositivo ? '↑' : '↓'} ${Math.abs(variacao).toFixed(1)}% vs período anterior`;
-    el.style.display = 'flex';
+    el.className = `pbi-kpi__trend pbi-kpi__trend--${isPositivo ? 'up' : 'down'}`;
+    el.innerHTML = `${isPositivo ? '↑' : '↓'} ${Math.abs(variacao).toFixed(1)}%`;
+    el.style.display = 'inline-flex';
 }
 
 // ============================================================================
-// ATUALIZAR TABELA
+// TABELA E PAGINAÇÃO
 // ============================================================================
 function atualizarTabela(pagina = 1) {
     const tbody = document.getElementById('tbodyCompras');
-    const emptyState = document.getElementById('emptyState');
     const paginacao = document.getElementById('paginacaoContainer');
     const totalRegistros = document.getElementById('totalRegistros');
     
     if (comprasData.length === 0) {
-        tbody.innerHTML = '';
-        emptyState.style.display = 'block';
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5">
+                    <div class="pbi-empty">
+                        <div class="pbi-empty__icon">📊</div>
+                        <div class="pbi-empty__text">Nenhuma compra encontrada no período</div>
+                    </div>
+                </td>
+            </tr>
+        `;
         paginacao.style.display = 'none';
         totalRegistros.textContent = '0 registros';
         return;
     }
-    
-    emptyState.style.display = 'none';
-    paginacao.style.display = 'flex';
     
     const total = comprasData.length;
     const totalPaginas = Math.ceil(total / itensPorPagina);
@@ -1001,25 +951,15 @@ function atualizarTabela(pagina = 1) {
     const paginaDados = comprasData.slice(inicio, fim);
     
     totalRegistros.textContent = `${formatarNumero(total)} registro${total !== 1 ? 's' : ''}`;
+    paginacao.style.display = 'flex';
     
-    tbody.innerHTML = paginaDados.map(compra => `
+    tbody.innerHTML = paginaDados.map(c => `
         <tr>
-            <td>${formatarDataBr(compra.data_entrada)}</td>
-            <td>${compra.fornecedor_nome || '-'}</td>
-            <td>${compra.numero_nf || '-'}</td>
-            <td>${formatarNumero(compra.total_itens)}</td>
-            <td class="erp-table__valor">${formatarMoeda(compra.valor_total)}</td>
-            <td>${compra.produtos_list || '-'}</td>
-            <td>
-                <div class="table-actions">
-                    <a href="/compras/notas-fiscais/${compra.id}/" class="erp-btn erp-btn--primary erp-btn--sm" title="Ver">
-                        <span>👁️</span>
-                    </a>
-                    <a href="/compras/notas-fiscais/${compra.id}/editar/" class="erp-btn erp-btn--secondary erp-btn--sm" title="Editar">
-                        <span>✏️</span>
-                    </a>
-                </div>
-            </td>
+            <td class="pbi-table__data">${formatarData(c.data_entrada)}</td>
+            <td>${c.fornecedor_nome || '-'}</td>
+            <td class="pbi-table__nf">${c.numero_nf || '-'}</td>
+            <td style="text-align:center">${formatarNumero(c.total_itens)}</td>
+            <td class="pbi-table__valor">${formatarMoeda(c.valor_total)}</td>
         </tr>
     `).join('');
     
@@ -1030,24 +970,20 @@ function renderizarPaginacao(paginaAtual, totalPaginas, total, inicio, fim) {
     const paginationEl = document.getElementById('pagination');
     const infoEl = document.getElementById('paginationInfo');
     
-    infoEl.textContent = `Mostrando ${inicio + 1} - ${Math.min(fim, total)} de ${total}`;
+    infoEl.textContent = `Mostrando ${inicio + 1}-${Math.min(fim, total)} de ${total}`;
     
     let html = '';
-    
-    html += `<a href="#" class="pagination__link ${paginaAtual === 1 ? 'pagination__link--disabled' : ''}" 
-                onclick="return mudarPagina(${paginaAtual - 1})">←</a>`;
+    html += `<button class="pbi-pagination__btn" onclick="mudarPagina(${paginaAtual - 1})" ${paginaAtual === 1 ? 'disabled' : ''}>←</button>`;
     
     for (let i = 1; i <= totalPaginas; i++) {
         if (i === 1 || i === totalPaginas || (i >= paginaAtual - 2 && i <= paginaAtual + 2)) {
-            html += `<a href="#" class="pagination__link ${i === paginaAtual ? 'pagination__link--active' : ''}" 
-                        onclick="return mudarPagina(${i})">${i}</a>`;
+            html += `<button class="pbi-pagination__btn ${i === paginaAtual ? 'active' : ''}" onclick="mudarPagina(${i})">${i}</button>`;
         } else if (i === paginaAtual - 3 || i === paginaAtual + 3) {
-            html += `<span class="pagination__link pagination__link--disabled">...</span>`;
+            html += `<button class="pbi-pagination__btn" disabled>...</button>`;
         }
     }
     
-    html += `<a href="#" class="pagination__link ${paginaAtual === totalPaginas ? 'pagination__link--disabled' : ''}" 
-                onclick="return mudarPagina(${paginaAtual + 1})">→</a>`;
+    html += `<button class="pbi-pagination__btn" onclick="mudarPagina(${paginaAtual + 1})" ${paginaAtual === totalPaginas ? 'disabled' : ''}>→</button>`;
     
     paginationEl.innerHTML = html;
 }
@@ -1063,226 +999,298 @@ function mudarPagina(pagina) {
 }
 
 // ============================================================================
-// GRÁFICOS
+// RANKING DE PRODUTOS
+// ============================================================================
+function atualizarRankingProdutos(produtos) {
+    const container = document.getElementById('rankingProdutos');
+    
+    if (!produtos || produtos.length === 0) {
+        container.innerHTML = `
+            <li class="pbi-empty">
+                <div class="pbi-empty__icon">📦</div>
+                <div class="pbi-empty__text">Nenhum produto encontrado</div>
+            </li>
+        `;
+        return;
+    }
+    
+    const maxValor = Math.max(...produtos.map(p => p.valor || p.quantidade));
+    
+    container.innerHTML = produtos.slice(0, 5).map((p, i) => {
+        const posClass = i === 0 ? 'pbi-ranking__pos--1' : i === 1 ? 'pbi-ranking__pos--2' : i === 2 ? 'pbi-ranking__pos--3' : '';
+        const percentual = ((p.valor || p.quantidade) / maxValor * 100).toFixed(0);
+        
+        return `
+            <li class="pbi-ranking__item">
+                <div class="pbi-ranking__pos ${posClass}">${i + 1}</div>
+                <div class="pbi-ranking__info">
+                    <div class="pbi-ranking__name">${p.nome}</div>
+                    <div class="pbi-ranking__bar">
+                        <div class="pbi-ranking__bar-fill" style="width:${percentual}%"></div>
+                    </div>
+                </div>
+                <div class="pbi-ranking__val">${formatarNumero(p.quantidade || 0)}</div>
+            </li>
+        `;
+    }).join('');
+}
+
+// ============================================================================
+// GRÁFICOS ECHARTS
 // ============================================================================
 function atualizarGraficos(data) {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const cores = getCoresTema(isDark);
+    const cores = getTemaCores();
     
-    // Gráfico de Evolução Mensal
-    criarGraficoEvolucao(data.evolucao_mensal, cores);
-    
-    // Gráfico de Fornecedores
-    criarGraficoFornecedores(data.top_fornecedores, cores);
-    
-    // Gráfico de Produtos
-    criarGraficoProdutos(data.top_produtos, cores);
-}
-
-function getCoresTema(isDark) {
-    return {
-        primaria: isDark ? '#60a5fa' : '#3b82f6',
-        secundaria: isDark ? '#34d399' : '#10b981',
-        terciaria: isDark ? '#fbbf24' : '#f59e0b',
-        quaternaria: isDark ? '#f87171' : '#ef4444',
-        texto: isDark ? '#e5e7eb' : '#374151',
-        grid: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-        fundo: isDark ? 'rgba(96, 165, 250, 0.1)' : 'rgba(59, 130, 246, 0.1)'
-    };
-}
-
-function criarGraficoEvolucao(dados, cores) {
-    const ctx = document.getElementById('graficoEvolucao').getContext('2d');
-    
-    if (charts.evolucao) charts.evolucao.destroy();
-    
-    const labels = dados?.map(d => d.mes) || [];
-    const valores = dados?.map(d => d.valor) || [];
-    
-    charts.evolucao = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Valor de Compras',
-                data: valores,
-                borderColor: cores.primaria,
-                backgroundColor: cores.fundo,
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: cores.primaria,
-                pointBorderColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#1f2937' : '#fff',
-                pointBorderWidth: 2,
-                pointRadius: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#1f2937' : '#fff',
-                    titleColor: cores.texto,
-                    bodyColor: cores.texto,
-                    borderColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#374151' : '#e5e7eb',
-                    borderWidth: 1,
-                    callbacks: {
-                        label: function(context) {
-                            return formatarMoeda(context.parsed.y);
-                        }
-                    }
+    // GRÁFICO DE EVOLUÇÃO - ÁREA COM GRADIENTE
+    const elEvolucao = document.getElementById('chartEvolucao');
+    if (elEvolucao) {
+        if (charts.evolucao) charts.evolucao.dispose();
+        charts.evolucao = echarts.init(elEvolucao);
+        
+        const meses = gerarMesesEntreDatas(
+            document.getElementById('dataInicio').value,
+            document.getElementById('dataFim').value
+        );
+        
+        const dadosPorMes = {};
+        (data.evolucao_mensal || []).forEach(item => {
+            const mesNormalizado = normalizarMes(item.mes);
+            dadosPorMes[mesNormalizado] = item.valor;
+        });
+        
+        const valores = meses.map(mes => dadosPorMes[mes] || 0);
+        
+        charts.evolucao.setOption({
+            tooltip: {
+                trigger: 'axis',
+                backgroundColor: cores.tooltip,
+                textStyle: { color: cores.tooltipTexto, fontSize: 12 },
+                borderColor: 'transparent',
+                padding: [12, 16],
+                formatter: function(p) {
+                    const valor = p[0].value;
+                    return `<div style="font-weight:600;margin-bottom:4px;">${p[0].name}</div>` +
+                           `<div style="display:flex;align-items:center;gap:8px;">` +
+                           `<span style="width:10px;height:10px;border-radius:50%;background:${p[0].color};"></span>` +
+                           `<span>Compras: <b>${formatarMoeda(valor)}</b></span>` +
+                           `</div>`;
                 }
             },
-            scales: {
-                x: {
-                    grid: { color: cores.grid, drawBorder: false },
-                    ticks: { color: cores.texto }
+            grid: { 
+                left: 16, 
+                right: 24, 
+                bottom: 32, 
+                top: 40, 
+                containLabel: true 
+            },
+            xAxis: {
+                type: 'category',
+                data: meses,
+                boundaryGap: false,
+                axisLine: { 
+                    lineStyle: { color: cores.grid } 
                 },
-                y: {
-                    grid: { color: cores.grid, drawBorder: false },
-                    ticks: {
-                        color: cores.texto,
-                        callback: function(value) {
-                            return 'R$ ' + (value / 1000).toFixed(0) + 'k';
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-
-function criarGraficoFornecedores(dados, cores) {
-    const ctx = document.getElementById('graficoFornecedores').getContext('2d');
-    
-    if (charts.fornecedores) charts.fornecedores.destroy();
-    
-    const labels = dados?.map(d => d.nome.substring(0, 15)) || [];
-    const valores = dados?.map(d => d.valor) || [];
-    
-    charts.fornecedores = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: labels,
-            datasets: [{
-                data: valores,
-                backgroundColor: [
-                    cores.primaria,
-                    cores.secundaria,
-                    cores.terciaria,
-                    cores.quaternaria,
-                    document.documentElement.getAttribute('data-theme') === 'dark' ? '#6b7280' : '#9ca3af'
-                ],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'right',
-                    labels: {
-                        color: cores.texto,
-                        font: { size: 11 },
-                        boxWidth: 12
-                    }
-                },
-                tooltip: {
-                    backgroundColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#1f2937' : '#fff',
-                    titleColor: cores.texto,
-                    bodyColor: cores.texto,
-                    borderColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#374151' : '#e5e7eb',
-                    borderWidth: 1,
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.label || '';
-                            const value = formatarMoeda(context.parsed);
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentual = ((context.parsed / total) * 100).toFixed(1);
-                            return `${label}: ${value} (${percentual}%)`;
-                        }
-                    }
-                }
-            }
-        }
-    });
-}
-
-function criarGraficoProdutos(dados, cores) {
-    const ctx = document.getElementById('graficoProdutos').getContext('2d');
-    
-    if (charts.produtos) charts.produtos.destroy();
-    
-    const labels = dados?.map(d => d.nome.substring(0, 20)) || [];
-    const valores = dados?.map(d => d.quantidade) || [];
-    
-    charts.produtos = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Quantidade Comprada',
-                data: valores,
-                backgroundColor: [
-                    cores.primaria,
-                    cores.secundaria,
-                    cores.terciaria,
-                    cores.quaternaria,
-                    document.documentElement.getAttribute('data-theme') === 'dark' ? '#8b5cf6' : '#6366f1'
-                ],
-                borderRadius: 4,
-                borderSkipped: false
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#1f2937' : '#fff',
-                    titleColor: cores.texto,
-                    bodyColor: cores.texto,
-                    borderColor: document.documentElement.getAttribute('data-theme') === 'dark' ? '#374151' : '#e5e7eb',
-                    borderWidth: 1
+                axisTick: { show: false },
+                axisLabel: { 
+                    color: cores.texto, 
+                    fontSize: 12,
+                    margin: 12
                 }
             },
-            scales: {
-                x: {
-                    grid: { display: false },
-                    ticks: { 
-                        color: cores.texto,
-                        font: { size: 10 }
+            yAxis: {
+                type: 'value',
+                min: 0,
+                splitLine: { 
+                    lineStyle: { 
+                        color: cores.grid, 
+                        type: 'dashed',
+                        width: 1
+                    } 
+                },
+                axisLabel: { 
+                    color: cores.texto, 
+                    fontSize: 11,
+                    formatter: v => 'R$' + (v/1000).toFixed(0) + 'k'
+                }
+            },
+            series: [{
+                name: 'Compras',
+                type: 'line',
+                smooth: 0.4,
+                data: valores,
+                symbol: 'circle',
+                symbolSize: 8,
+                showSymbol: true,
+                itemStyle: { 
+                    color: cores.sucesso,
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                },
+                lineStyle: { 
+                    width: 3,
+                    color: cores.sucesso
+                },
+                areaStyle: {
+                    opacity: 0.8,
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                        { offset: 0, color: hexToRgba(cores.sucesso, 0.5) },
+                        { offset: 0.5, color: hexToRgba(cores.sucesso, 0.2) },
+                        { offset: 1, color: hexToRgba(cores.sucesso, 0.05) }
+                    ])
+                }
+            }]
+        });
+    }
+    
+    // GRÁFICO DE FORNECEDORES (DONUT)
+    const elForn = document.getElementById('chartFornecedores');
+    if (elForn) {
+        if (charts.fornecedores) charts.fornecedores.dispose();
+        charts.fornecedores = echarts.init(elForn);
+        
+        const fornecedores = data.top_fornecedores || [];
+        const coresDonut = [cores.sucesso, cores.primaria, cores.info, cores.alerta, '#9ca3af'];
+        
+        charts.fornecedores.setOption({
+            tooltip: {
+                trigger: 'item',
+                backgroundColor: cores.tooltip,
+                textStyle: { color: cores.tooltipTexto, fontSize: 12 },
+                formatter: '{b}: {c} ({d}%)'
+            },
+            legend: {
+                bottom: 0,
+                textStyle: { color: cores.texto, fontSize: 10 },
+                icon: 'circle',
+                itemWidth: 8,
+                itemHeight: 8
+            },
+            series: [{
+                type: 'pie',
+                radius: ['45%', '75%'],
+                center: ['50%', '45%'],
+                avoidLabelOverlap: false,
+                label: { show: false },
+                emphasis: {
+                    label: {
+                        show: true,
+                        fontSize: 12,
+                        fontWeight: 'bold',
+                        color: cores.tooltipTexto
                     }
                 },
-                y: {
-                    grid: { color: cores.grid, drawBorder: false },
-                    ticks: { color: cores.texto }
-                }
-            }
+                data: fornecedores.map((f, i) => ({
+                    value: f.valor,
+                    name: f.nome.substring(0, 12),
+                    itemStyle: { color: coresDonut[i % coresDonut.length] }
+                }))
+            }]
+        });
+    }
+}
+
+// ============================================================================
+// FUNÇÕES AUXILIARES
+// ============================================================================
+function gerarMesesEntreDatas(dataInicio, dataFim) {
+    const inicio = dataInicio ? new Date(dataInicio) : new Date();
+    const fim = dataFim ? new Date(dataFim) : new Date();
+    
+    inicio.setDate(1);
+    fim.setDate(1);
+    
+    const meses = [];
+    const nomesMes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    
+    const atual = new Date(inicio);
+    while (atual <= fim) {
+        const mes = nomesMes[atual.getMonth()];
+        const ano = atual.getFullYear();
+        meses.push(`${mes}/${ano}`);
+        atual.setMonth(atual.getMonth() + 1);
+    }
+    
+    if (meses.length < 4) {
+        while (meses.length < 4) {
+            const primeiro = new Date(inicio);
+            primeiro.setMonth(primeiro.getMonth() - (4 - meses.length));
+            const mes = nomesMes[primeiro.getMonth()];
+            const ano = primeiro.getFullYear();
+            meses.unshift(`${mes}/${ano}`);
         }
-    });
+    }
+    
+    return meses;
+}
+
+function normalizarMes(mesStr) {
+    if (!mesStr) return '';
+    
+    if (mesStr.match(/^[A-Za-z]{3}\/\d{4}$/)) {
+        return mesStr.charAt(0).toUpperCase() + mesStr.slice(1).toLowerCase();
+    }
+    
+    const partes = mesStr.split(/[-\/]/);
+    if (partes.length === 2) {
+        const nomesMes = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        let mes, ano;
+        
+        if (partes[0].length === 4) {
+            ano = partes[0];
+            mes = parseInt(partes[1]) - 1;
+        } else {
+            mes = parseInt(partes[0]) - 1;
+            ano = partes[1];
+        }
+        
+        if (mes >= 0 && mes < 12) {
+            return `${nomesMes[mes]}/${ano}`;
+        }
+    }
+    
+    return mesStr;
+}
+
+function hexToRgba(hex, alpha) {
+    hex = hex.replace('#', '');
+    
+    if (hex.length === 3) {
+        hex = hex.split('').map(c => c + c).join('');
+    }
+    
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 // ============================================================================
 // AÇÕES
 // ============================================================================
-function limparFiltros() {
-    const hoje = new Date();
-    const trintaDiasAtras = new Date(hoje.getTime() - (30 * 24 * 60 * 60 * 1000));
+function aplicarFiltroPeriodo(dias) {
+    if (dias === 'custom') return;
     
-    document.getElementById('dataFim').value = formatarDataInput(hoje);
-    document.getElementById('dataInicio').value = formatarDataInput(trintaDiasAtras);
-    document.getElementById('fornecedorSelect').value = '';
+    const hoje = new Date();
+    const inicio = new Date();
+    inicio.setDate(hoje.getDate() - parseInt(dias));
+    
+    document.getElementById('dataInicio').value = inicio.toISOString().split('T')[0];
+    document.getElementById('dataFim').value = hoje.toISOString().split('T')[0];
     
     carregarDados();
 }
 
-function imprimirRelatorio() {
-    window.print();
+function limparFiltros() {
+    const hoje = new Date();
+    const trintaDiasAtras = new Date(hoje.getTime() - (30 * 24 * 60 * 60 * 1000));
+    
+    document.getElementById('dataFim').value = hoje.toISOString().split('T')[0];
+    document.getElementById('dataInicio').value = trintaDiasAtras.toISOString().split('T')[0];
+    document.getElementById('fornecedorSelect').value = '';
+    document.getElementById('filterPeriodo').value = '30';
+    
+    carregarDados();
 }
 
 function exportarExcel() {
@@ -1295,18 +1303,33 @@ function exportarExcel() {
     if (dataFim) params.append('data_fim', dataFim);
     if (fornecedor) params.append('fornecedor', fornecedor);
     
-    window.location.href = `/api/relatorio/compras/exportar/?${params.toString()}`;
+    window.location.href = `/api/compras/relatorio/exportar/?${params.toString()}`;
 }
 
-function mostrarErro(mensagem) {
-    alert(mensagem);
+function mostrarToast(mensagem, tipo) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.style.borderLeft = `4px solid var(--${tipo}-500)`;
+    toast.textContent = mensagem;
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'toastOut 0.25s ease';
+        setTimeout(() => toast.remove(), 250);
+    }, 4000);
 }
 
-// Atualizar gráficos quando mudar o tema
-window.addEventListener('themeChanged', function() {
-    if (comprasData.length > 0) {
-        carregarDados();
-    }
+// Resize
+window.addEventListener('resize', () => {
+    Object.values(charts).forEach(c => c && c.resize());
+});
+
+// Theme change
+window.addEventListener('themeChanged', () => {
+    Object.values(charts).forEach(c => c && c.dispose());
+    charts = {};
+    setTimeout(carregarDados, 100);
 });
 </script>
 {% endblock %}

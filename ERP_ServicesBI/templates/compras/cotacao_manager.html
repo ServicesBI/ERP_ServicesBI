@@ -5,10 +5,6 @@
 
 {% block extra_css %}
 <style>
-/* ============================================================================
-   COTAÇÃO MANAGER - PADRÃO CLIENTE + WIZARD EMBUTIDO
-   ============================================================================ */
-
 :root {
     --input-bg-light: #f5f5f0;
     --card-resumo-bg: #faf9f6;
@@ -25,7 +21,6 @@ html[data-theme="dark"] {
     --wizard-bg: #1e293b;
 }
 
-/* Cards de resumo */
 .resumo-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -100,7 +95,6 @@ html[data-theme="dark"] {
     font-variant-numeric: tabular-nums;
 }
 
-/* Header e Toolbar */
 .page-header {
     display: flex;
     justify-content: space-between;
@@ -164,7 +158,6 @@ html[data-theme="dark"] {
     background: #fff;
 }
 
-/* Tabela */
 .table-container {
     background: var(--card-bg);
     border-radius: 16px;
@@ -178,9 +171,7 @@ html[data-theme="dark"] {
     font-size: 14px;
 }
 
-.data-table thead {
-    background: var(--bg-tertiary);
-}
+.data-table thead { background: var(--bg-tertiary); }
 
 .data-table th {
     padding: 16px;
@@ -212,7 +203,6 @@ html[data-theme="dark"] {
 .col-titulo { font-weight: 600; color: var(--text-primary); }
 .col-itens, .col-forn { text-align: center; font-weight: 600; }
 
-/* Status pills */
 .status-pill {
     display: inline-flex;
     align-items: center;
@@ -233,19 +223,14 @@ html[data-theme="dark"] {
 
 .status-pill--rascunho { background: var(--gray-100); color: var(--gray-600); }
 .status-pill--rascunho::before { background: var(--gray-400); }
-
 .status-pill--enviada { background: var(--info-light); color: var(--info-700); }
 .status-pill--enviada::before { background: var(--info-500); animation: pulse 2s infinite; }
-
 .status-pill--respondida { background: var(--warning-light); color: var(--warning-700); }
 .status-pill--respondida::before { background: var(--warning-500); }
-
-.status-pill--analisada { background: var(--primary-100); color: var(--primary-700); }
-.status-pill--analisada::before { background: var(--primary-500); }
-
+.status-pill--em_analise { background: var(--primary-100); color: var(--primary-700); }
+.status-pill--em_analise::before { background: var(--primary-500); }
 .status-pill--concluida { background: var(--success-light); color: var(--success-700); }
 .status-pill--concluida::before { background: var(--success-500); }
-
 .status-pill--cancelada { background: var(--danger-light); color: var(--danger-700); }
 .status-pill--cancelada::before { background: var(--danger-500); }
 
@@ -254,11 +239,7 @@ html[data-theme="dark"] {
     50% { opacity: 0.5; }
 }
 
-/* Acoes */
-.acoes {
-    display: flex;
-    gap: 8px;
-}
+.acoes { display: flex; gap: 8px; }
 
 .btn-acao {
     width: 36px;
@@ -280,7 +261,6 @@ html[data-theme="dark"] {
 .btn-acao--excluir:hover { background: var(--danger-light); color: var(--danger-600); }
 .btn-acao--visualizar:hover { background: var(--info-light); color: var(--info-600); }
 
-/* Paginacao */
 .pagination-bar {
     display: flex;
     justify-content: space-between;
@@ -290,7 +270,6 @@ html[data-theme="dark"] {
 }
 
 .pagination-info { font-size: 13px; color: var(--text-secondary); }
-
 .pagination-btns { display: flex; gap: 6px; }
 
 .pagination-btn {
@@ -323,7 +302,6 @@ html[data-theme="dark"] {
 
 .pagination-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* Empty state */
 .empty-state {
     text-align: center;
     padding: 60px 24px;
@@ -332,10 +310,6 @@ html[data-theme="dark"] {
 
 .empty-state__icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
 .empty-state__title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
-
-/* ============================================================================
-   WIZARD EMBUTIDO
-   ============================================================================ */
 
 .wizard-container {
     display: none;
@@ -376,7 +350,6 @@ html[data-theme="dark"] {
     margin-top: 4px;
 }
 
-/* Stepper */
 .wizard-stepper {
     display: flex;
     align-items: center;
@@ -430,7 +403,6 @@ html[data-theme="dark"] {
 
 .step-divider.completed { background: var(--success-500); }
 
-/* Conteudo do wizard */
 .wizard-content {
     display: none;
     background: var(--card-bg);
@@ -447,7 +419,6 @@ html[data-theme="dark"] {
     to { opacity: 1; transform: translateX(0); }
 }
 
-/* Formularios do wizard */
 .form-section__title {
     font-size: 13px;
     font-weight: 700;
@@ -477,11 +448,7 @@ html[data-theme="dark"] {
 
 .form-row:last-child { margin-bottom: 0; }
 
-.form-group {
-    display: flex;
-    flex-direction: column;
-}
-
+.form-group { display: flex; flex-direction: column; }
 .form-group.full-width { grid-column: 1 / -1; }
 
 .form-label {
@@ -527,20 +494,11 @@ html[data-theme="dark"] {
     padding-right: 40px;
 }
 
-.form-textarea {
-    resize: vertical;
-    min-height: 100px;
-}
+.form-textarea { resize: vertical; min-height: 100px; }
 
-/* Tabela de itens dinamica */
-.itens-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 16px;
-}
+.itens-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
 
-.itens-table th,
-.itens-table td {
+.itens-table th, .itens-table td {
     padding: 12px;
     text-align: left;
     border-bottom: 1px solid var(--border-light);
@@ -592,7 +550,6 @@ html[data-theme="dark"] {
     background: var(--primary-50);
 }
 
-/* Cards de fornecedores */
 .fornecedores-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -619,19 +576,9 @@ html[data-theme="dark"] {
     background: var(--primary-50);
 }
 
-.fornecedor-card__nome {
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 4px;
-}
+.fornecedor-card__nome { font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+.fornecedor-card__doc { font-size: 13px; color: var(--text-secondary); font-family: monospace; }
 
-.fornecedor-card__doc {
-    font-size: 13px;
-    color: var(--text-secondary);
-    font-family: monospace;
-}
-
-/* BOTÃO DE IMPORTAR COTAÇÃO */
 .btn-importar {
     display: inline-flex;
     align-items: center;
@@ -655,48 +602,13 @@ html[data-theme="dark"] {
     transform: translateY(-2px);
 }
 
-.btn-importar .icon-big {
-    font-size: 32px;
-}
+.comparativo-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
 
-/* Cards de importação no Passo 3 */
-.importar-fornecedor-card {
-    background: var(--input-bg-light);
-    border: 2px solid var(--border-color);
-    border-radius: 12px;
-    padding: 20px;
-    text-align: center;
-    transition: all 0.2s ease;
-}
-
-.importar-fornecedor-card:hover {
-    border-color: var(--primary-400);
-    box-shadow: var(--shadow-sm);
-}
-
-.importar-fornecedor-card__nome {
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    font-size: 14px;
-}
-
-/* Tabela comparativa */
-.comparativo-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 16px;
-}
-
-.comparativo-table th,
-.comparativo-table td {
-    padding: 16px;
+.comparativo-table th, .comparativo-table td {
+    padding: 12px 16px;
     text-align: center;
     border: 1px solid var(--border-light);
+    font-size: 13px;
 }
 
 .comparativo-table th {
@@ -708,15 +620,6 @@ html[data-theme="dark"] {
 
 .comparativo-table td { background: var(--input-bg-light); }
 
-.comparativo-table .item-nome {
-    text-align: left;
-    font-weight: 600;
-}
-
-.preco-menor { background: var(--success-light) !important; color: var(--success-700); font-weight: 700; }
-.preco-maior { background: var(--danger-light) !important; color: var(--danger-700); }
-
-/* Sugestao */
 .sugestao-card {
     background: linear-gradient(135deg, var(--success-50), var(--success-100));
     border: 2px solid var(--success-300);
@@ -735,51 +638,16 @@ html[data-theme="dark"] {
     gap: 8px;
 }
 
-.sugestao-card__text {
-    font-size: 13px;
-    color: var(--success-700);
-}
+.sugestao-card__text { font-size: 13px; color: var(--success-700); }
 
-/* Pedidos gerados */
-.pedidos-gerados {
-    margin-top: 24px;
-}
-
-.pedido-resumo {
-    background: var(--input-bg-light);
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.pedido-resumo__info h4 {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 4px;
-}
-
-.pedido-resumo__info p {
-    font-size: 13px;
-    color: var(--text-secondary);
-}
-
-/* Acoes do wizard */
 .wizard-actions {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.wizard-actions__right {
-    display: flex;
-    gap: 12px;
-}
+.wizard-actions__right { display: flex; gap: 12px; }
 
-/* Modal de exclusao */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -843,10 +711,7 @@ html[data-theme="dark"] {
 
 .modal-exclusao__close:hover { background: rgba(255,255,255,0.2); }
 
-.modal-exclusao__body {
-    padding: 32px 24px;
-    text-align: center;
-}
+.modal-exclusao__body { padding: 32px 24px; text-align: center; }
 
 .modal-exclusao__icon {
     width: 80px;
@@ -881,7 +746,6 @@ html[data-theme="dark"] {
     justify-content: flex-end;
 }
 
-/* Responsivo */
 @media (max-width: 1200px) {
     .resumo-grid { grid-template-columns: repeat(2, 1fr); }
     .form-row { grid-template-columns: 1fr; }
@@ -902,7 +766,6 @@ html[data-theme="dark"] {
 
 <!-- ==================== MODO LISTA ==================== -->
 <div id="modo-lista">
-    <!-- HEADER -->
     <div class="page-header">
         <div class="page-header__title">
             <h1>COTAÇÕES COMPARATIVAS</h1>
@@ -921,69 +784,50 @@ html[data-theme="dark"] {
         {% endfor %}
     {% endif %}
 
-    <!-- CARDS DE RESUMO -->
     <div class="resumo-grid">
         <div class="resumo-card resumo-card--total">
-            <div class="resumo-card__header">
-                <div class="resumo-card__icon">📋</div>
-            </div>
+            <div class="resumo-card__header"><div class="resumo-card__icon">📋</div></div>
             <div class="resumo-card__label">Total de Cotações</div>
             <div class="resumo-card__value">{{ total_cotacoes|default:"0" }}</div>
         </div>
-
         <div class="resumo-card resumo-card--andamento">
-            <div class="resumo-card__header">
-                <div class="resumo-card__icon">⏳</div>
-            </div>
+            <div class="resumo-card__header"><div class="resumo-card__icon">⏳</div></div>
             <div class="resumo-card__label">Em Andamento</div>
             <div class="resumo-card__value" style="color: var(--warning-600);">{{ em_andamento|default:"0" }}</div>
         </div>
-
         <div class="resumo-card resumo-card--respondidas">
-            <div class="resumo-card__header">
-                <div class="resumo-card__icon">📨</div>
-            </div>
+            <div class="resumo-card__header"><div class="resumo-card__icon">📨</div></div>
             <div class="resumo-card__label">Respondidas</div>
             <div class="resumo-card__value" style="color: var(--info-600);">{{ respondidas|default:"0" }}</div>
         </div>
-
         <div class="resumo-card resumo-card--concluidas">
-            <div class="resumo-card__header">
-                <div class="resumo-card__icon">✅</div>
-            </div>
+            <div class="resumo-card__header"><div class="resumo-card__icon">✅</div></div>
             <div class="resumo-card__label">Concluídas</div>
             <div class="resumo-card__value" style="color: var(--success-600);">{{ concluidas|default:"0" }}</div>
         </div>
     </div>
 
-    <!-- TOOLBAR -->
     <div class="toolbar">
         <div class="search-box">
             <span class="search-box__icon">🔍</span>
-            <form method="get" style="display: contents;">
-                <input type="text" name="search" placeholder="Buscar por número ou título..." 
-                       value="{{ search|default:'' }}">
-            </form>
+            <form method="get" id="form-filtros" style="display: contents;">
+                <input type="text" name="search" placeholder="Buscar por número ou título..." value="{{ search|default:'' }}">
         </div>
-        
-        <select name="status" class="form-select" style="width: 180px;" onchange="this.form.submit()">
+        <select name="status" class="form-select" style="width: 180px;" onchange="document.getElementById('form-filtros').submit()">
             <option value="">Todos os status</option>
-            <option value="RASCUNHO" {% if status == 'RASCUNHO' %}selected{% endif %}>Rascunho</option>
-            <option value="ENVIADA" {% if status == 'ENVIADA' %}selected{% endif %}>Enviada</option>
-            <option value="RESPONDIDA" {% if status == 'RESPONDIDA' %}selected{% endif %}>Respondida</option>
-            <option value="ANALISADA" {% if status == 'ANALISADA' %}selected{% endif %}>Em Análise</option>
-            <option value="CONCLUIDA" {% if status == 'CONCLUIDA' %}selected{% endif %}>Concluída</option>
-            <option value="CANCELADA" {% if status == 'CANCELADA' %}selected{% endif %}>Cancelada</option>
+            <option value="rascunho" {% if status == 'rascunho' %}selected{% endif %}>Rascunho</option>
+            <option value="enviada" {% if status == 'enviada' %}selected{% endif %}>Enviada</option>
+            <option value="respondida" {% if status == 'respondida' %}selected{% endif %}>Respondida</option>
+            <option value="em_analise" {% if status == 'em_analise' %}selected{% endif %}>Em Análise</option>
+            <option value="concluida" {% if status == 'concluida' %}selected{% endif %}>Concluída</option>
+            <option value="cancelada" {% if status == 'cancelada' %}selected{% endif %}>Cancelada</option>
         </select>
-
+            </form>
         {% if search or status %}
-        <a href="{% url 'ERP_ServicesBI:cotacao_manager' %}" class="erp-btn erp-btn--secondary">
-            Limpar
-        </a>
+        <a href="{% url 'ERP_ServicesBI:cotacao_manager' %}" class="erp-btn erp-btn--secondary">Limpar</a>
         {% endif %}
     </div>
 
-    <!-- TABELA -->
     <div class="table-container">
         <table class="data-table">
             <thead>
@@ -1012,18 +856,9 @@ html[data-theme="dark"] {
                     </td>
                     <td>
                         <div class="acoes">
-                            <button type="button" class="btn-acao btn-acao--visualizar" title="Visualizar"
-                                    onclick="visualizarCotacao({{ cotacao.id }})">
-                                👁️
-                            </button>
-                            <button type="button" class="btn-acao btn-acao--editar" title="Editar"
-                                    onclick="editarCotacao({{ cotacao.id }})">
-                                ✏️
-                            </button>
-                            <button type="button" class="btn-acao btn-acao--excluir" title="Excluir"
-                                    onclick="abrirModalExclusao({{ cotacao.id }}, '{{ cotacao.numero }}', '{{ cotacao.titulo|escapejs }}')">
-                                🗑️
-                            </button>
+                            <button type="button" class="btn-acao btn-acao--visualizar" title="Visualizar" onclick="visualizarCotacao({{ cotacao.id }})">👁️</button>
+                            <button type="button" class="btn-acao btn-acao--editar" title="Editar" onclick="editarCotacao({{ cotacao.id }})">✏️</button>
+                            <button type="button" class="btn-acao btn-acao--excluir" title="Excluir" onclick="abrirModalExclusao({{ cotacao.id }}, '{{ cotacao.numero }}', '{{ cotacao.titulo|escapejs }}')">🗑️</button>
                         </div>
                     </td>
                 </tr>
@@ -1035,9 +870,7 @@ html[data-theme="dark"] {
                             <div class="empty-state__title">Nenhuma cotação encontrada</div>
                             <p>{% if search %}Tente outro termo de busca{% else %}Crie sua primeira cotação{% endif %}</p>
                             {% if not search %}
-                            <button type="button" class="erp-btn erp-btn--primary" style="margin-top: 16px;" onclick="novaCotacao()">
-                                ➕ Criar cotação
-                            </button>
+                            <button type="button" class="erp-btn erp-btn--primary" style="margin-top: 16px;" onclick="novaCotacao()">➕ Criar cotação</button>
                             {% endif %}
                         </div>
                     </td>
@@ -1046,34 +879,26 @@ html[data-theme="dark"] {
             </tbody>
         </table>
 
-        <!-- PAGINAÇÃO -->
         {% if cotacoes.has_other_pages %}
         <div class="pagination-bar">
-            <div class="pagination-info">
-                Mostrando {{ cotacoes.start_index }}-{{ cotacoes.end_index }} de {{ cotacoes.paginator.count }}
-            </div>
+            <div class="pagination-info">Mostrando {{ cotacoes.start_index }}-{{ cotacoes.end_index }} de {{ cotacoes.paginator.count }}</div>
             <div class="pagination-btns">
                 {% if cotacoes.has_previous %}
-                    <a href="?page={{ cotacoes.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}" 
-                       class="pagination-btn">←</a>
+                    <a href="?page={{ cotacoes.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="pagination-btn">←</a>
                 {% else %}
                     <button class="pagination-btn" disabled>←</button>
                 {% endif %}
-                
                 {% for num in cotacoes.paginator.page_range %}
                     {% if num >= cotacoes.number|add:'-2' and num <= cotacoes.number|add:'2' %}
                         {% if num == cotacoes.number %}
                             <span class="pagination-btn active">{{ num }}</span>
                         {% else %}
-                            <a href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}" 
-                               class="pagination-btn">{{ num }}</a>
+                            <a href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="pagination-btn">{{ num }}</a>
                         {% endif %}
                     {% endif %}
                 {% endfor %}
-                
                 {% if cotacoes.has_next %}
-                    <a href="?page={{ cotacoes.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}" 
-                       class="pagination-btn">→</a>
+                    <a href="?page={{ cotacoes.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="pagination-btn">→</a>
                 {% else %}
                     <button class="pagination-btn" disabled>→</button>
                 {% endif %}
@@ -1085,69 +910,39 @@ html[data-theme="dark"] {
 
 <!-- ==================== MODO WIZARD ==================== -->
 <div id="modo-wizard" class="wizard-container">
-    
-    <!-- WIZARD HEADER -->
     <div class="wizard-header">
         <div class="wizard-header__top">
             <div class="wizard-header__title">
                 <h2 id="wizard-titulo">Nova Cotação</h2>
                 <p>Preencha as informações para criar uma cotação comparativa</p>
             </div>
-            <button type="button" class="erp-btn erp-btn--secondary" onclick="voltarParaLista()">
-                ← Voltar para Lista
-            </button>
+            <button type="button" class="erp-btn erp-btn--secondary" onclick="voltarParaLista()">← Voltar para Lista</button>
         </div>
-
-        <!-- STEPPER - ORDEM CORRIGIDA: Dados → Fornecedores → Itens → Comparar → Pedidos -->
         <div class="wizard-stepper">
-            <div class="step active" id="step-1-indicator">
-                <span class="step__number">1</span>
-                <span>Dados</span>
-            </div>
+            <div class="step active" id="step-1-indicator"><span class="step__number">1</span><span>Dados</span></div>
             <div class="step-divider" id="divider-1"></div>
-            <!-- STEP 2: FORNECEDORES -->
-            <div class="step" id="step-2-indicator">
-                <span class="step__number">2</span>
-                <span>Fornecedores</span>
-            </div>
+            <div class="step" id="step-2-indicator"><span class="step__number">2</span><span>Fornecedores</span></div>
             <div class="step-divider" id="divider-2"></div>
-            <!-- STEP 3: ITENS -->
-            <div class="step" id="step-3-indicator">
-                <span class="step__number">3</span>
-                <span>Itens</span>
-            </div>
+            <div class="step" id="step-3-indicator"><span class="step__number">3</span><span>Itens</span></div>
             <div class="step-divider" id="divider-3"></div>
-            <div class="step" id="step-4-indicator">
-                <span class="step__number">4</span>
-                <span>Comparar</span>
-            </div>
+            <div class="step" id="step-4-indicator"><span class="step__number">4</span><span>Comparar</span></div>
             <div class="step-divider" id="divider-4"></div>
-            <div class="step" id="step-5-indicator">
-                <span class="step__number">5</span>
-                <span>Pedidos</span>
-            </div>
+            <div class="step" id="step-5-indicator"><span class="step__number">5</span><span>Pedidos</span></div>
         </div>
     </div>
 
-    <!-- ETAPA 1: DADOS DA COTAÇÃO -->
+    <!-- ETAPA 1: DADOS -->
     <div class="wizard-content active" id="step-1">
         <h3 class="form-section__title">📋 Informações Básicas</h3>
-        
         <div class="form-row">
             <div class="form-group full-width">
-                <label class="form-label" for="cotacao-titulo">
-                    Título da Cotação <span class="required">*</span>
-                </label>
-                <input type="text" id="cotacao-titulo" class="form-input" 
-                       placeholder="Ex: Cotação de Material de Escritório - Março/2026">
+                <label class="form-label" for="cotacao-titulo">Título da Cotação <span class="required">*</span></label>
+                <input type="text" id="cotacao-titulo" class="form-input" placeholder="Ex: Cotação de Material de Escritório - Março/2026">
             </div>
         </div>
-
         <div class="form-row">
             <div class="form-group">
-                <label class="form-label" for="cotacao-setor">
-                    Setor/Departamento <span class="required">*</span>
-                </label>
+                <label class="form-label" for="cotacao-setor">Setor/Departamento <span class="required">*</span></label>
                 <select id="cotacao-setor" class="form-select">
                     <option value="">Selecione...</option>
                     <option value="TI">Tecnologia da Informação</option>
@@ -1160,20 +955,15 @@ html[data-theme="dark"] {
                     <option value="OUTRO">Outro</option>
                 </select>
             </div>
-            
             <div class="form-group">
-                <label class="form-label" for="cotacao-data-limite">
-                    Data Limite para Resposta <span class="required">*</span>
-                </label>
+                <label class="form-label" for="cotacao-data-limite">Data Limite para Resposta <span class="required">*</span></label>
                 <input type="date" id="cotacao-data-limite" class="form-input">
             </div>
         </div>
-
         <div class="form-row">
             <div class="form-group full-width">
                 <label class="form-label" for="cotacao-observacoes">Observações</label>
-                <textarea id="cotacao-observacoes" class="form-textarea" 
-                          placeholder="Informações adicionais para os fornecedores..."></textarea>
+                <textarea id="cotacao-observacoes" class="form-textarea" placeholder="Informações adicionais para os fornecedores..."></textarea>
             </div>
         </div>
     </div>
@@ -1181,17 +971,14 @@ html[data-theme="dark"] {
     <!-- ETAPA 2: FORNECEDORES -->
     <div class="wizard-content" id="step-2">
         <h3 class="form-section__title">🏢 Selecionar Fornecedores</h3>
-        
         <div class="form-row" style="margin-bottom: 16px;">
             <div class="form-group full-width">
                 <div class="search-box" style="max-width: 100%;">
                     <span class="search-box__icon">🔍</span>
-                    <input type="text" id="buscar-fornecedor" placeholder="Buscar fornecedor por nome ou CNPJ..."
-                           onkeyup="filtrarFornecedores()">
+                    <input type="text" id="buscar-fornecedor" placeholder="Buscar fornecedor por nome ou CNPJ..." onkeyup="filtrarFornecedores()">
                 </div>
             </div>
         </div>
-
         <div class="fornecedores-grid" id="fornecedores-grid">
             {% for fornecedor in fornecedores %}
             <div class="fornecedor-card" data-id="{{ fornecedor.id }}" onclick="toggleFornecedor(this)">
@@ -1202,25 +989,19 @@ html[data-theme="dark"] {
             <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-tertiary);">
                 <div style="font-size: 48px; margin-bottom: 16px;">🏢</div>
                 <p>Nenhum fornecedor cadastrado</p>
-                <a href="{% url 'ERP_ServicesBI:fornecedor_form' %}" class="erp-btn erp-btn--primary" style="margin-top: 16px;">
-                    ➕ Cadastrar Fornecedor
-                </a>
+                <a href="{% url 'ERP_ServicesBI:fornecedor_add' %}" class="erp-btn erp-btn--primary" style="margin-top: 16px;">➕ Cadastrar Fornecedor</a>
             </div>
             {% endfor %}
         </div>
-
         <div style="margin-top: 20px; padding: 16px; background: var(--info-light); border-radius: 10px; display: flex; align-items: center; gap: 12px;">
             <span style="font-size: 20px;">💡</span>
-            <span style="font-size: 13px; color: var(--info-700);">
-                <strong>Fornecedores selecionados:</strong> <span id="contador-fornecedores">0</span>
-            </span>
+            <span style="font-size: 13px; color: var(--info-700);"><strong>Fornecedores selecionados:</strong> <span id="contador-fornecedores">0</span></span>
         </div>
     </div>
 
-    <!-- ETAPA 3: ITENS + IMPORTAR COTAÇÕES -->
+    <!-- ETAPA 3: ITENS + IMPORTAR -->
     <div class="wizard-content" id="step-3">
         <h3 class="form-section__title">📦 Produtos/Serviços a Cotar</h3>
-        
         <table class="itens-table" id="tabela-itens">
             <thead>
                 <tr>
@@ -1241,16 +1022,9 @@ html[data-theme="dark"] {
                 </tr>
             </tbody>
         </table>
-        
-        <button type="button" class="btn-add-item" onclick="adicionarItem()">
-            <span>➕</span> Adicionar Item
-        </button>
-
-        <!-- BOTÕES DE IMPORTAR COTAÇÃO POR FORNECEDOR -->
+        <button type="button" class="btn-add-item" onclick="adicionarItem()"><span>➕</span> Adicionar Item</button>
         <h3 class="form-section__title" style="margin-top: 32px;">📥 Importar Cotações dos Fornecedores</h3>
-        
         <div class="fornecedores-grid" id="fornecedores-importar-grid">
-            <!-- Cards serão gerados dinamicamente pelo JavaScript -->
             <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-tertiary);">
                 <div style="font-size: 48px; margin-bottom: 16px;">📎</div>
                 <p>Selecione fornecedores no passo anterior para importar as cotações</p>
@@ -1261,52 +1035,29 @@ html[data-theme="dark"] {
     <!-- ETAPA 4: COMPARATIVO -->
     <div class="wizard-content" id="step-4">
         <h3 class="form-section__title">⚖️ Comparativo de Preços</h3>
-        
         <div id="comparativo-container">
-            <p style="text-align: center; color: var(--text-tertiary); padding: 40px;">
-                Aguardando respostas dos fornecedores...
-            </p>
+            <p style="text-align: center; color: var(--text-tertiary); padding: 40px;">Aguardando respostas dos fornecedores...</p>
         </div>
-
         <div class="sugestao-card" id="sugestao-card" style="display: none;">
-            <div class="sugestao-card__title">🎯 Sugestão de Melhor Fornecedor</div>
-            <div class="sugestao-card__text" id="sugestao-texto">
-                Baseado em preço, prazo e histórico.
-            </div>
+            <div class="sugestao-card__title">🎯 Seleção Inteligente</div>
+            <div class="sugestao-card__text" id="sugestao-texto"></div>
         </div>
     </div>
 
     <!-- ETAPA 5: PEDIDOS -->
     <div class="wizard-content" id="step-5">
         <h3 class="form-section__title">🛍️ Gerar Pedidos de Compra</h3>
-        
         <div id="pedidos-container">
-            <p style="text-align: center; color: var(--text-tertiary); padding: 40px;">
-                Selecione os fornecedores vencedores para gerar os pedidos.
-            </p>
-        </div>
-
-        <div class="pedidos-gerados" id="pedidos-gerados" style="display: none;">
-            <h4 style="margin-bottom: 16px; color: var(--text-primary);">Pedidos a serem gerados:</h4>
-            <div id="lista-pedidos-gerados"></div>
+            <p style="text-align: center; color: var(--text-tertiary); padding: 40px;">Selecione os fornecedores vencedores para gerar os pedidos.</p>
         </div>
     </div>
 
-    <!-- WIZARD ACTIONS -->
     <div class="wizard-actions">
-        <button type="button" class="erp-btn erp-btn--secondary" id="btn-anterior" onclick="etapaAnterior()" style="display: none;">
-            ← Anterior
-        </button>
+        <button type="button" class="erp-btn erp-btn--secondary" id="btn-anterior" onclick="etapaAnterior()" style="display: none;">← Anterior</button>
         <div class="wizard-actions__right">
-            <button type="button" class="erp-btn erp-btn--secondary" onclick="salvarRascunho()">
-                💾 Salvar Rascunho
-            </button>
-            <button type="button" class="erp-btn erp-btn--primary" id="btn-proximo" onclick="proximaEtapa()">
-                Próximo →
-            </button>
-            <button type="button" class="erp-btn erp-btn--success" id="btn-finalizar" onclick="finalizarCotacao()" style="display: none;">
-                ✅ Finalizar Cotação
-            </button>
+            <button type="button" class="erp-btn erp-btn--secondary" onclick="salvarRascunho()">💾 Salvar Rascunho</button>
+            <button type="button" class="erp-btn erp-btn--primary" id="btn-proximo" onclick="proximaEtapa()">Próximo →</button>
+            <button type="button" class="erp-btn erp-btn--success" id="btn-finalizar" onclick="finalizarCotacao()" style="display: none;">✅ Gerar Pedidos</button>
         </div>
     </div>
 </div>
@@ -1315,33 +1066,24 @@ html[data-theme="dark"] {
 <div class="modal-overlay" id="modalExclusao">
     <div class="modal-exclusao">
         <div class="modal-exclusao__header">
-            <div class="modal-exclusao__title">
-                ⚠️ Confirmar Exclusão
-            </div>
+            <div class="modal-exclusao__title">⚠️ Confirmar Exclusão</div>
             <button type="button" class="modal-exclusao__close" onclick="fecharModalExclusao()">×</button>
         </div>
         <div class="modal-exclusao__body">
             <div class="modal-exclusao__icon">🗑️</div>
             <div class="modal-exclusao__text">Tem certeza que deseja excluir?</div>
             <div class="modal-exclusao__subtext">Você está prestes a excluir a cotação:</div>
-            
             <div style="background: var(--bg-tertiary); border-radius: 12px; padding: 16px 20px; margin-bottom: 20px;">
                 <div style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;" id="modalCotacaoNumero"></div>
                 <div style="font-size: 13px; color: var(--text-secondary);" id="modalCotacaoTitulo"></div>
             </div>
-            
             <div style="background: var(--danger-light); border: 1px solid var(--danger-200); border-radius: 10px; padding: 12px 16px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; color: var(--danger-700);">
-                <span>🚨</span>
-                <strong>Atenção:</strong> Esta ação não pode ser desfeita!
+                <span>🚨</span><strong>Atenção:</strong> Esta ação não pode ser desfeita!
             </div>
         </div>
         <div class="modal-exclusao__footer">
-            <button type="button" class="erp-btn erp-btn--secondary" onclick="fecharModalExclusao()">
-                Cancelar
-            </button>
-            <button type="button" class="erp-btn erp-btn--danger" onclick="executarExclusao()">
-                <span>🗑️</span> Sim, Excluir
-            </button>
+            <button type="button" class="erp-btn erp-btn--secondary" onclick="fecharModalExclusao()">Cancelar</button>
+            <button type="button" class="erp-btn erp-btn--danger" onclick="executarExclusao()"><span>🗑️</span> Sim, Excluir</button>
         </div>
     </div>
 </div>
@@ -1350,25 +1092,19 @@ html[data-theme="dark"] {
 <div class="modal-overlay" id="modalImportar">
     <div class="modal-exclusao" style="max-width: 500px;">
         <div class="modal-exclusao__header" style="background: var(--primary-600);">
-            <div class="modal-exclusao__title">
-                📥 Importar Cotação
-            </div>
+            <div class="modal-exclusao__title">📥 Importar Cotação</div>
             <button type="button" class="modal-exclusao__close" onclick="fecharModalImportar()">×</button>
         </div>
         <div class="modal-exclusao__body">
             <div id="modalImportarFornecedorNome" style="font-weight: 600; margin-bottom: 20px; font-size: 16px;"></div>
-            
             <button type="button" class="btn-importar" onclick="document.getElementById('arquivo-cotacao').click()" style="margin-bottom: 20px;">
-                <span class="icon-big">📎</span>
+                <span style="font-size: 32px;">📎</span>
                 <span>Clique para anexar arquivo<br><small>PDF, Excel ou CSV</small></span>
             </button>
-            
             <input type="file" id="arquivo-cotacao" style="display: none;" accept=".pdf,.csv,.xlsx,.xls" onchange="mostrarArquivoSelecionado(this)">
-            
             <div id="arquivo-selecionado-info" style="margin-bottom: 20px; padding: 12px; background: var(--success-light); border-radius: 8px; display: none;">
                 <span style="color: var(--success-700); font-weight: 500;">✅ Arquivo selecionado: <span id="nome-arquivo"></span></span>
             </div>
-
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">📅 Prazo de Entrega (dias)</label>
@@ -1381,12 +1117,8 @@ html[data-theme="dark"] {
             </div>
         </div>
         <div class="modal-exclusao__footer">
-            <button type="button" class="erp-btn erp-btn--secondary" onclick="fecharModalImportar()">
-                Cancelar
-            </button>
-            <button type="button" class="erp-btn erp-btn--primary" onclick="confirmarImportacao()">
-                📥 Importar Cotação
-            </button>
+            <button type="button" class="erp-btn erp-btn--secondary" onclick="fecharModalImportar()">Cancelar</button>
+            <button type="button" class="erp-btn erp-btn--primary" onclick="confirmarImportacao()">📥 Importar Cotação</button>
         </div>
     </div>
 </div>
@@ -1398,1084 +1130,606 @@ html[data-theme="dark"] {
 // ============================================================================
 // VARIÁVEIS GLOBAIS
 // ============================================================================
-let etapaAtual = 1;
-let cotacaoId = null;
-let fornecedoresSelecionados = new Set();
-let itensCotacao = [];
-let respostasFornecedores = {};
-let fornecedorIdImportar = null;
+var etapaAtual = 1;
+var cotacaoId = null;
+var fornecedoresSelecionados = new Set();
+var fornecedorIdImportar = null;
+var dadosComparativo = { itens: [], fornecedores: [], respostas: {}, menor_total_id: null };
+var selecoesPorItem = {};
 
 // ============================================================================
-// NAVEGAÇÃO MODO LISTA ↔ WIZARD
+// UTILITÁRIOS
 // ============================================================================
+function fmt(valor) {
+    if (!valor || isNaN(valor)) return '0,00';
+    return parseFloat(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
+function mostrarToast(mensagem, tipo) {
+    var toast = document.createElement('div');
+    toast.className = 'erp-alert erp-alert--' + tipo;
+    toast.style.cssText = 'position:fixed;top:90px;right:20px;z-index:9999;min-width:300px;animation:slideInToast 0.3s ease;box-shadow:var(--shadow-lg);';
+    toast.innerHTML = mensagem;
+    document.body.appendChild(toast);
+    setTimeout(function() { toast.style.animation = 'slideOutToast 0.3s ease'; setTimeout(function() { toast.remove(); }, 300); }, 5000);
+}
+
+function getCookie(name) {
+    var v = null;
+    if (document.cookie) {
+        document.cookie.split(';').forEach(function(c) {
+            var x = c.trim();
+            if (x.substring(0, name.length + 1) === (name + '='))
+                v = decodeURIComponent(x.substring(name.length + 1));
+        });
+    }
+    return v;
+}
+
+// ============================================================================
+// NAVEGAÇÃO LISTA ↔ WIZARD
+// ============================================================================
 function novaCotacao() {
-    cotacaoId = null;
-    etapaAtual = 1;
-    fornecedoresSelecionados.clear();
-    itensCotacao = [];
-    respostasFornecedores = {};
-    
-    // Resetar formulário
+    cotacaoId = null; etapaAtual = 1; fornecedoresSelecionados.clear();
+    dadosComparativo = { itens: [], fornecedores: [], respostas: {}, menor_total_id: null };
+    selecoesPorItem = {};
     document.getElementById('cotacao-titulo').value = '';
     document.getElementById('cotacao-setor').value = '';
     document.getElementById('cotacao-data-limite').value = '';
     document.getElementById('cotacao-observacoes').value = '';
-    
-    // Resetar tabela de itens
-    document.getElementById('itens-tbody').innerHTML = `
-        <tr class="item-row">
-            <td class="item-numero">1</td>
-            <td><input type="text" class="item-produto" placeholder="Digite o nome do produto"></td>
-            <td><input type="text" class="item-unidade" placeholder="UN" value="UN"></td>
-            <td><input type="number" class="item-quantidade" placeholder="0" min="1" step="0.01"></td>
-            <td><button type="button" class="btn-acao btn-acao--excluir" onclick="removerItem(this)">🗑️</button></td>
-        </tr>
-    `;
-    
-    // Resetar fornecedores
-    document.querySelectorAll('.fornecedor-card').forEach(card => {
-        card.classList.remove('selected');
-    });
+    document.getElementById('itens-tbody').innerHTML = '<tr class="item-row"><td class="item-numero">1</td><td><input type="text" class="item-produto" placeholder="Digite o nome do produto"></td><td><input type="text" class="item-unidade" placeholder="UN" value="UN"></td><td><input type="number" class="item-quantidade" placeholder="0" min="1" step="0.01"></td><td><button type="button" class="btn-acao btn-acao--excluir" onclick="removerItem(this)">🗑️</button></td></tr>';
+    document.querySelectorAll('.fornecedor-card').forEach(function(c) { c.classList.remove('selected'); });
     atualizarContadorFornecedores();
-    
-    // Limpar cards de importação
-    document.getElementById('fornecedores-importar-grid').innerHTML = `
-        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-tertiary);">
-            <div style="font-size: 48px; margin-bottom: 16px;">📎</div>
-            <p>Selecione fornecedores no passo anterior para importar as cotações</p>
-        </div>
-    `;
-    
-    // Atualizar título
+    document.getElementById('fornecedores-importar-grid').innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-tertiary);"><div style="font-size: 48px; margin-bottom: 16px;">📎</div><p>Selecione fornecedores no passo anterior para importar as cotações</p></div>';
     document.getElementById('wizard-titulo').textContent = 'Nova Cotação';
-    
-    // Mostrar wizard, esconder lista
     document.getElementById('modo-lista').style.display = 'none';
     document.getElementById('modo-wizard').classList.add('active');
-    
-    atualizarStepper();
-    atualizarBotoes();
+    atualizarStepper(); atualizarBotoes();
 }
 
 function editarCotacao(id) {
-    cotacaoId = id;
-    
-    // Carregar dados da cotação via AJAX
-    fetch(`/api/cotacao/${id}/dados/`)
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                // Preencher dados
-                document.getElementById('cotacao-titulo').value = data.titulo;
-                document.getElementById('cotacao-setor').value = data.setor;
-                document.getElementById('cotacao-data-limite').value = data.data_limite;
-                document.getElementById('cotacao-observacoes').value = data.observacoes || '';
-                
-                // Preencher itens
-                if (data.itens && data.itens.length > 0) {
-                    const tbody = document.getElementById('itens-tbody');
-                    tbody.innerHTML = '';
-                    data.itens.forEach((item, index) => {
-                        tbody.innerHTML += `
-                            <tr class="item-row">
-                                <td class="item-numero">${index + 1}</td>
-                                <td><input type="text" class="item-produto" value="${item.produto}" placeholder="Digite o nome do produto"></td>
-                                <td><input type="text" class="item-unidade" value="${item.unidade}" placeholder="UN"></td>
-                                <td><input type="number" class="item-quantidade" value="${item.quantidade}" placeholder="0" min="1" step="0.01"></td>
-                                <td><button type="button" class="btn-acao btn-acao--excluir" onclick="removerItem(this)">🗑️</button></td>
-                            </tr>
-                        `;
-                    });
-                }
-                
-                // Selecionar fornecedores
-                if (data.fornecedores) {
-                    data.fornecedores.forEach(fornId => {
-                        const card = document.querySelector(`.fornecedor-card[data-id="${fornId}"]`);
-                        if (card) {
-                            card.classList.add('selected');
-                            fornecedoresSelecionados.add(parseInt(fornId));
-                        }
-                    });
-                    atualizarContadorFornecedores();
-                }
-                
-                document.getElementById('wizard-titulo').textContent = `Editar Cotação ${data.numero}`;
-                
-                // Definir etapa baseada no status
-                if (data.status === 'RASCUNHO') {
-                    etapaAtual = 1;
-                } else if (data.status === 'ENVIADA') {
-                    etapaAtual = 3;
-                } else if (data.status === 'RESPONDIDA') {
-                    etapaAtual = 4;
-                }
-                
-                document.getElementById('modo-lista').style.display = 'none';
-                document.getElementById('modo-wizard').classList.add('active');
-                atualizarStepper();
-                atualizarBotoes();
-                
-                // 🔥 CORREÇÃO: Gerar cards de importação se estiver no step 3 ou superior
-                if (etapaAtual >= 3) {
-                    gerarCardsImportacao();
-                }
-                
-                // Se estiver na etapa 4, carregar comparativo
-                if (etapaAtual === 4) {
-                    carregarComparativo();
-                }
+    cotacaoId = id; selecoesPorItem = {};
+    fetch('/api/cotacao/' + id + '/dados/')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.success) throw new Error(data.message || 'Erro');
+            document.getElementById('cotacao-titulo').value = data.titulo;
+            document.getElementById('cotacao-setor').value = data.setor;
+            document.getElementById('cotacao-data-limite').value = data.data_limite;
+            document.getElementById('cotacao-observacoes').value = data.observacoes || '';
+            if (data.itens && data.itens.length > 0) {
+                var tbody = document.getElementById('itens-tbody'); tbody.innerHTML = '';
+                data.itens.forEach(function(item, index) {
+                    var desc = item.descricao_display || item.descricao_manual || item.produto || '';
+                    tbody.innerHTML += '<tr class="item-row"><td class="item-numero">' + (index + 1) + '</td><td><input type="text" class="item-produto" value="' + desc + '" placeholder="Digite o nome do produto"></td><td><input type="text" class="item-unidade" value="' + (item.unidade_medida || 'UN') + '" placeholder="UN"></td><td><input type="number" class="item-quantidade" value="' + item.quantidade + '" placeholder="0" min="1" step="0.01"></td><td><button type="button" class="btn-acao btn-acao--excluir" onclick="removerItem(this)">🗑️</button></td></tr>';
+                });
             }
+            fornecedoresSelecionados.clear();
+            if (data.fornecedores) {
+                data.fornecedores.forEach(function(fornId) {
+                    var card = document.querySelector('.fornecedor-card[data-id="' + fornId + '"]');
+                    if (card) { card.classList.add('selected'); fornecedoresSelecionados.add(parseInt(fornId)); }
+                });
+                atualizarContadorFornecedores();
+            }
+            document.getElementById('wizard-titulo').textContent = 'Editar Cotação ' + data.numero;
+            var st = (data.status || '').toLowerCase();
+            if (st === 'rascunho') etapaAtual = 1;
+            else if (st === 'enviada') etapaAtual = 3;
+            else if (st === 'respondida' || st === 'em_analise') etapaAtual = 4;
+            else if (st === 'concluida') etapaAtual = 5;
+            else etapaAtual = 1;
+            document.getElementById('modo-lista').style.display = 'none';
+            document.getElementById('modo-wizard').classList.add('active');
+            atualizarStepper(); atualizarBotoes();
+            if (etapaAtual >= 3) gerarCardsImportacao();
+            if (etapaAtual === 4) carregarComparativo();
         })
-        .catch(err => {
-            mostrarToast('Erro ao carregar cotação: ' + err.message, 'danger');
-        });
+        .catch(function(err) { mostrarToast('Erro ao carregar cotação: ' + err.message, 'danger'); });
 }
 
 function visualizarCotacao(id) {
-    // Modo visualização - só permite ver, não editar
     editarCotacao(id);
-    // Desabilitar todos os inputs
-    document.querySelectorAll('#modo-wizard input, #modo-wizard select, #modo-wizard textarea').forEach(el => {
-        el.disabled = true;
-    });
-    document.querySelectorAll('.btn-add-item, .fornecedor-card, .btn-acao--excluir, .btn-importar').forEach(el => {
-        el.style.pointerEvents = 'none';
-        el.style.opacity = '0.5';
-    });
+    setTimeout(function() {
+        document.querySelectorAll('#modo-wizard input, #modo-wizard select, #modo-wizard textarea').forEach(function(el) { el.disabled = true; });
+        document.querySelectorAll('.btn-add-item, .fornecedor-card, .btn-acao--excluir, .btn-importar').forEach(function(el) { el.style.pointerEvents = 'none'; el.style.opacity = '0.5'; });
+    }, 500);
 }
 
 function voltarParaLista() {
     document.getElementById('modo-wizard').classList.remove('active');
     document.getElementById('modo-lista').style.display = 'block';
-    
-    // Reabilitar inputs se estavam desabilitados
-    document.querySelectorAll('#modo-wizard input, #modo-wizard select, #modo-wizard textarea').forEach(el => {
-        el.disabled = false;
-    });
-    document.querySelectorAll('.btn-add-item, .fornecedor-card, .btn-acao--excluir, .btn-importar').forEach(el => {
-        el.style.pointerEvents = '';
-        el.style.opacity = '';
-    });
-    
-    // Recarregar página para atualizar lista
+    document.querySelectorAll('#modo-wizard input, #modo-wizard select, #modo-wizard textarea').forEach(function(el) { el.disabled = false; });
+    document.querySelectorAll('.btn-add-item, .fornecedor-card, .btn-acao--excluir, .btn-importar').forEach(function(el) { el.style.pointerEvents = ''; el.style.opacity = ''; });
     location.reload();
 }
 
 // ============================================================================
-// NAVEGAÇÃO DO WIZARD
+// WIZARD NAVIGATION
 // ============================================================================
-
 function proximaEtapa() {
-    // 🔥 CORREÇÃO CRÍTICA: No passo 3, salvar antes de avançar
-    if (etapaAtual === 3) {
-        if (!validarEtapaAtual()) return;
-        
-        // Salva como rascunho e só avança se der certo
-        salvarCotacao('RASCUNHO', function(id) {
-            if (id) {
-                console.log('✅ Cotação salva, avançando para etapa', etapaAtual + 1);
-                etapaAtual++;
-                atualizarStepper();
-                atualizarBotoes();
-                
-                if (etapaAtual === 4) {
-                    carregarComparativo();
-                }
-            }
-        });
-        return; // Importante: retorna aqui, o callback continua o fluxo
-    }
-    
-    // Para outros passos, apenas valida e avança
+    if (etapaAtual === 3) { salvarCotacaoEAvancar(); return; }
     if (!validarEtapaAtual()) return;
-    
-    if (etapaAtual < 5) {
-        etapaAtual++;
-        atualizarStepper();
-        atualizarBotoes();
-        
-        // Ações específicas por etapa
-        if (etapaAtual === 3) {
-            gerarCardsImportacao();
-        } else if (etapaAtual === 4) {
-            carregarComparativo();
-        } else if (etapaAtual === 5) {
-            prepararPedidos();
-        }
-    }
+    if (etapaAtual < 5) { etapaAtual++; atualizarStepper(); atualizarBotoes(); if (etapaAtual === 3) gerarCardsImportacao(); else if (etapaAtual === 4) carregarComparativo(); else if (etapaAtual === 5) prepararPedidos(); }
 }
 
-function etapaAnterior() {
-    if (etapaAtual > 1) {
-        etapaAtual--;
-        atualizarStepper();
-        atualizarBotoes();
-    }
+function salvarCotacaoEAvancar() {
+    var temItemManual = false;
+    document.querySelectorAll('.item-row').forEach(function(row) { var p = row.querySelector('.item-produto').value.trim(); var q = parseFloat(row.querySelector('.item-quantidade').value) || 0; if (p && q > 0) temItemManual = true; });
+    var temImportacao = document.getElementById('fornecedores-importar-grid').innerHTML.indexOf('IMPORTADO') !== -1;
+    if (!temItemManual && !temImportacao) { mostrarToast('Adicione pelo menos um item OU importe uma cotação de fornecedor', 'warning'); return; }
+    salvarCotacao('rascunho', function(id) { if (id) { etapaAtual = 4; atualizarStepper(); atualizarBotoes(); carregarComparativo(); } });
 }
+
+function etapaAnterior() { if (etapaAtual > 1) { etapaAtual--; atualizarStepper(); atualizarBotoes(); } }
 
 function atualizarStepper() {
-    // Atualizar indicadores visuais
-    for (let i = 1; i <= 5; i++) {
-        const step = document.getElementById(`step-${i}-indicator`);
-        const divider = document.getElementById(`divider-${i}`);
-        
+    for (var i = 1; i <= 5; i++) {
+        var step = document.getElementById('step-' + i + '-indicator');
+        var divider = document.getElementById('divider-' + i);
         step.classList.remove('active', 'completed');
-        
-        if (i < etapaAtual) {
-            step.classList.add('completed');
-            if (divider) divider.classList.add('completed');
-        } else if (i === etapaAtual) {
-            step.classList.add('active');
-        }
+        if (i < etapaAtual) { step.classList.add('completed'); if (divider) divider.classList.add('completed'); }
+        else if (i === etapaAtual) { step.classList.add('active'); }
+        else { if (divider) divider.classList.remove('completed'); }
     }
-    
-    // Mostrar/esconder conteúdo das etapas
-    document.querySelectorAll('.wizard-content').forEach((el, index) => {
-        el.classList.remove('active');
-        if (index + 1 === etapaAtual) {
-            el.classList.add('active');
-        }
-    });
+    document.querySelectorAll('.wizard-content').forEach(function(el, index) { el.classList.toggle('active', index + 1 === etapaAtual); });
 }
 
 function atualizarBotoes() {
-    const btnAnterior = document.getElementById('btn-anterior');
-    const btnProximo = document.getElementById('btn-proximo');
-    const btnFinalizar = document.getElementById('btn-finalizar');
-    
-    btnAnterior.style.display = etapaAtual > 1 ? 'block' : 'none';
-    
-    if (etapaAtual === 5) {
-        btnProximo.style.display = 'none';
-        btnFinalizar.style.display = 'block';
-    } else {
-        btnProximo.style.display = 'block';
-        btnFinalizar.style.display = 'none';
-    }
+    document.getElementById('btn-anterior').style.display = etapaAtual > 1 ? 'block' : 'none';
+    document.getElementById('btn-proximo').style.display = etapaAtual < 5 ? 'block' : 'none';
+    document.getElementById('btn-finalizar').style.display = etapaAtual === 5 ? 'block' : 'none';
 }
 
 function validarEtapaAtual() {
-    switch (etapaAtual) {
-        case 1:
-            const titulo = document.getElementById('cotacao-titulo').value.trim();
-            const setor = document.getElementById('cotacao-setor').value;
-            const dataLimite = document.getElementById('cotacao-data-limite').value;
-            
-            if (!titulo) {
-                mostrarToast('Preencha o título da cotação', 'warning');
-                return false;
-            }
-            if (!setor) {
-                mostrarToast('Selecione o setor', 'warning');
-                return false;
-            }
-            if (!dataLimite) {
-                mostrarToast('Defina a data limite', 'warning');
-                return false;
-            }
-            return true;
-            
-        case 2:
-            // ETAPA 2: FORNECEDORES
-            if (fornecedoresSelecionados.size === 0) {
-                mostrarToast('Selecione pelo menos um fornecedor', 'warning');
-                return false;
-            }
-            return true;
-            
-        case 3:
-            // ETAPA 3: ITENS
-            const itens = document.querySelectorAll('.item-row');
-            let temItemValido = false;
-            
-            itens.forEach((row, index) => {
-                const produto = row.querySelector('.item-produto').value.trim();
-                const quantidade = parseFloat(row.querySelector('.item-quantidade').value) || 0;
-                
-                // Debug no console
-                console.log(`Item ${index + 1}: produto="${produto}", quantidade=${quantidade}`);
-                
-                if (produto && quantidade > 0) {
-                    temItemValido = true;
-                }
-            });
-            
-            console.log('Tem item válido?', temItemValido);
-            
-            if (!temItemValido) {
-                mostrarToast('Adicione pelo menos um item com nome e quantidade maior que 0', 'warning');
-                return false;
-            }
-            return true;
-            
-        default:
-            return true;
+    if (etapaAtual === 1) {
+        if (!document.getElementById('cotacao-titulo').value.trim()) { mostrarToast('Preencha o título da cotação', 'warning'); return false; }
+        if (!document.getElementById('cotacao-setor').value) { mostrarToast('Selecione o setor', 'warning'); return false; }
+        if (!document.getElementById('cotacao-data-limite').value) { mostrarToast('Defina a data limite', 'warning'); return false; }
+        return true;
     }
+    if (etapaAtual === 2) { if (fornecedoresSelecionados.size === 0) { mostrarToast('Selecione pelo menos um fornecedor', 'warning'); return false; } return true; }
+    return true;
 }
 
 // ============================================================================
 // ETAPA 2: FORNECEDORES
 // ============================================================================
-
-function toggleFornecedor(card) {
-    const id = parseInt(card.dataset.id);
-    
-    if (card.classList.contains('selected')) {
-        card.classList.remove('selected');
-        fornecedoresSelecionados.delete(id);
-    } else {
-        card.classList.add('selected');
-        fornecedoresSelecionados.add(id);
-    }
-    
-    atualizarContadorFornecedores();
-}
-
-function atualizarContadorFornecedores() {
-    document.getElementById('contador-fornecedores').textContent = fornecedoresSelecionados.size;
-}
-
-function filtrarFornecedores() {
-    const termo = document.getElementById('buscar-fornecedor').value.toLowerCase();
-    
-    document.querySelectorAll('.fornecedor-card').forEach(card => {
-        const nome = card.querySelector('.fornecedor-card__nome').textContent.toLowerCase();
-        const doc = card.querySelector('.fornecedor-card__doc').textContent.toLowerCase();
-        
-        if (nome.includes(termo) || doc.includes(termo)) {
-            card.style.display = 'block';
-        } else {
-            card.style.display = 'none';
-        }
-    });
-}
+function toggleFornecedor(card) { var id = parseInt(card.dataset.id); if (card.classList.contains('selected')) { card.classList.remove('selected'); fornecedoresSelecionados.delete(id); } else { card.classList.add('selected'); fornecedoresSelecionados.add(id); } atualizarContadorFornecedores(); }
+function atualizarContadorFornecedores() { document.getElementById('contador-fornecedores').textContent = fornecedoresSelecionados.size; }
+function filtrarFornecedores() { var termo = document.getElementById('buscar-fornecedor').value.toLowerCase(); document.querySelectorAll('.fornecedor-card').forEach(function(card) { var nome = card.querySelector('.fornecedor-card__nome').textContent.toLowerCase(); var doc = card.querySelector('.fornecedor-card__doc').textContent.toLowerCase(); card.style.display = (nome.indexOf(termo) !== -1 || doc.indexOf(termo) !== -1) ? 'block' : 'none'; }); }
 
 // ============================================================================
-// ETAPA 3: ITENS + IMPORTAR COTAÇÕES
+// ETAPA 3: ITENS + IMPORTAR
 // ============================================================================
+function adicionarItem() { var tbody = document.getElementById('itens-tbody'); var numero = tbody.children.length + 1; var tr = document.createElement('tr'); tr.className = 'item-row'; tr.innerHTML = '<td class="item-numero">' + numero + '</td><td><input type="text" class="item-produto" placeholder="Digite o nome do produto"></td><td><input type="text" class="item-unidade" placeholder="UN" value="UN"></td><td><input type="number" class="item-quantidade" placeholder="0" min="1" step="0.01"></td><td><button type="button" class="btn-acao btn-acao--excluir" onclick="removerItem(this)">🗑️</button></td>'; tbody.appendChild(tr); atualizarNumerosItens(); }
+function removerItem(btn) { var tbody = document.getElementById('itens-tbody'); if (tbody.children.length <= 1) { mostrarToast('A cotação deve ter pelo menos um item', 'warning'); return; } btn.closest('tr').remove(); atualizarNumerosItens(); }
+function atualizarNumerosItens() { document.querySelectorAll('.item-numero').forEach(function(el, i) { el.textContent = i + 1; }); }
 
-function adicionarItem() {
-    const tbody = document.getElementById('itens-tbody');
-    const numero = tbody.children.length + 1;
-    
-    const novaLinha = document.createElement('tr');
-    novaLinha.className = 'item-row';
-    novaLinha.innerHTML = `
-        <td class="item-numero">${numero}</td>
-        <td><input type="text" class="item-produto" placeholder="Digite o nome do produto"></td>
-        <td><input type="text" class="item-unidade" placeholder="UN" value="UN"></td>
-        <td><input type="number" class="item-quantidade" placeholder="0" min="1" step="0.01"></td>
-        <td><button type="button" class="btn-acao btn-acao--excluir" onclick="removerItem(this)">🗑️</button></td>
-    `;
-    
-    tbody.appendChild(novaLinha);
-    atualizarNumerosItens();
-}
-
-function removerItem(btn) {
-    const tbody = document.getElementById('itens-tbody');
-    if (tbody.children.length <= 1) {
-        mostrarToast('A cotação deve ter pelo menos um item', 'warning');
-        return;
-    }
-    
-    btn.closest('tr').remove();
-    atualizarNumerosItens();
-}
-
-function atualizarNumerosItens() {
-    document.querySelectorAll('.item-numero').forEach((el, index) => {
-        el.textContent = index + 1;
-    });
-}
-
-// Gerar cards de importação para cada fornecedor selecionado
 function gerarCardsImportacao() {
-    const container = document.getElementById('fornecedores-importar-grid');
-    
-    if (fornecedoresSelecionados.size === 0) {
-        container.innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-tertiary);">
-                <div style="font-size: 48px; margin-bottom: 16px;">📎</div>
-                <p>Selecione fornecedores no passo anterior para importar as cotações</p>
-            </div>
-        `;
-        return;
-    }
-    
-    // 🔥 CORREÇÃO: Se tem cotação salva, busca do backend quais já importaram
-    if (cotacaoId) {
-        fetch(`/api/cotacao/${cotacaoId}/fornecedores-importados/`)
-            .then(r => r.json())
-            .then(data => {
-                const importados = data.success ? data.importados : [];
-                renderizarCards(container, importados);
-            })
-            .catch(err => {
-                console.error('Erro ao buscar importados:', err);
-                // Fallback: mostra todos como pendentes
-                renderizarCards(container, []);
-            });
-    } else {
-        // Cotação nova, todos pendentes
-        renderizarCards(container, []);
-    }
+    var container = document.getElementById('fornecedores-importar-grid');
+    if (fornecedoresSelecionados.size === 0) { container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-tertiary);"><div style="font-size: 48px; margin-bottom: 16px;">📎</div><p>Selecione fornecedores no passo anterior</p></div>'; return; }
+    if (cotacaoId) { fetch('/api/cotacao/' + cotacaoId + '/fornecedores-importados/').then(function(r) { return r.json(); }).then(function(data) { renderizarCardsImportacao(container, data.success ? data.importados : []); }).catch(function() { renderizarCardsImportacao(container, []); }); }
+    else { renderizarCardsImportacao(container, []); }
 }
 
-// Função auxiliar para renderizar os cards
-function renderizarCards(container, importados) {
-    let html = '';
-    
-    fornecedoresSelecionados.forEach(fornId => {
-        const card = document.querySelector(`.fornecedor-card[data-id="${fornId}"]`);
-        const nome = card ? card.querySelector('.fornecedor-card__nome').textContent : `Fornecedor ${fornId}`;
-        
-        // Verifica se já foi importado (como número)
-        const jaImportado = importados.includes(fornId) || importados.includes(String(fornId));
-        
+function renderizarCardsImportacao(container, importados) {
+    var html = '';
+    fornecedoresSelecionados.forEach(function(fornId) {
+        var card = document.querySelector('.fornecedor-card[data-id="' + fornId + '"]');
+        var nome = card ? card.querySelector('.fornecedor-card__nome').textContent : 'Fornecedor ' + fornId;
+        var jaImportado = importados.indexOf(fornId) !== -1 || importados.indexOf(String(fornId)) !== -1;
         if (jaImportado) {
-            // Card já importado (VERDE)
-            html += `
-                <div class="importar-fornecedor-card" 
-                     data-fornecedor-id="${fornId}"
-                     style="border: 2px solid var(--success-500) !important; 
-                            background: var(--success-light) !important; 
-                            box-shadow: 0 0 0 2px var(--success-300) !important;
-                            border-radius: 12px;
-                            padding: 20px;
-                            text-align: center;">
-                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                        <span>🏢</span>
-                        <span>${nome}</span>
-                        <span style="background: var(--success-500); color: white; font-size: 10px; padding: 2px 8px; border-radius: 10px; margin-left: 8px; font-weight: 600;">IMPORTADO</span>
-                    </div>
-                    <button type="button" disabled 
-                            style="display: inline-flex; align-items: center; justify-content: center; gap: 12px; padding: 20px 32px; border: 2px solid var(--success-500); border-radius: 12px; background: var(--success-50); color: var(--success-700); font-size: 16px; font-weight: 600; cursor: default; width: 100%;">
-                        <span style="font-size: 32px;">✅</span>
-                        <span>Cotação Importada!</span>
-                    </button>
-                </div>
-            `;
+            html += '<div style="border: 2px solid var(--success-500); background: var(--success-light); border-radius: 12px; padding: 20px; text-align: center;"><div style="font-weight: 600; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;"><span>🏢</span><span>' + nome + '</span><span style="background: var(--success-500); color: white; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600;">IMPORTADO</span></div><div style="padding: 16px; border: 2px solid var(--success-500); border-radius: 12px; background: var(--success-50); color: var(--success-700); font-size: 16px; font-weight: 600;"><span style="font-size: 32px;">✅</span> Cotação Importada!</div></div>';
         } else {
-            // Card normal (pendente)
-            html += `
-                <div class="importar-fornecedor-card" data-fornecedor-id="${fornId}" style="background: var(--input-bg-light); border: 2px solid var(--border-color); border-radius: 12px; padding: 20px; text-align: center;">
-                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                        <span>🏢</span>
-                        <span>${nome}</span>
-                    </div>
-                    <button type="button" class="btn-importar" onclick="abrirModalImportar(${fornId})" style="display: inline-flex; align-items: center; justify-content: center; gap: 12px; padding: 20px 32px; border: 2px dashed var(--primary-400); border-radius: 12px; background: var(--primary-50); color: var(--primary-700); font-size: 16px; font-weight: 600; cursor: pointer; width: 100%;">
-                        <span style="font-size: 32px;">📎</span>
-                        <span>Anexar Cotação<br><small>PDF, Excel ou CSV</small></span>
-                    </button>
-                </div>
-            `;
+            html += '<div style="background: var(--input-bg-light); border: 2px solid var(--border-color); border-radius: 12px; padding: 20px; text-align: center;"><div style="font-weight: 600; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;"><span>🏢</span><span>' + nome + '</span></div><button type="button" class="btn-importar" onclick="abrirModalImportar(' + fornId + ')"><span style="font-size: 32px;">📎</span><span>Anexar Cotação<br><small>PDF, Excel ou CSV</small></span></button></div>';
         }
     });
-    
     container.innerHTML = html;
-    console.log(`✅ Cards renderizados: ${fornecedoresSelecionados.size}, Importados: ${importados.length}`);
 }
-// Modal de importar cotação
+
+// ============================================================================
+// IMPORTAÇÃO
+// ============================================================================
 function abrirModalImportar(fornecedorId) {
-    // 🔥 CORREÇÃO: Verifica se tem cotação salva antes de abrir
-    if (!cotacaoId) {
-        mostrarToast('Salve a cotação como rascunho antes de importar', 'warning');
-        return;
-    }
-    
-    fornecedorIdImportar = fornecedorId;
-    const card = document.querySelector(`.fornecedor-card[data-id="${fornecedorId}"]`);
-    const nome = card ? card.querySelector('.fornecedor-card__nome').textContent : `Fornecedor ${fornecedorId}`;
-    
-    document.getElementById('modalImportarFornecedorNome').textContent = `🏢 ${nome}`;
-    document.getElementById('modalImportar').classList.add('active');
-    document.body.style.overflow = 'hidden';
+    if (!cotacaoId) { mostrarToast('⏳ Salvando cotação antes de importar...', 'info'); salvarCotacao('rascunho', function(id) { if (id) { mostrarToast('✅ Cotação salva!', 'success'); gerarCardsImportacao(); _abrirModalImportarReal(fornecedorId); } else { mostrarToast('❌ Preencha os dados básicos antes de importar', 'warning'); } }); return; }
+    _abrirModalImportarReal(fornecedorId);
 }
-
-function fecharModalImportar() {
-    document.getElementById('modalImportar').classList.remove('active');
-    document.body.style.overflow = '';
-    fornecedorIdImportar = null;
-    
-    // Limpar formulário
-    document.getElementById('arquivo-cotacao').value = '';
-    document.getElementById('arquivo-selecionado-info').style.display = 'none';
-    document.getElementById('import-prazo').value = '';
-    document.getElementById('import-desconto').value = '';
-}
-
-function mostrarArquivoSelecionado(input) {
-    if (input.files && input.files[0]) {
-        document.getElementById('nome-arquivo').textContent = input.files[0].name;
-        document.getElementById('arquivo-selecionado-info').style.display = 'block';
-    }
-}
+function _abrirModalImportarReal(fornecedorId) { fornecedorIdImportar = fornecedorId; var card = document.querySelector('.fornecedor-card[data-id="' + fornecedorId + '"]'); var nome = card ? card.querySelector('.fornecedor-card__nome').textContent : 'Fornecedor ' + fornecedorId; document.getElementById('modalImportarFornecedorNome').textContent = '🏢 ' + nome; document.getElementById('modalImportar').classList.add('active'); document.body.style.overflow = 'hidden'; }
+function fecharModalImportar() { document.getElementById('modalImportar').classList.remove('active'); document.body.style.overflow = ''; fornecedorIdImportar = null; document.getElementById('arquivo-cotacao').value = ''; document.getElementById('arquivo-selecionado-info').style.display = 'none'; document.getElementById('import-prazo').value = ''; document.getElementById('import-desconto').value = ''; }
+function mostrarArquivoSelecionado(input) { if (input.files && input.files[0]) { document.getElementById('nome-arquivo').textContent = input.files[0].name; document.getElementById('arquivo-selecionado-info').style.display = 'block'; } }
 
 function confirmarImportacao() {
-    const arquivo = document.getElementById('arquivo-cotacao').files[0];
-    const prazo = document.getElementById('import-prazo').value;
-    const desconto = document.getElementById('import-desconto').value;
-    
-    if (!arquivo) {
-        mostrarToast('Selecione um arquivo para importar', 'warning');
-        return;
-    }
-    
-    if (!cotacaoId) {
-        mostrarToast('Salve a cotação como rascunho antes de importar', 'warning');
-        fecharModalImportar();
-        return;
-    }
-    
-    const formData = new FormData();
+    var arquivo = document.getElementById('arquivo-cotacao').files[0];
+    if (!arquivo) { mostrarToast('Selecione um arquivo para importar', 'warning'); return; }
+    if (!cotacaoId) { mostrarToast('⏳ Salvando cotação...', 'info'); salvarCotacao('rascunho', function(id) { if (id) { _executarImportacao(arquivo); } else { mostrarToast('❌ Preencha os dados básicos antes de importar', 'warning'); } }); return; }
+    _executarImportacao(arquivo);
+}
+
+function _executarImportacao(arquivo) {
+    var formData = new FormData();
     formData.append('arquivo', arquivo);
     formData.append('fornecedor_id', fornecedorIdImportar);
-    formData.append('prazo_entrega', prazo);
-    formData.append('desconto', desconto);
-    
-    fetch(`/api/cotacao/${cotacaoId}/importar-cotacao/`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken')
-        },
-        body: formData
-    })
-    .then(r => {
-        if (!r.ok) {
-            return r.text().then(text => {
-                throw new Error(`Erro ${r.status}: ${text.substring(0, 100)}`);
-            });
-        }
-        return r.json();
-    })
-    .then(data => {
-        if (data.success) {
-            mostrarToast('✅ ' + (data.message || 'Cotação importada com sucesso!'), 'success');
-            fecharModalImportar();
-            // 🔥 CORREÇÃO: Recarrega os cards para mostrar o verde
-            gerarCardsImportacao();
-        } else {
-            throw new Error(data.error || data.message || 'Erro desconhecido');
-        }
-    })
-    .catch(err => {
-        mostrarToast('❌ Erro ao importar: ' + err.message, 'danger');
-        console.error('Erro completo:', err);
-    });
-}
-// 🔥 CORREÇÃO: Função simplificada - agora só salva no localStorage
-// A atualização visual é feita chamando gerarCardsImportacao()
-function atualizarCardImportado(fornecedorId) {
-    // Salva no localStorage
-    if (!cotacaoId) return;
-    
-    const storageKey = `cotacao_${cotacaoId}_importados`;
-    let importados = [];
-    
-    try {
-        importados = JSON.parse(localStorage.getItem(storageKey) || '[]');
-    } catch (e) {
-        importados = [];
-    }
-    
-    const fornIdStr = String(fornecedorId);
-    if (!importados.includes(fornIdStr)) {
-        importados.push(fornIdStr);
-        localStorage.setItem(storageKey, JSON.stringify(importados));
-        console.log(`✅ Fornecedor ${fornecedorId} marcado como importado`);
-    }
+    formData.append('prazo_entrega', document.getElementById('import-prazo').value);
+    formData.append('desconto', document.getElementById('import-desconto').value);
+    var btnImportar = document.querySelector('#modalImportar .erp-btn--primary');
+    var textoOriginal = btnImportar.innerHTML; btnImportar.innerHTML = '⏳ Importando...'; btnImportar.disabled = true;
+    fetch('/api/cotacao/' + cotacaoId + '/importar-cotacao/', { method: 'POST', headers: { 'X-CSRFToken': getCookie('csrftoken') }, body: formData })
+    .then(function(r) { if (!r.ok) return r.text().then(function(t) { throw new Error('Erro ' + r.status); }); return r.json(); })
+    .then(function(data) { if (data.success) { mostrarToast('✅ ' + (data.message || 'Cotação importada!'), 'success'); if (data.total_itens) { mostrarToast('📊 ' + data.total_itens + ' itens extraídos do arquivo', 'info'); } fecharModalImportar(); gerarCardsImportacao(); } else { throw new Error(data.message || 'Erro'); } })
+    .catch(function(err) { mostrarToast('❌ Erro ao importar: ' + err.message, 'danger'); })
+    .finally(function() { btnImportar.innerHTML = textoOriginal; btnImportar.disabled = false; });
 }
 
 // ============================================================================
-// ETAPA 4: COMPARATIVO
+// ETAPA 4: COMPARATIVO DE PREÇOS (CORRIGIDO)
 // ============================================================================
-
-// SUBSTITUA a função carregarComparativo por esta versão com logs:
-
 function carregarComparativo() {
-    const container = document.getElementById('comparativo-container');
-    
-    console.log('🔍 Carregando comparativo para cotação:', cotacaoId);
-    
-    if (!cotacaoId) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state__icon">⚠️</div>
-                <div class="empty-state__title">Cotação não salva</div>
-                <p>Salve a cotação como rascunho primeiro</p>
-            </div>
-        `;
-        return;
+    var container = document.getElementById('comparativo-container');
+    if (!cotacaoId) { 
+        container.innerHTML = '<div class="empty-state"><div class="empty-state__icon">⚠️</div><div class="empty-state__title">Cotação não salva</div><p>Salve como rascunho primeiro</p></div>'; 
+        return; 
     }
-    
-    // Mostra loading
-    container.innerHTML = `
-        <div style="text-align: center; padding: 60px;">
-            <div style="font-size: 48px; margin-bottom: 16px;">⏳</div>
-            <p>Carregando comparativo...</p>
-        </div>
-    `;
-    
-    fetch(`/api/cotacao/${cotacaoId}/comparativo/`)
-        .then(r => {
-            console.log('📡 Resposta da API:', r.status);
-            if (!r.ok) {
-                return r.text().then(text => {
-                    throw new Error(`HTTP ${r.status}: ${text.substring(0, 200)}`);
-                });
-            }
-            return r.json();
-        })
-        .then(data => {
-            console.log('📊 Dados recebidos:', data);
-            
-            if (data.success && data.respostas && Object.keys(data.respostas).length > 0) {
-                respostasFornecedores = data.respostas;
-                renderizarComparativo(data.itens, data.respostas, data.fornecedores);
-            } else {
-                // Verifica se tem fornecedores importados no localStorage
-                const importados = JSON.parse(localStorage.getItem(`cotacao_${cotacaoId}_importados`) || '[]');
-                
-                if (importados.length > 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state__icon">📊</div>
-                            <div class="empty-state__title">Processando importações...</div>
-                            <p>Foram importadas ${importados.length} cotação(ões), mas os dados ainda estão sendo processados.</p>
-                            <button type="button" class="erp-btn erp-btn--primary" style="margin-top: 16px;" onclick="carregarComparativo()">
-                                🔄 Recarregar
-                            </button>
-                        </div>
-                    `;
-                } else {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <div class="empty-state__icon">📋</div>
-                            <div class="empty-state__title">Nenhuma cotação importada</div>
-                            <p>Volte ao passo anterior e importe as cotações dos fornecedores</p>
-                            <button type="button" class="erp-btn erp-btn--secondary" style="margin-top: 16px;" onclick="etapaAnterior()">
-                                ← Voltar para Itens
-                            </button>
-                        </div>
-                    `;
+    container.innerHTML = '<div style="text-align: center; padding: 60px;"><div style="font-size: 48px; margin-bottom: 16px; animation: pulse 1s infinite;">⏳</div><p style="color: var(--text-secondary);">Analisando cotações dos fornecedores...</p></div>';
+
+    fetch('/api/cotacao/' + cotacaoId + '/comparativo/')
+    .then(function(r) { 
+        if (!r.ok) { 
+            return r.text().then(function(t) { throw new Error('HTTP ' + r.status); }); 
+        } 
+        return r.json(); 
+    })
+    .then(function(data) {
+        if (!data.success) throw new Error(data.message || 'Erro');
+        dadosComparativo = data;
+        selecoesPorItem = {};
+
+        // ✅ CORREÇÃO CRÍTICA: Declarar temRespostas e verificar data.itens
+        var temRespostas = false;
+        
+        // Verificar se há respostas nos fornecedores
+        if (data.fornecedores && data.fornecedores.length > 0) {
+            for (var i = 0; i < data.fornecedores.length; i++) {
+                if (data.fornecedores[i].total_itens_cotados > 0) { 
+                    temRespostas = true; 
+                    break; 
                 }
             }
-        })
-        .catch(err => {
-            console.error('❌ Erro ao carregar comparativo:', err);
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-state__icon" style="color: var(--danger-500);">❌</div>
-                    <div class="empty-state__title">Erro ao carregar comparativo</div>
-                    <p style="color: var(--danger-600);">${err.message}</p>
-                    <button type="button" class="erp-btn erp-btn--primary" style="margin-top: 16px;" onclick="carregarComparativo()">
-                        🔄 Tentar novamente
-                    </button>
-                </div>
-            `;
-        });
+        }
+        
+        // ✅ VERIFICAÇÃO ADICIONAL: Também considerar se há itens na lista
+        if (!temRespostas && data.itens && data.itens.length > 0) { 
+            temRespostas = true; 
+        }
+
+        if (!temRespostas) {
+            container.innerHTML = '<div class="empty-state"><div class="empty-state__icon">📋</div><div class="empty-state__title">Nenhuma cotação importada ainda</div><p>Volte ao passo anterior e importe as cotações</p><button type="button" class="erp-btn erp-btn--secondary" style="margin-top: 16px;" onclick="etapaAnterior()">← Voltar para Itens</button></div>';
+            return;
+        }
+        renderizarComparativoCompleto(data);
+    })
+    .catch(function(err) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-state__icon" style="color: var(--danger-500);">❌</div><div class="empty-state__title">Erro ao carregar comparativo</div><p style="color: var(--danger-600);">' + err.message + '</p><button type="button" class="erp-btn erp-btn--primary" style="margin-top: 16px;" onclick="carregarComparativo()">🔄 Tentar novamente</button></div>';
+    });
 }
 
-function renderizarComparativo(itens, respostas, fornecedores) {
-    const container = document.getElementById('comparativo-container');
-    
-    let html = '<table class="comparativo-table"><thead><tr><th>Item</th>';
-    
-    fornecedores.forEach(f => {
-        html += `<th>${f.nome}<br><small>${f.condicao}</small></th>`;
+function renderizarComparativoCompleto(data) {
+    var container = document.getElementById('comparativo-container');
+    var itens = data.itens, fornecedores = data.fornecedores, respostas = data.respostas, menor_total_id = data.menor_total_id;
+    var html = '';
+
+    // TABELA RESUMO
+    html += '<div style="overflow-x: auto; margin-bottom: 32px;"><table class="comparativo-table"><thead><tr><th style="text-align: left; min-width: 220px;">FORNECEDOR:</th>';
+    fornecedores.forEach(function(f) { 
+        var best = f.id === menor_total_id; 
+        html += '<th style="min-width: 180px; ' + (best ? 'background: var(--success-light); color: var(--success-800);' : '') + '"><strong>' + f.nome + '</strong>' + (best ? '<br><span style="font-size: 10px; background: var(--success-500); color: white; padding: 2px 6px; border-radius: 8px;">⭐ MENOR TOTAL</span>' : '') + '</th>'; 
     });
-    
     html += '</tr></thead><tbody>';
-    
-    itens.forEach(item => {
-        html += `<tr><td class="item-nome">${item.nome}<br><small>${item.quantidade} ${item.unidade}</small></td>`;
-        
-        let menorPreco = Infinity;
-        let precos = [];
-        
-        fornecedores.forEach(f => {
-            const resp = respostas[f.id] && respostas[f.id][item.id];
-            const preco = resp ? parseFloat(resp.preco) : 0;
-            if (preco > 0) {
-                precos.push({ forn: f.id, preco: preco });
-                if (preco < menorPreco) menorPreco = preco;
+    html += '<tr><td style="text-align: left; font-weight: 700;">VALOR TOTAL (C/ IMPOSTOS):</td>'; 
+    fornecedores.forEach(function(f) { 
+        var best = f.id === menor_total_id; 
+        html += '<td style="font-weight: 700; ' + (best ? 'background: var(--success-light); color: var(--success-700);' : '') + '">' + (f.valor_total_bruto > 0 ? 'R$ ' + fmt(f.valor_total_bruto) : '—') + '</td>'; 
+    }); 
+    html += '</tr>';
+    html += '<tr><td style="text-align: left; font-weight: 600;">% DESCONTO:</td>'; 
+    fornecedores.forEach(function(f) { html += '<td>' + (f.percentual_desconto > 0 ? f.percentual_desconto + '%' : '—') + '</td>'; }); 
+    html += '</tr>';
+    html += '<tr><td style="text-align: left; font-weight: 700;">VALOR FINAL NEGOCIADO:</td>'; 
+    fornecedores.forEach(function(f) { 
+        var neg = f.valor_total_bruto * (1 - f.percentual_desconto / 100); 
+        var best = f.id === menor_total_id; 
+        html += '<td style="font-weight: 700; ' + (best ? 'background: var(--success-light);' : '') + '">' + (neg > 0 ? 'R$ ' + fmt(neg) : '—') + '</td>'; 
+    }); 
+    html += '</tr>';
+    html += '<tr><td style="text-align: left; font-weight: 600;">% FRETE:</td>'; 
+    fornecedores.forEach(function(f) { 
+        var neg = f.valor_total_bruto * (1 - f.percentual_desconto / 100); 
+        html += '<td>' + (neg > 0 && f.valor_frete > 0 ? ((f.valor_frete / neg) * 100).toFixed(0) + '%' : '—') + '</td>'; 
+    }); 
+    html += '</tr>';
+    html += '<tr><td style="text-align: left; font-weight: 700; background: var(--bg-tertiary);">VALOR FINAL DE COMPRA:</td>'; 
+    fornecedores.forEach(function(f) { 
+        var best = f.id === menor_total_id; 
+        html += '<td style="font-weight: 700; font-size: 15px; ' + (best ? 'background: var(--success-light); color: var(--success-800);' : 'background: var(--bg-tertiary);') + '">' + (f.valor_total_liquido > 0 ? 'R$ ' + fmt(f.valor_total_liquido) : '—') + '</td>'; 
+    }); 
+    html += '</tr>';
+    html += '<tr><td style="text-align: left; font-weight: 600;">% DISPONIBILIDADE:</td>'; 
+    fornecedores.forEach(function(f) { 
+        var p = f.disponibilidade_pct; 
+        var ic = p >= 100 ? '🟢' : p >= 75 ? '🟡' : '🔴'; 
+        html += '<td>' + ic + ' ' + f.disponibilidade + '</td>'; 
+    }); 
+    html += '</tr>';
+    html += '<tr><td style="text-align: left; font-weight: 600;">CONDIÇÃO PAGAMENTO:</td>'; 
+    fornecedores.forEach(function(f) { html += '<td>' + (f.condicao_pagamento || '—') + '</td>'; }); 
+    html += '</tr>';
+    html += '<tr><td style="text-align: left; font-weight: 600;">PRAZO ENTREGA (DIAS):</td>'; 
+    fornecedores.forEach(function(f) { html += '<td>' + (f.prazo_entrega_dias > 0 ? f.prazo_entrega_dias : '—') + '</td>'; }); 
+    html += '</tr>';
+    html += '</tbody></table></div>';
+
+    // TABELA ITENS
+    html += '<h3 class="form-section__title" style="margin-top: 8px;">📊 Comparativo por Item — Selecione o fornecedor para cada produto</h3>';
+    html += '<div style="overflow-x: auto;"><table class="comparativo-table"><thead><tr><th style="text-align: center; width: 40px;">Nº</th><th style="text-align: left; min-width: 200px;">Descrição do Produto</th><th style="width: 60px;">Qtd</th><th style="width: 70px;">U.M.</th>';
+    fornecedores.forEach(function(f) { html += '<th colspan="2" style="min-width: 200px; text-align: center;"><strong>' + f.nome + '</strong></th>'; });
+    html += '</tr><tr><th></th><th></th><th></th><th></th>';
+    fornecedores.forEach(function() { html += '<th style="font-size: 11px;">Preço Unit.</th><th style="font-size: 11px;">Total</th>'; });
+    html += '</tr></thead><tbody>';
+
+    itens.forEach(function(item, idx) {
+        var menorP = Infinity, maiorP = 0;
+        fornecedores.forEach(function(f) { 
+            var r = respostas[f.id] ? respostas[f.id][item.id] : null; 
+            if (r && r.disponivel && r.preco_unitario > 0) { 
+                if (r.preco_unitario < menorP) menorP = r.preco_unitario; 
+                if (r.preco_unitario > maiorP) maiorP = r.preco_unitario; 
+            } 
+        });
+
+        html += '<tr><td style="text-align: center; font-weight: 600;">' + (idx + 1) + '</td><td style="text-align: left; font-weight: 600;">' + item.nome + '</td><td style="text-align: center;">' + item.quantidade + '</td><td style="text-align: center;">' + item.unidade + '</td>';
+
+        fornecedores.forEach(function(f) {
+            var r = respostas[f.id] ? respostas[f.id][item.id] : null;
+            if (r && r.disponivel && r.preco_unitario > 0) {
+                var isBest = r.preco_unitario <= menorP;
+                var isWorst = fornecedores.length >= 3 && r.preco_unitario >= maiorP && maiorP > menorP;
+                var bg = ''; 
+                if (isBest) bg = 'background: #d4edda; color: #155724;'; 
+                else if (isWorst) bg = 'background: #f8d7da; color: #721c24;';
+                var total = r.preco_unitario * item.quantidade;
+                var chk = isBest ? 'checked' : '';
+                if (isBest && !selecoesPorItem[item.id]) { 
+                    selecoesPorItem[item.id] = { 
+                        fornecedor_cf_id: f.id, 
+                        fornecedor_id: f.fornecedor_id, 
+                        fornecedor_nome: f.nome, 
+                        item_cotacao_id: r.item_cotacao_id, 
+                        preco_unitario: r.preco_unitario, 
+                        preco_total: total, 
+                        prazo: r.prazo, 
+                        item_nome: item.nome, 
+                        quantidade: item.quantidade, 
+                        unidade: item.unidade 
+                    }; 
+                }
+                var nomeEsc = f.nome.replace(/"/g, '&quot;'); 
+                var itemNomeEsc = item.nome.replace(/"/g, '&quot;');
+                html += '<td style="' + bg + '"><div style="display: flex; align-items: center; gap: 6px; justify-content: center;"><input type="radio" name="sel_' + item.id + '" value="' + f.id + '" data-item="' + item.id + '" data-cf="' + f.id + '" data-fid="' + f.fornecedor_id + '" data-fn="' + nomeEsc + '" data-in="' + itemNomeEsc + '" data-icid="' + r.item_cotacao_id + '" data-pu="' + r.preco_unitario + '" data-pt="' + total + '" data-pz="' + (r.prazo || 0) + '" data-q="' + item.quantidade + '" data-u="' + item.unidade + '" onchange="onSelecaoItem(this)" ' + chk + ' style="width: 16px; height: 16px; cursor: pointer;"><span style="font-weight: ' + (isBest ? '700' : '400') + ';">R$ ' + fmt(r.preco_unitario) + '</span></div>';
+                if (r.descricao_fornecedor && r.descricao_fornecedor !== item.nome) { 
+                    html += '<div style="font-size: 10px; color: var(--text-tertiary); margin-top: 2px; text-align: center;">' + r.descricao_fornecedor.substring(0, 40) + '</div>'; 
+                }
+                html += '</td><td style="' + bg + ' font-weight: ' + (isBest ? '700' : '400') + ';">R$ ' + fmt(total) + '</td>';
+            } else if (r && !r.disponivel) { 
+                html += '<td colspan="2" style="color: var(--text-tertiary); text-align: center;"><span style="font-size: 12px;">❌ Indisponível</span></td>'; 
+            }
+            else { 
+                html += '<td style="color: var(--text-tertiary); text-align: center;">—</td><td style="color: var(--text-tertiary); text-align: center;">—</td>'; 
             }
         });
-        
-        fornecedores.forEach(f => {
-            const resp = respostas[f.id] && respostas[f.id][item.id];
-            const preco = resp ? parseFloat(resp.preco) : 0;
-            const prazo = resp ? resp.prazo : '-';
-            
-            let classe = '';
-            if (preco === menorPreco && preco > 0) classe = 'preco-menor';
-            else if (preco > 0) classe = 'preco-maior';
-            
-            html += `<td class="${classe}">
-                ${preco > 0 ? 'R$ ' + preco.toFixed(2) : '-'}<br>
-                <small>${prazo} dias</small>
-            </td>`;
-        });
-        
         html += '</tr>';
     });
-    
-    html += '</tbody></table>';
+    html += '</tbody></table></div>';
+    html += '<div id="resumo-selecao" style="margin-top: 24px;"></div>';
     container.innerHTML = html;
-    
-    // Mostrar sugestão
-    calcularSugestao(itens, respostas, fornecedores);
+    atualizarResumoSelecao();
+    document.getElementById('sugestao-card').style.display = 'block';
+    document.getElementById('sugestao-texto').innerHTML = 'O sistema pré-selecionou o <strong>menor preço por item</strong>. Você pode alterar clicando no radio button de cada fornecedor.<br><span style="font-size: 12px; color: var(--text-secondary);">💡 Considere prazo de entrega e disponibilidade antes de confirmar.</span>';
 }
 
-function calcularSugestao(itens, respostas, fornecedores) {
-    // Algoritmo simples: melhor custo-benefício (preço + prazo)
-    let pontuacao = {};
-    
-    fornecedores.forEach(f => {
-        pontuacao[f.id] = { total: 0, itens: 0 };
-    });
-    
-    itens.forEach(item => {
-        let precos = [];
-        fornecedores.forEach(f => {
-            const resp = respostas[f.id] && respostas[f.id][item.id];
-            if (resp && parseFloat(resp.preco) > 0) {
-                precos.push({ forn: f.id, preco: parseFloat(resp.preco), prazo: parseInt(resp.prazo) || 0 });
-            }
-        });
-        
-        if (precos.length > 0) {
-            const menorPreco = Math.min(...precos.map(p => p.preco));
-            
-            precos.forEach(p => {
-                const pontosPreco = (menorPreco / p.preco) * 50;
-                const pontosPrazo = Math.max(0, 50 - (p.prazo * 2));
-                pontuacao[p.forn].total += pontosPreco + pontosPrazo;
-                pontuacao[p.forn].itens++;
-            });
-        }
-    });
-    
-    // Encontrar vencedor
-    let vencedor = null;
-    let melhorPontuacao = 0;
-    
-    for (const [fornId, pontos] of Object.entries(pontuacao)) {
-        const media = pontos.total / pontos.itens;
-        if (media > melhorPontuacao) {
-            melhorPontuacao = media;
-            vencedor = fornecedores.find(f => f.id == fornId);
-        }
+function onSelecaoItem(radio) { 
+    var d = radio.dataset; 
+    selecoesPorItem[d.item] = { 
+        fornecedor_cf_id: parseInt(d.cf), 
+        fornecedor_id: parseInt(d.fid), 
+        fornecedor_nome: d.fn, 
+        item_cotacao_id: parseInt(d.icid), 
+        preco_unitario: parseFloat(d.pu), 
+        preco_total: parseFloat(d.pt), 
+        prazo: parseInt(d.pz) || 0, 
+        item_nome: d['in'], 
+        quantidade: parseFloat(d.q), 
+        unidade: d.u 
+    }; 
+    atualizarResumoSelecao(); 
+}
+
+function atualizarResumoSelecao() {
+    var el = document.getElementById('resumo-selecao'); 
+    if (!el) return;
+    var porForn = {}; 
+    for (var id in selecoesPorItem) { 
+        var s = selecoesPorItem[id]; 
+        if (!porForn[s.fornecedor_cf_id]) porForn[s.fornecedor_cf_id] = { nome: s.fornecedor_nome, itens: [], total: 0 }; 
+        porForn[s.fornecedor_cf_id].itens.push(s); 
+        porForn[s.fornecedor_cf_id].total += s.preco_total; 
     }
-    
-    if (vencedor) {
-        document.getElementById('sugestao-card').style.display = 'block';
-        document.getElementById('sugestao-texto').innerHTML = `
-            <strong>${vencedor.nome}</strong> apresenta a melhor relação custo-benefício 
-            considerando preço e prazo de entrega. 
-            <br>Pontuação: ${melhorPontuacao.toFixed(1)}/100
-        `;
+    var totalG = 0, nForn = 0, nItens = Object.keys(selecoesPorItem).length; 
+    for (var k in porForn) { totalG += porForn[k].total; nForn++; }
+    var h = '<div style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 2px solid #0ea5e9; border-radius: 12px; padding: 20px;"><h4 style="margin-bottom: 12px; color: #0c4a6e;">📋 Resumo da Seleção — ' + nItens + ' ite' + (nItens !== 1 ? 'ns' : 'm') + ' → ' + nForn + ' pedido' + (nForn !== 1 ? 's' : '') + '</h4><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px;">';
+    for (var cfId in porForn) { 
+        var f = porForn[cfId]; 
+        h += '<div style="background: white; border-radius: 10px; padding: 16px; border: 1px solid #bae6fd;"><div style="font-weight: 700; color: #0c4a6e; margin-bottom: 8px;">🏢 ' + f.nome + '</div><div style="font-size: 13px; color: #475569; margin-bottom: 4px;">' + f.itens.length + ' ite' + (f.itens.length !== 1 ? 'ns' : 'm') + '</div><div style="font-size: 18px; font-weight: 700; color: #0369a1;">R$ ' + fmt(f.total) + '</div></div>'; 
     }
+    h += '</div><div style="margin-top: 12px; text-align: right; font-size: 16px; font-weight: 700; color: #0c4a6e;">TOTAL GERAL: R$ ' + fmt(totalG) + '</div></div>';
+    el.innerHTML = h;
 }
 
 // ============================================================================
 // ETAPA 5: PEDIDOS
 // ============================================================================
-
 function prepararPedidos() {
-    const container = document.getElementById('pedidos-container');
-    
-    // Agrupar itens por fornecedor vencedor
-    let pedidos = {};
-    
-    // Lógica simplificada: por enquanto mostra todos os fornecedores selecionados
-    fornecedoresSelecionados.forEach(fornId => {
-        const card = document.querySelector(`.fornecedor-card[data-id="${fornId}"]`);
-        const nome = card ? card.querySelector('.fornecedor-card__nome').textContent : `Fornecedor ${fornId}`;
-        
-        pedidos[fornId] = {
-            fornecedor: nome,
-            itens: [],
-            total: 0
-        };
-    });
-    
-    let html = '<div style="display: grid; gap: 16px;">';
-    
-    for (const [fornId, pedido] of Object.entries(pedidos)) {
-        html += `
-            <div style="background: var(--input-bg-light); border-radius: 12px; padding: 20px; border: 2px solid var(--border-color);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <div>
-                        <h4 style="font-weight: 600; color: var(--text-primary);">${pedido.fornecedor}</h4>
-                        <p style="font-size: 13px; color: var(--text-secondary);">Pedido será gerado automaticamente</p>
-                    </div>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" checked class="gerar-pedido-check" data-forn="${fornId}">
-                        <span style="font-size: 14px;">Gerar pedido</span>
-                    </label>
-                </div>
-                <div style="font-size: 13px; color: var(--text-secondary);">
-                    Total estimado: <strong style="color: var(--primary-600);">R$ 0,00</strong>
-                </div>
-            </div>
-        `;
+    var container = document.getElementById('pedidos-container');
+    var porForn = {}; 
+    for (var itemId in selecoesPorItem) { 
+        var s = selecoesPorItem[itemId]; 
+        if (!porForn[s.fornecedor_cf_id]) porForn[s.fornecedor_cf_id] = { cf_id: s.fornecedor_cf_id, fornecedor_id: s.fornecedor_id, nome: s.fornecedor_nome, itens: [], total: 0 }; 
+        porForn[s.fornecedor_cf_id].itens.push(s); 
+        porForn[s.fornecedor_cf_id].total += s.preco_total; 
     }
-    
-    html += '</div>';
+    if (Object.keys(porForn).length === 0) { 
+        container.innerHTML = '<div class="empty-state"><div class="empty-state__icon">⚠️</div><div class="empty-state__title">Nenhum item selecionado</div><p>Volte ao passo anterior e selecione os fornecedores para cada item</p></div>'; 
+        return; 
+    }
+    var html = '<div style="background: var(--info-light); border-radius: 10px; padding: 16px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;"><span style="font-size: 24px;">💡</span><span style="font-size: 13px; color: var(--info-700);">Revise os pedidos abaixo e confirme.</span></div>';
+    var totalGeral = 0;
+    for (var cfId in porForn) { 
+        var forn = porForn[cfId]; 
+        totalGeral += forn.total; 
+        html += '<div style="background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 12px; margin-bottom: 16px; overflow: hidden;" id="pedido-card-' + cfId + '"><div style="padding: 16px 20px; background: var(--bg-tertiary); display: flex; justify-content: space-between; align-items: center;"><div><h4 style="font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;"><input type="checkbox" checked class="pedido-check" data-cf="' + cfId + '" onchange="togglePedido(\'' + cfId + '\')" style="width: 18px; height: 18px;"> 🏢 ' + forn.nome + '</h4><p style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">' + forn.itens.length + ' ite' + (forn.itens.length !== 1 ? 'ns' : 'm') + '</p></div><div style="text-align: right;"><div style="font-size: 12px; color: var(--text-secondary);">Valor do Pedido</div><div style="font-size: 20px; font-weight: 700; color: var(--primary-600);">R$ ' + fmt(forn.total) + '</div></div></div><table style="width: 100%; border-collapse: collapse; font-size: 13px;"><thead><tr style="background: var(--input-bg-light);"><th style="padding: 10px 16px; text-align: left;">Produto</th><th style="padding: 10px 16px; text-align: center; width: 80px;">Qtd</th><th style="padding: 10px 16px; text-align: center; width: 60px;">Un</th><th style="padding: 10px 16px; text-align: right; width: 120px;">Preço Unit.</th><th style="padding: 10px 16px; text-align: right; width: 120px;">Total</th></tr></thead><tbody>'; 
+        forn.itens.forEach(function(item) { 
+            html += '<tr style="border-top: 1px solid var(--border-light);"><td style="padding: 10px 16px; font-weight: 500;">' + item.item_nome + '</td><td style="padding: 10px 16px; text-align: center;">' + item.quantidade + '</td><td style="padding: 10px 16px; text-align: center;">' + item.unidade + '</td><td style="padding: 10px 16px; text-align: right;">R$ ' + fmt(item.preco_unitario) + '</td><td style="padding: 10px 16px; text-align: right; font-weight: 600;">R$ ' + fmt(item.preco_total) + '</td></tr>'; 
+        }); 
+        html += '</tbody></table></div>'; 
+    }
+    var numPedidos = Object.keys(porForn).length;
+    html += '<div style="background: linear-gradient(135deg, var(--primary-50), var(--primary-100)); border: 2px solid var(--primary-300); border-radius: 12px; padding: 20px; display: flex; justify-content: space-between; align-items: center;"><div><div style="font-size: 14px; font-weight: 600; color: var(--primary-700);">' + numPedidos + ' Pedido' + (numPedidos !== 1 ? 's' : '') + ' de Compra</div><div style="font-size: 12px; color: var(--primary-600); margin-top: 4px;">Serão gerados como "Pendente"</div></div><div style="font-size: 24px; font-weight: 700; color: var(--primary-800);">R$ ' + fmt(totalGeral) + '</div></div>';
     container.innerHTML = html;
 }
 
-// ============================================================================
-// AÇÕES FINAIS
-// ============================================================================
-
-function salvarRascunho() {
-    salvarCotacao('RASCUNHO', function(id) {
-        if (id) {
-            console.log('✅ Rascunho salvo com ID:', id);
-        }
-    });
+function togglePedido(cfId) { 
+    var card = document.getElementById('pedido-card-' + cfId); 
+    if (card) card.style.opacity = card.querySelector('.pedido-check').checked ? '1' : '0.5'; 
 }
+
+// ============================================================================
+// SALVAR / GERAR PEDIDOS
+// ============================================================================
+function salvarRascunho() { salvarCotacao('rascunho', function(id) {}); }
 
 function finalizarCotacao() {
-    salvarCotacao('CONCLUIDA', function(id) {
-        if (id) {
-            setTimeout(() => voltarParaLista(), 1500);
-        }
-    });
+    var porForn = {}; 
+    for (var itemId in selecoesPorItem) { 
+        var s = selecoesPorItem[itemId]; 
+        if (!porForn[s.fornecedor_cf_id]) porForn[s.fornecedor_cf_id] = { fornecedor_id: s.fornecedor_id, itens: [], valor_total: 0 }; 
+        porForn[s.fornecedor_cf_id].itens.push({ produto_nome: s.item_nome, quantidade: s.quantidade, preco_unitario: s.preco_unitario, preco_total: s.preco_total }); 
+        porForn[s.fornecedor_cf_id].valor_total += s.preco_total; 
+    }
+    var pedidos = []; 
+    for (var cfId in porForn) { 
+        var card = document.getElementById('pedido-card-' + cfId); 
+        var check = card ? card.querySelector('.pedido-check') : null; 
+        if (!check || check.checked) pedidos.push(porForn[cfId]); 
+    }
+    if (pedidos.length === 0) { mostrarToast('Selecione pelo menos um pedido', 'warning'); return; }
+    if (!confirm('Gerar ' + pedidos.length + ' pedido(s) de compra?')) return;
+    fetch('/api/cotacao/' + cotacaoId + '/gerar-pedidos/', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') }, body: JSON.stringify({ cotacao_id: cotacaoId, pedidos: pedidos }) })
+    .then(function(r) { if (!r.ok) return r.text().then(function(t) { throw new Error('HTTP ' + r.status); }); return r.json(); })
+    .then(function(data) { 
+        if (data.success) { 
+            var gerados = data.pedidos || []; 
+            var msg = '✅ ' + gerados.length + ' pedido(s) gerado(s)!<br>'; 
+            gerados.forEach(function(p) { msg += '<br>📦 <strong>' + p.numero + '</strong> — ' + p.fornecedor + ' — ' + p.total_itens + ' itens — R$ ' + fmt(p.valor_total); }); 
+            document.getElementById('pedidos-container').innerHTML = '<div style="background: var(--success-light); border: 2px solid var(--success-400); border-radius: 12px; padding: 24px; text-align: center;"><div style="font-size: 48px; margin-bottom: 16px;">🎉</div><div style="font-size: 18px; font-weight: 700; color: var(--success-800); margin-bottom: 12px;">Pedidos Gerados com Sucesso!</div><div style="font-size: 14px; color: var(--success-700); line-height: 1.8;">' + msg + '</div><div style="margin-top: 20px; display: flex; gap: 12px; justify-content: center;"><a href="/compras/pedidos/" class="erp-btn erp-btn--primary">📦 Ver Pedidos</a><button type="button" class="erp-btn erp-btn--secondary" onclick="voltarParaLista()">← Voltar</button></div></div>'; 
+            document.getElementById('btn-finalizar').style.display = 'none'; 
+            document.getElementById('btn-anterior').style.display = 'none'; 
+            mostrarToast(data.message || 'Pedidos gerados!', 'success'); 
+        } else { 
+            throw new Error(data.message || 'Erro'); 
+        } 
+    })
+    .catch(function(err) { mostrarToast('Erro: ' + err.message, 'danger'); });
 }
 
-// 🔥 CORREÇÃO CRÍTICA: Função reescrita com suporte a callback
 function salvarCotacao(status, callback) {
-    console.log('💾 Iniciando salvamento...', { status, cotacaoId });
-    
-    // Coletar dados do formulário
-    const dados = {
-        id: cotacaoId,
-        titulo: document.getElementById('cotacao-titulo').value.trim(),
-        setor: document.getElementById('cotacao-setor').value,
-        data_limite: document.getElementById('cotacao-data-limite').value,
-        observacoes: document.getElementById('cotacao-observacoes').value.trim(),
-        status: status,
-        itens: [],
-        fornecedores: Array.from(fornecedoresSelecionados)
-    };
-    
-    // Validação básica
-    if (!dados.titulo) {
-        mostrarToast('Preencha o título da cotação', 'warning');
-        if (callback) callback(null);
-        return;
-    }
-    if (!dados.setor) {
-        mostrarToast('Selecione o setor', 'warning');
-        if (callback) callback(null);
-        return;
-    }
-    if (!dados.data_limite) {
-        mostrarToast('Defina a data limite', 'warning');
-        if (callback) callback(null);
-        return;
-    }
-    
-    // 🔥 CORREÇÃO: Coletar itens da tabela corretamente
-    const linhas = document.querySelectorAll('#itens-tbody tr');
-    console.log('📋 Linhas encontradas:', linhas.length);
-    
-    linhas.forEach((row, index) => {
-        const produtoInput = row.querySelector('.item-produto');
-        const unidadeInput = row.querySelector('.item-unidade');
-        const quantidadeInput = row.querySelector('.item-quantidade');
-        
-        const produto = produtoInput ? produtoInput.value.trim() : '';
-        const unidade = unidadeInput ? unidadeInput.value.trim() : 'UN';
-        const quantidade = quantidadeInput ? parseFloat(quantidadeInput.value) || 0 : 0;
-        
-        console.log(`Item ${index + 1}:`, { produto, unidade, quantidade });
-        
-        // Só adiciona se tiver produto e quantidade > 0
-        if (produto && quantidade > 0) {
-            dados.itens.push({ 
-                produto: produto, 
-                unidade: unidade || 'UN', 
-                quantidade: quantidade 
-            });
-        }
+    var dados = { id: cotacaoId, titulo: document.getElementById('cotacao-titulo').value.trim(), setor: document.getElementById('cotacao-setor').value, data_limite: document.getElementById('cotacao-data-limite').value, observacoes: document.getElementById('cotacao-observacoes').value.trim(), status: status, itens: [], fornecedores: Array.from(fornecedoresSelecionados) };
+    if (!dados.titulo) { mostrarToast('Preencha o título', 'warning'); if (callback) callback(null); return; }
+    if (!dados.setor) { mostrarToast('Selecione o setor', 'warning'); if (callback) callback(null); return; }
+    if (!dados.data_limite) { mostrarToast('Defina a data limite', 'warning'); if (callback) callback(null); return; }
+    document.querySelectorAll('#itens-tbody tr').forEach(function(row) { 
+        var p = row.querySelector('.item-produto'); 
+        var u = row.querySelector('.item-unidade'); 
+        var q = row.querySelector('.item-quantidade'); 
+        var produto = p ? p.value.trim() : ''; 
+        var unidade = u ? u.value.trim() : 'UN'; 
+        var quantidade = q ? parseFloat(q.value) || 0 : 0; 
+        if (produto && quantidade > 0) { 
+            dados.itens.push({ descricao_manual: produto, unidade_medida: unidade, quantidade: quantidade }); 
+        } 
     });
-    
-    console.log('✅ Itens coletados:', dados.itens.length, dados.itens);
-    
-    // Se estiver no passo 3 e não tiver itens, avisa mas continua (para rascunho)
-    if (etapaAtual === 3 && dados.itens.length === 0 && status !== 'RASCUNHO') {
-        mostrarToast('Adicione pelo menos um item válido', 'warning');
-        if (callback) callback(null);
-        return;
-    }
-    
-    // Enviar para servidor
-    fetch('/api/cotacao/salvar/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken')
-        },
-        body: JSON.stringify(dados)
+    fetch('/api/cotacao/salvar/', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') }, body: JSON.stringify(dados) })
+    .then(function(r) { if (!r.ok) return r.text().then(function(t) { throw new Error('HTTP ' + r.status); }); return r.json(); })
+    .then(function(data) { 
+        if (data.success) { 
+            cotacaoId = data.id; 
+            mostrarToast(data.message || 'Cotação salva!', 'success'); 
+            if (callback) callback(data.id); 
+        } else { 
+            throw new Error(data.message || 'Erro'); 
+        } 
     })
-    .then(r => {
-        if (!r.ok) {
-            return r.text().then(text => {
-                throw new Error(`HTTP ${r.status}: ${text.substring(0, 200)}`);
-            });
-        }
-        return r.json();
-    })
-    .then(data => {
-        console.log('📡 Resposta do servidor:', data);
-        
-        if (data.success) {
-            // 🔥 CORREÇÃO: Atualiza cotacaoId ANTES de qualquer coisa
-            cotacaoId = data.id;
-            console.log('✅ Cotação salva com ID:', cotacaoId);
-            
-            mostrarToast(data.message || 'Cotação salva com sucesso!', 'success');
-            
-            // 🔥 CORREÇÃO: Chama callback se existir
-            if (callback) {
-                callback(data.id);
-            }
-        } else {
-            throw new Error(data.message || 'Erro ao salvar');
-        }
-    })
-    .catch(err => {
-        console.error('❌ Erro ao salvar:', err);
-        mostrarToast('Erro ao salvar: ' + err.message, 'danger');
-        if (callback) callback(null);
-    });
+    .catch(function(err) { mostrarToast('Erro ao salvar: ' + err.message, 'danger'); if (callback) callback(null); });
 }
 
 // ============================================================================
-// MODAL DE EXCLUSÃO
+// MODAL EXCLUSÃO
 // ============================================================================
-
-let cotacaoIdExcluir = null;
-
-function abrirModalExclusao(id, numero, titulo) {
-    cotacaoIdExcluir = id;
-    document.getElementById('modalCotacaoNumero').textContent = numero;
-    document.getElementById('modalCotacaoTitulo').textContent = titulo;
-    document.getElementById('modalExclusao').classList.add('active');
-    document.body.style.overflow = 'hidden';
+var cotacaoIdExcluir = null;
+function abrirModalExclusao(id, numero, titulo) { 
+    cotacaoIdExcluir = id; 
+    document.getElementById('modalCotacaoNumero').textContent = numero; 
+    document.getElementById('modalCotacaoTitulo').textContent = titulo; 
+    document.getElementById('modalExclusao').classList.add('active'); 
+    document.body.style.overflow = 'hidden'; 
 }
-
-function fecharModalExclusao() {
-    document.getElementById('modalExclusao').classList.remove('active');
-    document.body.style.overflow = '';
-    cotacaoIdExcluir = null;
+function fecharModalExclusao() { 
+    document.getElementById('modalExclusao').classList.remove('active'); 
+    document.body.style.overflow = ''; 
+    cotacaoIdExcluir = null; 
 }
-
-function executarExclusao() {
-    if (!cotacaoIdExcluir) return;
-    
-    fetch(`/api/cotacao/${cotacaoIdExcluir}/excluir/`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken')
-        }
+function executarExclusao() { 
+    if (!cotacaoIdExcluir) return; 
+    fetch('/api/cotacao/' + cotacaoIdExcluir + '/excluir/', { method: 'POST', headers: { 'X-CSRFToken': getCookie('csrftoken') } })
+    .then(function(r) { return r.json(); })
+    .then(function(data) { 
+        if (data.success) { 
+            fecharModalExclusao(); 
+            var linha = document.getElementById('linha-' + cotacaoIdExcluir); 
+            if (linha) { 
+                linha.style.transition = 'all 0.4s ease'; 
+                linha.style.opacity = '0'; 
+                linha.style.transform = 'translateX(-30px)'; 
+                setTimeout(function() { 
+                    linha.remove(); 
+                    if (!document.querySelectorAll('.data-table tbody tr').length) location.reload(); 
+                }, 400); 
+            } 
+            mostrarToast(data.message, 'success'); 
+        } else { 
+            throw new Error(data.message); 
+        } 
     })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            fecharModalExclusao();
-            
-            // Animação de remoção
-            const linha = document.getElementById(`linha-${cotacaoIdExcluir}`);
-            if (linha) {
-                linha.style.transition = 'all 0.4s ease';
-                linha.style.opacity = '0';
-                linha.style.transform = 'translateX(-30px)';
-                setTimeout(() => {
-                    linha.remove();
-                    if (document.querySelectorAll('.data-table tbody tr').length === 0) {
-                        location.reload();
-                    }
-                }, 400);
-            }
-            
-            mostrarToast(data.message, 'success');
-        } else {
-            throw new Error(data.message);
-        }
-    })
-    .catch(err => {
-        fecharModalExclusao();
-        mostrarToast(err.message, 'danger');
-    });
+    .catch(function(err) { 
+        fecharModalExclusao(); 
+        mostrarToast(err.message, 'danger'); 
+    }); 
 }
 
-// Fechar modal ao clicar fora
-document.getElementById('modalExclusao').addEventListener('click', function(e) {
-    if (e.target === this) fecharModalExclusao();
-});
+document.getElementById('modalExclusao').addEventListener('click', function(e) { if (e.target === this) fecharModalExclusao(); });
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { fecharModalExclusao(); fecharModalImportar(); } });
 
-// Fechar com ESC
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        fecharModalExclusao();
-        fecharModalImportar();
-    }
-});
-
-// ============================================================================
-// UTILITÁRIOS
-// ============================================================================
-
-function mostrarToast(mensagem, tipo) {
-    const toast = document.createElement('div');
-    toast.className = `erp-alert erp-alert--${tipo}`;
-    toast.style.cssText = `
-        position: fixed;
-        top: 90px;
-        right: 20px;
-        z-index: 9999;
-        min-width: 300px;
-        animation: slideIn 0.3s ease;
-        box-shadow: var(--shadow-lg);
-    `;
-    toast.innerHTML = mensagem;
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.style.animation = 'slideOut 0.3s ease';
-        setTimeout(() => toast.remove(), 300);
-    }, 5000);
-}
-
-function getCookie(name) {
-    let v = null;
-    if (document.cookie) {
-        const c = document.cookie.split(';');
-        for (let i = 0; i < c.length; i++) {
-            const x = c[i].trim();
-            if (x.substring(0, name.length + 1) === (name + '=')) {
-                v = decodeURIComponent(x.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return v;
-}
-
-// CSS para animações do toast
-const s = document.createElement('style');
-s.textContent = `
-    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-    @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
-`;
-document.head.appendChild(s);
+// Animações toast
+var _s = document.createElement('style');
+_s.textContent = '@keyframes slideInToast { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } } @keyframes slideOutToast { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }';
+document.head.appendChild(_s);
 </script>
 {% endblock %}

@@ -3,257 +3,1220 @@
 
 {% block title %}Relatório Financeiro - ERP ServicesBI{% endblock %}
 
-{% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% block extra_css %}
+<style>
+.dashboard-pbi {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+    min-height: calc(100vh - 60px);
+    background: var(--bg-secondary);
+}
+
+/* ===== HEADER ===== */
+.pbi-header {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.pbi-header__left { display: flex; flex-direction: column; gap: 2px; }
+
+.pbi-header__title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pbi-header__title-bar {
+    width: 4px;
+    height: 22px;
+    background: var(--primary-500);
+    border-radius: 2px;
+}
+
+.pbi-header__meta {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.pbi-header__right { display: flex; align-items: center; gap: 8px; }
+
+.pbi-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    transition: all 0.15s;
+    text-decoration: none;
+}
+
+.pbi-btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
+.pbi-btn--primary { background: var(--primary-500); color: white; border-color: var(--primary-500); }
+.pbi-btn--primary:hover { background: var(--primary-600); color: white; }
+.pbi-btn--success { background: var(--success-500); color: white; border-color: var(--success-500); }
+.pbi-btn--success:hover { background: var(--success-600); color: white; }
+.pbi-btn--danger { background: var(--danger-500); color: white; border-color: var(--danger-500); }
+.pbi-btn--danger:hover { background: var(--danger-600); color: white; }
+.pbi-btn--purple { background: #8b5cf6; color: white; border-color: #8b5cf6; }
+.pbi-btn--purple:hover { background: #7c3aed; color: white; }
+
+/* ===== SLICER BAR ===== */
+.pbi-slicer-bar {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.pbi-slicer-bar__label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-tertiary);
+}
+
+.pbi-slicer-group { display: flex; align-items: center; gap: 6px; }
+.pbi-slicer-group label { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+
+.pbi-select, .pbi-input {
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 13px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    cursor: pointer;
+    min-width: 130px;
+}
+
+.pbi-select:focus, .pbi-input:focus { 
+    outline: none; 
+    border-color: var(--primary-500); 
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.15); 
+}
+
+.pbi-slicer-divider { width: 1px; height: 20px; background: var(--border-color); }
+.pbi-slicer-bar__spacer { flex: 1; }
+
+/* ===== CANVAS ===== */
+.pbi-canvas {
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* ===== KPI CARDS ===== */
+.pbi-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+}
+
+@media (max-width: 1100px) { .pbi-kpi-row { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px)  { .pbi-kpi-row { grid-template-columns: 1fr; } }
+
+.pbi-kpi {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 20px;
+    cursor: default;
+    transition: transform 0.15s, box-shadow 0.15s;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pbi-kpi:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+
+.pbi-kpi__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.pbi-kpi__label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-tertiary);
+}
+
+.pbi-kpi__icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.pbi-kpi--success .pbi-kpi__icon { background: rgba(34,197,94,0.1); color: #22c55e; }
+.pbi-kpi--danger .pbi-kpi__icon { background: rgba(239,68,68,0.1); color: #ef4444; }
+.pbi-kpi--warning .pbi-kpi__icon { background: rgba(245,158,11,0.1); color: #f59e0b; }
+.pbi-kpi--info .pbi-kpi__icon { background: rgba(59,130,246,0.1); color: #3b82f6; }
+
+.pbi-kpi__value {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+}
+
+.pbi-kpi__value--success { color: #22c55e; }
+.pbi-kpi__value--danger { color: #ef4444; }
+
+.pbi-kpi__sparkline-wrap {
+    height: 32px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.pbi-kpi__sparkline {
+    height: 32px !important;
+    max-height: 32px;
+    width: 100%;
+}
+
+.pbi-kpi__bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 2px;
+}
+
+.pbi-kpi__trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
+.pbi-kpi__trend--up { color: #16a34a; background: rgba(34,197,94,0.1); }
+.pbi-kpi__trend--down { color: #dc2626; background: rgba(239,68,68,0.1); }
+.pbi-kpi__trend--neutral { color: var(--text-secondary); background: var(--bg-secondary); }
+
+.pbi-kpi__subtitle {
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+/* ===== GRÁFICOS ===== */
+.pbi-charts-row { display: grid; gap: 14px; }
+.pbi-charts-row--1-1 { grid-template-columns: 1fr 1fr; }
+.pbi-charts-row--2-1 { grid-template-columns: 2fr 1fr; }
+.pbi-charts-row--full { grid-template-columns: 1fr; }
+
+@media (max-width: 900px) {
+    .pbi-charts-row--1-1, .pbi-charts-row--2-1 { grid-template-columns: 1fr; }
+}
+
+/* ===== PANEL ===== */
+.pbi-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: box-shadow 0.15s;
+}
+
+.pbi-panel:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+
+.pbi-panel__header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.pbi-panel__title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pbi-panel__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary-500);
+    flex-shrink: 0;
+}
+
+.pbi-panel__body { padding: 16px 20px; }
+.pbi-panel__body--no-pad { padding: 0; }
+
+.pbi-chart-container { position: relative; width: 100%; height: 280px; }
+.pbi-chart-container--sm { height: 240px; }
+
+/* ===== CARDS DE ALERTA ===== */
+.pbi-alert-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+@media (max-width: 900px) { .pbi-alert-row { grid-template-columns: 1fr; } }
+
+.pbi-alert-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: box-shadow 0.15s;
+}
+
+.pbi-alert-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+
+.pbi-alert-card__header {
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.pbi-alert-card__header--warning {
+    background: rgba(245,158,11,0.1);
+    border-bottom: 1px solid rgba(245,158,11,0.2);
+}
+
+.pbi-alert-card__header--danger {
+    background: rgba(239,68,68,0.1);
+    border-bottom: 1px solid rgba(239,68,68,0.2);
+}
+
+.pbi-alert-card__title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pbi-alert-card__body {
+    padding: 20px;
+}
+
+.pbi-alert-card__value {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.pbi-alert-card__value--warning { color: #f59e0b; }
+.pbi-alert-card__value--danger { color: #ef4444; }
+
+.pbi-alert-card__sub {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #ef4444;
+    margin-bottom: 15px;
+}
+
+.pbi-alert-card__footer {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+}
+
+.pbi-alert-card__link {
+    color: var(--primary-500);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.pbi-alert-card__link:hover { color: var(--primary-600); }
+
+/* ===== TABELA ===== */
+.pbi-table-wrap { overflow-x: auto; }
+
+.pbi-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.pbi-table thead { background: var(--bg-tertiary); }
+
+.pbi-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-tertiary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.pbi-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.pbi-table tbody tr { transition: background 0.1s; }
+.pbi-table tbody tr:hover { background: var(--bg-secondary); }
+.pbi-table tbody tr:last-child td { border-bottom: none; }
+
+.pbi-table .erp-text-right { text-align: right; }
+.pbi-table .erp-text-center { text-align: center; }
+.pbi-table .erp-font-semibold { font-weight: 600; color: var(--text-primary); }
+
+/* ===== BADGES ===== */
+.pbi-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.pbi-badge--success { background: rgba(34,197,94,0.15); color: #16a34a; }
+.pbi-badge--danger { background: rgba(239,68,68,0.15); color: #dc2626; }
+
+/* ===== STATUS BAR ===== */
+.pbi-statusbar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 8px 24px;
+    background: var(--card-bg);
+    border-top: 1px solid var(--border-color);
+    font-size: 11px;
+    color: var(--text-tertiary);
+    flex-wrap: wrap;
+}
+
+.pbi-statusbar__item { display: flex; align-items: center; gap: 5px; }
+.pbi-statusbar__dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
+.pbi-statusbar__spacer { flex: 1; }
+
+/* ===== EMPTY ===== */
+.pbi-empty { padding: 40px 20px; text-align: center; color: var(--text-tertiary); }
+.pbi-empty__icon { font-size: 40px; opacity: 0.3; margin-bottom: 12px; }
+.pbi-empty__text { font-size: 13px; }
+
+/* ===== TOAST ===== */
+.toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+
+.toast {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 220px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    animation: toastIn 0.25s ease;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+@keyframes toastIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ===== FILTROS EXPANDÍVEIS ===== */
+.pbi-filters-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.pbi-filters-panel__header {
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.pbi-filters-panel__header:hover { background: var(--bg-secondary); }
+
+.pbi-filters-panel__title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pbi-filters-panel__body {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+    display: none;
+}
+
+.pbi-filters-panel__body--open { display: block; }
+
+.pbi-filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.pbi-filter-group { display: flex; flex-direction: column; gap: 4px; }
+.pbi-filter-group label { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+
+.pbi-filters-actions {
+    display: flex;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* ===== MENSAGENS ===== */
+.pbi-messages {
+    margin-bottom: 16px;
+}
+
+.pbi-message {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pbi-message--error {
+    background: rgba(239,68,68,0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239,68,68,0.2);
+}
+
+.pbi-message--success {
+    background: rgba(34,197,94,0.1);
+    color: #16a34a;
+    border: 1px solid rgba(34,197,94,0.2);
+}
+</style>
 {% endblock %}
 
 {% block content %}
-<div style="margin-bottom: 20px;">
-    <h2 style="margin: 0; font-size: 24px; color: #1f2937;">FINANCEIRO</h2>
-    <p style="margin: 5px 0 0 0; color: #6b7280;">Relatórios e análises financeiras</p>
-</div>
+<div class="dashboard-pbi">
 
-{% if messages %}
-    {% for message in messages %}
-        {% if message.tags == 'error' %}
-        <div style="margin-bottom: 15px; padding: 12px; border-radius: 6px; background: #fee2e2; color: #dc2626; border: 1px solid #fecaca;">
-            {{ message }}
-        </div>
-        {% else %}
-        <div style="margin-bottom: 15px; padding: 12px; border-radius: 6px; background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0;">
-            {{ message }}
-        </div>
-        {% endif %}
-    {% endfor %}
-{% endif %}
-
-<!-- Cards de Resumo -->
-<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px;">
-    <div style="background: white; border-radius: 8px; padding: 20px; border-left: 4px solid #22c55e; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <div style="color: #6b7280; font-size: 12px; margin-bottom: 8px; text-transform: uppercase; font-weight: 600;">Entradas</div>
-        <div style="font-size: 24px; font-weight: 700; color: #22c55e;">{{ entradas|currency_br }}</div>
-    </div>
-    
-    <div style="background: white; border-radius: 8px; padding: 20px; border-left: 4px solid #ef4444; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <div style="color: #6b7280; font-size: 12px; margin-bottom: 8px; text-transform: uppercase; font-weight: 600;">Saídas</div>
-        <div style="font-size: 24px; font-weight: 700; color: #ef4444;">{{ saidas|currency_br }}</div>
-    </div>
-    
-    <div style="background: white; border-radius: 8px; padding: 20px; border-left: 4px solid {% if saldo >= 0 %}#22c55e{% else %}#ef4444{% endif %}; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <div style="color: #6b7280; font-size: 12px; margin-bottom: 8px; text-transform: uppercase; font-weight: 600;">Saldo</div>
-        <div style="font-size: 24px; font-weight: 700; color: {% if saldo >= 0 %}#22c55e{% else %}#ef4444{% endif %};">{{ saldo|currency_br }}</div>
-    </div>
-    
-    <div style="background: white; border-radius: 8px; padding: 20px; border-left: 4px solid #f59e0b; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <div style="color: #6b7280; font-size: 12px; margin-bottom: 8px; text-transform: uppercase; font-weight: 600;">Contas em Aberto</div>
-        <div style="font-size: 24px; font-weight: 700; color: #f59e0b;">{{ contas_receber_aberto|currency_br }}</div>
-    </div>
-</div>
-
-<!-- Filtros -->
-<div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 20px;">
-    <div style="padding: 20px; border-bottom: 1px solid #e5e7eb; background: #f3f4f6;">
-        <h3 style="margin: 0; font-size: 16px; color: #1f2937;">FILTROS</h3>
-    </div>
-    <div style="padding: 20px;">
-        <form method="get" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
-            <div style="display: flex; flex-direction: column; gap: 5px;">
-                <label style="font-size: 12px; color: #6b7280; font-weight: 600;">Data Inicial</label>
-                <input type="date" name="data_inicial" value="{{ data_inicial|default:'' }}" style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; width: 150px;">
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 5px;">
-                <label style="font-size: 12px; color: #6b7280; font-weight: 600;">Data Final</label>
-                <input type="date" name="data_final" value="{{ data_final|default:'' }}" style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; width: 150px;">
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 5px;">
-                <label style="font-size: 12px; color: #6b7280; font-weight: 600;">Tipo</label>
-                <select name="tipo_relatorio" style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; width: 180px;">
-                    <option value="geral" {% if tipo_relatorio == 'geral' %}selected{% endif %}>Geral</option>
-                    <option value="receitas" {% if tipo_relatorio == 'receitas' %}selected{% endif %}>Apenas Receitas</option>
-                    <option value="despesas" {% if tipo_relatorio == 'despesas' %}selected{% endif %}>Apenas Despesas</option>
-                </select>
-            </div>
-            <button type="submit" style="padding: 8px 16px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">📊 Gerar Relatório</button>
-            <a href="{% url 'relatorio_financeiro_pdf' %}" style="padding: 8px 16px; background: #8b5cf6; color: white; border: none; border-radius: 6px; text-decoration: none; font-size: 14px;">📄 PDF</a>
-        </form>
-    </div>
-</div>
-
-<!-- Gráficos -->
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-    <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px;">
-        <div style="padding: 20px; border-bottom: 1px solid #e5e7eb; background: #f3f4f6;">
-            <h3 style="margin: 0; font-size: 16px; color: #1f2937;">EVOLUÇÃO DIÁRIA</h3>
-        </div>
-        <div style="padding: 20px;">
-            <canvas id="graficoDiario" height="250"></canvas>
-        </div>
-    </div>
-    
-    <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px;">
-        <div style="padding: 20px; border-bottom: 1px solid #e5e7eb; background: #f3f4f6;">
-            <h3 style="margin: 0; font-size: 16px; color: #1f2937;">EVOLUÇÃO MENSAL</h3>
-        </div>
-        <div style="padding: 20px;">
-            <canvas id="graficoMensal" height="250"></canvas>
-        </div>
-    </div>
-</div>
-
-<!-- Contas em Aberto -->
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
-    <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; border-top: 4px solid #f59e0b;">
-        <div style="padding: 20px; border-bottom: 1px solid #e5e7eb; background: #fffbeb;">
-            <h3 style="margin: 0; font-size: 16px; color: #92400e;">CONTAS A RECEBER EM ABERTO</h3>
-        </div>
-        <div style="padding: 20px;">
-            <div style="font-size: 32px; font-weight: 700; color: #f59e0b; margin-bottom: 10px;">{{ contas_receber_aberto|currency_br }}</div>
-            <div style="color: #ef4444; font-size: 14px; font-weight: 500;">⚠️ Vencidas: {{ contas_receber_vencidas|currency_br }}</div>
-            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
-                <a href="{% url 'conta_receber_list' %}" style="color: #2563eb; text-decoration: none; font-size: 14px;">Ver detalhes →</a>
+    <!-- HEADER -->
+    <div class="pbi-header">
+        <div class="pbi-header__left">
+            <h1 class="pbi-header__title">
+                <div class="pbi-header__title-bar"></div>
+                Relatório Financeiro
+            </h1>
+            <div class="pbi-header__meta">
+                <span>📅 Período: <strong id="periodText">{{ data_inicial|default:"Mês atual" }} até {{ data_final|default:"Hoje" }}</strong></span>
+                <span>🕐 Atualizado: <strong id="updateTime">--:--</strong></span>
             </div>
         </div>
-    </div>
-    
-    <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; border-top: 4px solid #ef4444;">
-        <div style="padding: 20px; border-bottom: 1px solid #e5e7eb; background: #fef2f2;">
-            <h3 style="margin: 0; font-size: 16px; color: #991b1b;">CONTAS A PAGAR EM ABERTO</h3>
-        </div>
-        <div style="padding: 20px;">
-            <div style="font-size: 32px; font-weight: 700; color: #ef4444; margin-bottom: 10px;">{{ contas_pagar_aberto|currency_br }}</div>
-            <div style="color: #ef4444; font-size: 14px; font-weight: 500;">⚠️ Vencidas: {{ contas_pagar_vencidas|currency_br }}</div>
-            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
-                <a href="{% url 'conta_pagar_list' %}" style="color: #2563eb; text-decoration: none; font-size: 14px;">Ver detalhes →</a>
-            </div>
+        <div class="pbi-header__right">
+            <button class="pbi-btn" onclick="location.reload()">🔄 Atualizar</button>
+            <button class="pbi-btn" onclick="window.print()">🖨️ Imprimir</button>
+            <button class="pbi-btn pbi-btn--purple" onclick="window.print()">📄 PDF</button>
+            <button class="pbi-btn pbi-btn--success" onclick="exportarExcel()">📊 Excel</button>
         </div>
     </div>
-</div>
 
-<!-- Tabela de Movimentações -->
-<div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px;">
-    <div style="padding: 20px; border-bottom: 1px solid #e5e7eb;">
-        <h3 style="margin: 0; font-size: 18px; color: #1f2937;">MOVIMENTAÇÕES DO PERÍODO</h3>
+    <!-- SLICER BAR -->
+    <div class="pbi-slicer-bar">
+        <span class="pbi-slicer-bar__label">Visão</span>
+        <div class="pbi-slicer-group">
+            <label>Período</label>
+            <select class="pbi-select" id="filterPeriodo" onchange="aplicarFiltroPeriodo(this.value)">
+                <option value="30" {% if dias_periodo == 30 %}selected{% endif %}>Últimos 30 dias</option>
+                <option value="90" {% if dias_periodo == 90 %}selected{% endif %}>Últimos 3 meses</option>
+                <option value="180" {% if dias_periodo == 180 %}selected{% endif %}>Últimos 6 meses</option>
+                <option value="365" {% if dias_periodo == 365 %}selected{% endif %}>Último ano</option>
+                <option value="custom" {% if dias_periodo == 'custom' %}selected{% endif %}>Personalizado</option>
+            </select>
+        </div>
+        <div class="pbi-slicer-divider"></div>
+        <div class="pbi-slicer-group">
+            <label>Tipo</label>
+            <select class="pbi-select" name="tipo_relatorio" id="filterTipo" onchange="this.form.submit()">
+                <option value="geral" {% if tipo_relatorio == 'geral' %}selected{% endif %}>Geral</option>
+                <option value="receitas" {% if tipo_relatorio == 'receitas' %}selected{% endif %}>Apenas Receitas</option>
+                <option value="despesas" {% if tipo_relatorio == 'despesas' %}selected{% endif %}>Apenas Despesas</option>
+            </select>
+        </div>
+        <div class="pbi-slicer-bar__spacer"></div>
+        <span style="font-size:12px; color:var(--text-tertiary);">
+            <strong style="color:var(--success-500);">{{ movimentacoes|length }}</strong> movimentações
+        </span>
     </div>
-    <div style="overflow-x: auto;">
-        <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr style="background: #2563eb; color: white;">
-                    <th style="padding: 12px; text-align: left;">Data</th>
-                    <th style="padding: 12px; text-align: left;">Descrição</th>
-                    <th style="padding: 12px; text-align: left;">Categoria</th>
-                    <th style="padding: 12px; text-align: center;">Tipo</th>
-                    <th style="padding: 12px; text-align: right;">Valor</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for mov in movimentacoes|slice:":10" %}
-                <tr style="border-bottom: 1px solid #e5e7eb;">
-                    <td style="padding: 12px; font-size: 14px;">{{ mov.data|date:"d/m/Y" }}</td>
-                    <td style="padding: 12px; font-size: 14px;">{{ mov.descricao|truncatechars:40 }}</td>
-                    <td style="padding: 12px; font-size: 14px; color: #6b7280;">{{ mov.categoria|default:"-" }}</td>
-                    <td style="padding: 12px; text-align: center;">
-                        {% if mov.tipo == 'entrada' %}
-                            <span style="padding: 4px 12px; background: #22c55e; color: white; border-radius: 12px; font-size: 12px; font-weight: 500;">Entrada</span>
-                        {% else %}
-                            <span style="padding: 4px 12px; background: #ef4444; color: white; border-radius: 12px; font-size: 12px; font-weight: 500;">Saída</span>
-                        {% endif %}
-                    </td>
-                    <td style="padding: 12px; text-align: right; font-weight: 600; color: {% if mov.tipo == 'entrada' %}#22c55e{% else %}#ef4444{% endif %};">
-                        {% if mov.tipo == 'entrada' %}+{% else %}-{% endif %} {{ mov.valor|currency_br }}
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="5" style="padding: 40px; text-align: center; color: #6b7280;">
-                        Nenhuma movimentação no período selecionado.
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% if movimentacoes|length > 10 %}
-    <div style="padding: 15px; text-align: center; border-top: 1px solid #e5e7eb;">
-        <a href="{% url 'fluxo_caixa' %}" style="color: #2563eb; text-decoration: none; font-size: 14px;">Ver todas as movimentações →</a>
+
+    <!-- MENSAGENS -->
+    {% if messages %}
+    <div class="pbi-messages">
+        {% for message in messages %}
+            <div class="pbi-message pbi-message--{{ message.tags }}">
+                {% if message.tags == 'error' %}⚠️{% else %}✅{% endif %}
+                {{ message }}
+            </div>
+        {% endfor %}
     </div>
     {% endif %}
+
+    <div class="pbi-canvas">
+
+        <!-- KPI CARDS -->
+        <div class="pbi-kpi-row">
+
+            <div class="pbi-kpi pbi-kpi--success">
+                <div class="pbi-kpi__top">
+                    <span class="pbi-kpi__label">Entradas</span>
+                    <div class="pbi-kpi__icon">💰</div>
+                </div>
+                <div class="pbi-kpi__value pbi-kpi__value--success">{{ entradas|currency_br }}</div>
+                <div class="pbi-kpi__sparkline-wrap">
+                    <canvas class="pbi-kpi__sparkline" id="sparkEntradas"></canvas>
+                </div>
+                <div class="pbi-kpi__bottom">
+                    <span class="pbi-kpi__trend pbi-kpi__trend--up">▲ Receitas</span>
+                    <span class="pbi-kpi__subtitle">no período</span>
+                </div>
+            </div>
+
+            <div class="pbi-kpi pbi-kpi--danger">
+                <div class="pbi-kpi__top">
+                    <span class="pbi-kpi__label">Saídas</span>
+                    <div class="pbi-kpi__icon">📤</div>
+                </div>
+                <div class="pbi-kpi__value pbi-kpi__value--danger">{{ saidas|currency_br }}</div>
+                <div class="pbi-kpi__sparkline-wrap">
+                    <canvas class="pbi-kpi__sparkline" id="sparkSaidas"></canvas>
+                </div>
+                <div class="pbi-kpi__bottom">
+                    <span class="pbi-kpi__trend pbi-kpi__trend--down">▼ Despesas</span>
+                    <span class="pbi-kpi__subtitle">no período</span>
+                </div>
+            </div>
+
+            <div class="pbi-kpi pbi-kpi--info">
+                <div class="pbi-kpi__top">
+                    <span class="pbi-kpi__label">Saldo</span>
+                    <div class="pbi-kpi__icon">⚖️</div>
+                </div>
+                <div class="pbi-kpi__value {% if saldo >= 0 %}pbi-kpi__value--success{% else %}pbi-kpi__value--danger{% endif %}">
+                    {{ saldo|currency_br }}
+                </div>
+                <div class="pbi-kpi__sparkline-wrap">
+                    <canvas class="pbi-kpi__sparkline" id="sparkSaldo"></canvas>
+                </div>
+                <div class="pbi-kpi__bottom">
+                    <span class="pbi-kpi__trend {% if saldo >= 0 %}pbi-kpi__trend--up{% else %}pbi-kpi__trend--down{% endif %}">
+                        {% if saldo >= 0 %}▲ Positivo{% else %}▼ Negativo{% endif %}
+                    </span>
+                    <span class="pbi-kpi__subtitle">líquido</span>
+                </div>
+            </div>
+
+            <div class="pbi-kpi pbi-kpi--warning">
+                <div class="pbi-kpi__top">
+                    <span class="pbi-kpi__label">Contas em Aberto</span>
+                    <div class="pbi-kpi__icon">📋</div>
+                </div>
+                <div class="pbi-kpi__value pbi-kpi__value--warning">{{ contas_receber_aberto|currency_br }}</div>
+                <div class="pbi-kpi__sparkline-wrap">
+                    <canvas class="pbi-kpi__sparkline" id="sparkAberto"></canvas>
+                </div>
+                <div class="pbi-kpi__bottom">
+                    <span class="pbi-kpi__trend pbi-kpi__trend--neutral">⏳ A Receber</span>
+                    <span class="pbi-kpi__subtitle">pendente</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- GRÁFICOS -->
+        <div class="pbi-charts-row pbi-charts-row--1-1">
+            <div class="pbi-panel">
+                <div class="pbi-panel__header">
+                    <h5 class="pbi-panel__title">
+                        <div class="pbi-panel__dot"></div>
+                        Evolução Diária
+                    </h5>
+                </div>
+                <div class="pbi-panel__body">
+                    <div class="pbi-chart-container" id="chartDiario"></div>
+                </div>
+            </div>
+
+            <div class="pbi-panel">
+                <div class="pbi-panel__header">
+                    <h5 class="pbi-panel__title">
+                        <div class="pbi-panel__dot" style="background:#8b5cf6"></div>
+                        Evolução Mensal
+                    </h5>
+                </div>
+                <div class="pbi-panel__body">
+                    <div class="pbi-chart-container" id="chartMensal"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARDS DE ALERTA -->
+        <div class="pbi-alert-row">
+            <div class="pbi-alert-card">
+                <div class="pbi-alert-card__header pbi-alert-card__header--warning">
+                    <h5 class="pbi-alert-card__title">
+                        <span style="font-size: 16px;">📥</span>
+                        Contas a Receber em Aberto
+                    </h5>
+                </div>
+                <div class="pbi-alert-card__body">
+                    <div class="pbi-alert-card__value pbi-alert-card__value--warning">{{ contas_receber_aberto|currency_br }}</div>
+                    <div class="pbi-alert-card__sub">
+                        <span>⚠️</span>
+                        <span>Vencidas: {{ contas_receber_vencidas|currency_br }}</span>
+                    </div>
+                    <div class="pbi-alert-card__footer">
+                        <a href="{% url 'ERP_ServicesBI:relatorio_financeiro' %}" class="pbi-alert-card__link">
+                            Ver detalhes →
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pbi-alert-card">
+                <div class="pbi-alert-card__header pbi-alert-card__header--danger">
+                    <h5 class="pbi-alert-card__title">
+                        <span style="font-size: 16px;">📤</span>
+                        Contas a Pagar em Aberto
+                    </h5>
+                </div>
+                <div class="pbi-alert-card__body">
+                    <div class="pbi-alert-card__value pbi-alert-card__value--danger">{{ contas_pagar_aberto|currency_br }}</div>
+                    <div class="pbi-alert-card__sub">
+                        <span>⚠️</span>
+                        <span>Vencidas: {{ contas_pagar_vencidas|currency_br }}</span>
+                    </div>
+                    <div class="pbi-alert-card__footer">
+                        <a href="{% url 'ERP_ServicesBI:conta_pagar_list' %}" class="pbi-alert-card__link"></a>
+                            Ver detalhes →
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FILTROS AVANÇADOS -->
+        <div class="pbi-filters-panel">
+            <div class="pbi-filters-panel__header" onclick="toggleFilters()">
+                <h5 class="pbi-filters-panel__title">
+                    <span>🔍</span> Filtros Avançados
+                </h5>
+                <span id="filterToggleIcon">▼</span>
+            </div>
+            <div class="pbi-filters-panel__body" id="filtersBody">
+                <form method="get" id="advancedFiltersForm">
+                    <div class="pbi-filters-grid">
+                        <div class="pbi-filter-group">
+                            <label>Data Inicial</label>
+                            <input type="date" name="data_inicial" value="{{ data_inicial|default:'' }}" class="pbi-input">
+                        </div>
+                        <div class="pbi-filter-group">
+                            <label>Data Final</label>
+                            <input type="date" name="data_final" value="{{ data_final|default:'' }}" class="pbi-input">
+                        </div>
+                        <div class="pbi-filter-group">
+                            <label>Tipo de Relatório</label>
+                            <select name="tipo_relatorio" class="pbi-select">
+                                <option value="geral" {% if tipo_relatorio == 'geral' %}selected{% endif %}>Geral</option>
+                                <option value="receitas" {% if tipo_relatorio == 'receitas' %}selected{% endif %}>Apenas Receitas</option>
+                                <option value="despesas" {% if tipo_relatorio == 'despesas' %}selected{% endif %}>Apenas Despesas</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="pbi-filters-actions">
+                        <button type="submit" class="pbi-btn pbi-btn--primary">📊 Gerar Relatório</button>
+                        <a href="{% url 'ERP_ServicesBI:relatorio_financeiro' %}" class="pbi-btn">Limpar Filtros</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- TABELA DE MOVIMENTAÇÕES -->
+        <div class="pbi-panel">
+            <div class="pbi-panel__header">
+                <h5 class="pbi-panel__title">
+                    <div class="pbi-panel__dot" style="background:#06b6d4"></div>
+                    Movimentações do Período
+                </h5>
+                <span style="font-size:12px; color:var(--text-tertiary);" id="totalMovLabel">{{ movimentacoes|length }} registros</span>
+            </div>
+            <div class="pbi-panel__body pbi-panel__body--no-pad">
+                <div class="pbi-table-wrap">
+                    <table class="pbi-table" id="tabelaMovimentacoes">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Descrição</th>
+                                <th>Categoria</th>
+                                <th style="text-align:center">Tipo</th>
+                                <th style="text-align:right">Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mov in movimentacoes|slice:":10" %}
+                            <tr>
+                                <td>{{ mov.data|date:"d/m/Y" }}</td>
+                                <td style="font-weight:500; color:var(--text-primary);">{{ mov.descricao|truncatechars:40 }}</td>
+                                <td style="color: var(--text-tertiary);">{{ mov.categoria|default:"-" }}</td>
+                                <td style="text-align: center;">
+                                    {% if mov.tipo == 'entrada' %}
+                                        <span class="pbi-badge pbi-badge--success">Entrada</span>
+                                    {% else %}
+                                        <span class="pbi-badge pbi-badge--danger">Saída</span>
+                                    {% endif %}
+                                </td>
+                                <td style="text-align: right; font-weight: 600; color: {% if mov.tipo == 'entrada' %}#22c55e{% else %}#ef4444{% endif %};">
+                                    {% if mov.tipo == 'entrada' %}+{% else %}-{% endif %} {{ mov.valor|currency_br }}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5">
+                                    <div class="pbi-empty">
+                                        <div class="pbi-empty__icon">📋</div>
+                                        <div class="pbi-empty__text">Nenhuma movimentação no período selecionado</div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if movimentacoes|length > 10 %}
+                <div style="padding: 15px; text-align: center; border-top: 1px solid var(--border-color);">
+                    <a href="{% url 'ERP_ServicesBI:fluxo_caixa_list' %}" style="color: var(--primary-500); text-decoration: none; font-size: 14px; font-weight: 500;">
+                        Ver todas as movimentações →
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <div class="pbi-statusbar">
+        <div class="pbi-statusbar__item">
+            <div class="pbi-statusbar__dot"></div>
+            Conectado
+        </div>
+        <div class="pbi-statusbar__item">📅 <span id="statusDate"></span></div>
+        <div class="pbi-statusbar__spacer"></div>
+        <div class="pbi-statusbar__item">ERP ServicesBI v1.0 · Módulo Financeiro</div>
+    </div>
+
 </div>
 
+<div class="toast-container" id="toastContainer"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
 <script>
-// Gráfico Diário
-const ctxDiario = document.getElementById('graficoDiario').getContext('2d');
-new Chart(ctxDiario, {
-    type: 'line',
-    data: {
-        labels: {{ datas_labels|safe|default:'[]' }},
-        datasets: [{
-            label: 'Entradas',
-            data: {{ entradas_diarias|safe|default:'[]' }},
-            borderColor: '#22c55e',
-            backgroundColor: 'rgba(34, 197, 94, 0.1)',
-            fill: true,
-            tension: 0.4
-        }, {
-            label: 'Saídas',
-            data: {{ saidas_diarias|safe|default:'[]' }},
-            borderColor: '#ef4444',
-            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-            fill: true,
-            tension: 0.4
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { position: 'bottom' }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    callback: function(value) {
-                        return 'R$ ' + value.toLocaleString('pt-BR');
+function formatMoeda(v) {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
+}
+
+function getTheme() {
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    return {
+        text: isDark ? '#94a3b8' : '#64748b',
+        grid: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+        tooltip: isDark ? '#1e293b' : '#ffffff',
+        tooltipT: isDark ? '#f1f5f9' : '#1e293b',
+    };
+}
+
+/* ===== DADOS DO BACKEND ===== */
+var datasLabels = {{ datas_labels|safe|default:'[]' }};
+var entradasDiarias = {{ entradas_diarias|safe|default:'[]' }};
+var saidasDiarias = {{ saidas_diarias|safe|default:'[]' }};
+var mesesLabels = {{ meses_labels|safe|default:'[]' }};
+var entradasMensais = {{ entradas_mensais|safe|default:'[]' }};
+var saidasMensais = {{ saidas_mensais|safe|default:'[]' }};
+
+/* ===== SPARKLINES ===== */
+function initSparklines() {
+    var sparkColors = {
+        entradas: '#22c55e',
+        saidas: '#ef4444',
+        saldo: '#3b82f6',
+        aberto: '#f59e0b'
+    };
+
+    // Sparkline Entradas
+    var ctx1 = document.getElementById('sparkEntradas');
+    if (ctx1 && entradasDiarias.length > 0) {
+        new Chart(ctx1, {
+            type: 'line',
+            data: {
+                labels: datasLabels.slice(-6),
+                datasets: [{
+                    data: entradasDiarias.slice(-6),
+                    borderColor: sparkColors.entradas,
+                    borderWidth: 1.5,
+                    pointRadius: 0,
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: sparkColors.entradas + '15'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                scales: { x: { display: false }, y: { display: false } }
+            }
+        });
+    }
+
+    // Sparkline Saídas
+    var ctx2 = document.getElementById('sparkSaidas');
+    if (ctx2 && saidasDiarias.length > 0) {
+        new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: datasLabels.slice(-6),
+                datasets: [{
+                    data: saidasDiarias.slice(-6),
+                    borderColor: sparkColors.saidas,
+                    borderWidth: 1.5,
+                    pointRadius: 0,
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: sparkColors.saidas + '15'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                scales: { x: { display: false }, y: { display: false } }
+            }
+        });
+    }
+
+    // Sparkline Saldo (calculado)
+    var ctx3 = document.getElementById('sparkSaldo');
+    if (ctx3) {
+        var saldoData = entradasDiarias.map((e, i) => (e || 0) - (saidasDiarias[i] || 0));
+        new Chart(ctx3, {
+            type: 'line',
+            data: {
+                labels: datasLabels.slice(-6),
+                datasets: [{
+                    data: saldoData.slice(-6),
+                    borderColor: sparkColors.saldo,
+                    borderWidth: 1.5,
+                    pointRadius: 0,
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: sparkColors.saldo + '15'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                scales: { x: { display: false }, y: { display: false } }
+            }
+        });
+    }
+
+    // Sparkline Aberto (simulado com dados constantes do período)
+    var ctx4 = document.getElementById('sparkAberto');
+    if (ctx4) {
+        var abertoValor = {{ contas_receber_aberto|default:0 }};
+        new Chart(ctx4, {
+            type: 'line',
+            data: {
+                labels: ['', '', '', '', '', ''],
+                datasets: [{
+                    data: [abertoValor * 0.8, abertoValor * 0.85, abertoValor * 0.9, abertoValor * 0.95, abertoValor, abertoValor],
+                    borderColor: sparkColors.aberto,
+                    borderWidth: 1.5,
+                    pointRadius: 0,
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: sparkColors.aberto + '15'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                scales: { x: { display: false }, y: { display: false } }
+            }
+        });
+    }
+}
+
+/* ===== GRÁFICOS ECHARTS ===== */
+var charts = {};
+
+function initCharts() {
+    if (typeof echarts === 'undefined') return;
+    var t = getTheme();
+
+    /* Gráfico Diário - Linha */
+    var el1 = document.getElementById('chartDiario');
+    if (el1) {
+        var c1 = echarts.init(el1);
+        charts.diario = c1;
+        c1.setOption({
+            tooltip: {
+                trigger: 'axis',
+                backgroundColor: t.tooltip,
+                textStyle: { color: t.tooltipT, fontSize: 12 },
+                borderColor: 'transparent',
+                formatter: function(p) {
+                    return '<b>' + p[0].name + '</b><br>' +
+                        p.map(function(s) {
+                            return '<span style="color:' + s.color + '">●</span> ' + s.seriesName + ': ' + formatMoeda(s.value);
+                        }).join('<br>');
+                }
+            },
+            legend: {
+                data: ['Entradas', 'Saídas'],
+                bottom: 0,
+                textStyle: { color: t.text, fontSize: 12 },
+                icon: 'circle',
+                itemWidth: 8, itemHeight: 8
+            },
+            grid: { left: 12, right: 12, bottom: 40, top: 12, containLabel: true },
+            xAxis: {
+                type: 'category', data: datasLabels, boundaryGap: false,
+                axisLine: { lineStyle: { color: t.grid } },
+                axisTick: { show: false },
+                axisLabel: { color: t.text, fontSize: 11 }
+            },
+            yAxis: {
+                type: 'value',
+                splitLine: { lineStyle: { color: t.grid, type: 'dashed' } },
+                axisLabel: { color: t.text, fontSize: 11, formatter: v => 'R$' + (v/1000).toFixed(0) + 'k' }
+            },
+            series: [
+                {
+                    name: 'Entradas', type: 'line', smooth: 0.5, data: entradasDiarias,
+                    itemStyle: { color: '#22c55e' },
+                    lineStyle: { width: 2.5 },
+                    areaStyle: { color: { type:'linear', x:0,y:0,x2:0,y2:1,
+                        colorStops:[{offset:0,color:'rgba(34,197,94,0.2)'},{offset:1,color:'rgba(34,197,94,0)'}]}}
+                },
+                {
+                    name: 'Saídas', type: 'line', smooth: 0.5, data: saidasDiarias,
+                    itemStyle: { color: '#ef4444' },
+                    lineStyle: { width: 2.5 },
+                    areaStyle: { color: { type:'linear', x:0,y:0,x2:0,y2:1,
+                        colorStops:[{offset:0,color:'rgba(239,68,68,0.2)'},{offset:1,color:'rgba(239,68,68,0)'}]}}
+                }
+            ]
+        });
+    }
+
+    /* Gráfico Mensal - Barras */
+    var el2 = document.getElementById('chartMensal');
+    if (el2) {
+        var c2 = echarts.init(el2);
+        charts.mensal = c2;
+        c2.setOption({
+            tooltip: {
+                trigger: 'axis',
+                backgroundColor: t.tooltip,
+                textStyle: { color: t.tooltipT, fontSize: 12 },
+                axisPointer: { type: 'shadow' },
+                formatter: function(p) {
+                    return '<b>' + p[0].name + '</b><br>' +
+                        p.map(function(s) {
+                            return '<span style="color:' + s.color + '">●</span> ' + s.seriesName + ': ' + formatMoeda(s.value);
+                        }).join('<br>');
+                }
+            },
+            legend: {
+                data: ['Entradas', 'Saídas'],
+                bottom: 0,
+                textStyle: { color: t.text, fontSize: 12 },
+                icon: 'circle',
+                itemWidth: 8, itemHeight: 8
+            },
+            grid: { left: 12, right: 12, bottom: 40, top: 12, containLabel: true },
+            xAxis: {
+                type: 'category', data: mesesLabels,
+                axisLine: { lineStyle: { color: t.grid } },
+                axisTick: { show: false },
+                axisLabel: { color: t.text, fontSize: 11 }
+            },
+            yAxis: {
+                type: 'value',
+                splitLine: { lineStyle: { color: t.grid, type: 'dashed' } },
+                axisLabel: { color: t.text, fontSize: 11, formatter: v => 'R$' + (v/1000).toFixed(0) + 'k' }
+            },
+            series: [
+                {
+                    name: 'Entradas', type: 'bar', data: entradasMensais,
+                    itemStyle: {
+                        borderRadius: [6,6,0,0],
+                        color: new echarts.graphic.LinearGradient(0,0,0,1,[
+                            {offset:0, color:'#22c55e'}, {offset:1, color:'#16a34a'}
+                        ])
+                    }
+                },
+                {
+                    name: 'Saídas', type: 'bar', data: saidasMensais,
+                    itemStyle: {
+                        borderRadius: [6,6,0,0],
+                        color: new echarts.graphic.LinearGradient(0,0,0,1,[
+                            {offset:0, color:'#ef4444'}, {offset:1, color:'#dc2626'}
+                        ])
                     }
                 }
-            }
-        }
+            ]
+        });
     }
+
+    window.addEventListener('resize', function() {
+        Object.values(charts).forEach(function(c){ c && c.resize(); });
+    });
+}
+
+/* ===== FILTROS ===== */
+function toggleFilters() {
+    var body = document.getElementById('filtersBody');
+    var icon = document.getElementById('filterToggleIcon');
+    if (body.classList.contains('pbi-filters-panel__body--open')) {
+        body.classList.remove('pbi-filters-panel__body--open');
+        icon.textContent = '▼';
+    } else {
+        body.classList.add('pbi-filters-panel__body--open');
+        icon.textContent = '▲';
+    }
+}
+
+function aplicarFiltroPeriodo(dias) {
+    if (dias === 'custom') {
+        toggleFilters();
+        return;
+    }
+    var hoje = new Date();
+    var inicio = new Date();
+    inicio.setDate(hoje.getDate() - parseInt(dias));
+    
+    document.querySelector('input[name="data_inicial"]').value = inicio.toISOString().split('T')[0];
+    document.querySelector('input[name="data_final"]').value = hoje.toISOString().split('T')[0];
+    document.getElementById('advancedFiltersForm').submit();
+}
+
+/* ===== EXPORTAR EXCEL ===== */
+function exportarExcel() {
+    const tabela = document.getElementById('tabelaMovimentacoes');
+    let csv = [];
+    tabela.querySelectorAll('thead th').forEach(th => csv.push(th.innerText));
+    const headers = csv.join(';');
+    csv = [headers];
+    
+    tabela.querySelectorAll('tbody tr').forEach(tr => {
+        const row = [];
+        tr.querySelectorAll('td').forEach(td => row.push(td.innerText.replace(/\n/g, ' ').trim()));
+        if (row.some(cell => cell)) csv.push(row.join(';'));
+    });
+    
+    const blob = new Blob(['\uFEFF' + csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'relatorio_financeiro_' + new Date().toISOString().split('T')[0] + '.csv';
+    link.click();
+    
+    showToast('Exportação iniciada!', 'success');
+}
+
+function showToast(msg, type) {
+    var container = document.getElementById('toastContainer');
+    var toast = document.createElement('div');
+    toast.className = 'toast toast--' + type;
+    toast.textContent = msg;
+    container.appendChild(toast);
+    setTimeout(function() { toast.remove(); }, 3000);
+}
+
+/* ===== INIT ===== */
+document.addEventListener('DOMContentLoaded', function() {
+    var now = new Date();
+    document.getElementById('updateTime').textContent = now.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+    document.getElementById('statusDate').textContent = now.toLocaleDateString('pt-BR', { weekday:'short', day:'2-digit', month:'short', year:'numeric' });
+    
+    setTimeout(initCharts, 200);
+    setTimeout(initSparklines, 100);
 });
 
-// Gráfico Mensal
-const ctxMensal = document.getElementById('graficoMensal').getContext('2d');
-new Chart(ctxMensal, {
-    type: 'bar',
-    data: {
-        labels: {{ meses_labels|safe|default:'[]' }},
-        datasets: [{
-            label: 'Entradas',
-            data: {{ entradas_mensais|safe|default:'[]' }},
-            backgroundColor: '#22c55e'
-        }, {
-            label: 'Saídas',
-            data: {{ saidas_mensais|safe|default:'[]' }},
-            backgroundColor: '#ef4444'
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { position: 'bottom' }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    callback: function(value) {
-                        return 'R$ ' + value.toLocaleString('pt-BR');
-                    }
-                }
-            }
-        }
-    }
+window.addEventListener('themeChanged', function() {
+    Object.values(charts).forEach(function(c){ c && c.dispose(); });
+    charts = {};
+    setTimeout(initCharts, 100);
 });
 </script>
 {% endblock %}

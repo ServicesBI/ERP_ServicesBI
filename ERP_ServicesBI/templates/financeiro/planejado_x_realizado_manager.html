@@ -1,0 +1,743 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Planejado x Realizado - ERP ServicesBI{% endblock %}
+
+{% block extra_css %}
+<style>
+.dashboard-pbi {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+    min-height: calc(100vh - 60px);
+    background: var(--bg-secondary);
+}
+
+/* ===== HEADER ===== */
+.pbi-header {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.pbi-header__left { display: flex; flex-direction: column; gap: 2px; }
+
+.pbi-header__title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pbi-header__title-bar {
+    width: 4px;
+    height: 22px;
+    background: var(--primary-500);
+    border-radius: 2px;
+}
+
+.pbi-header__meta {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.pbi-header__right { display: flex; align-items: center; gap: 8px; }
+
+.pbi-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    transition: all 0.15s;
+    text-decoration: none;
+}
+
+.pbi-btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
+.pbi-btn--primary { background: var(--primary-500); color: white; border-color: var(--primary-500); }
+.pbi-btn--primary:hover { background: var(--primary-600); color: white; }
+.pbi-btn--success { background: var(--success-500); color: white; border-color: var(--success-500); }
+.pbi-btn--danger { background: var(--danger-500); color: white; border-color: var(--danger-500); }
+.pbi-btn--secondary { background: var(--bg-secondary); color: var(--text-secondary); }
+
+/* ===== CARDS RESUMO ===== */
+.resumo-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 900px) { .resumo-cards { grid-template-columns: 1fr; } }
+
+.resumo-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--card-border);
+    border-left: 4px solid var(--primary-500);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.resumo-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+.resumo-card--receitas { border-left-color: var(--success-500); }
+.resumo-card--despesas { border-left-color: var(--danger-500); }
+.resumo-card--saldo { border-left-color: var(--primary-500); }
+
+.resumo-card__label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    font-weight: 700;
+}
+
+.resumo-card__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.resumo-card__row:last-child { margin-bottom: 0; padding-top: 8px; border-top: 1px solid var(--border-color); }
+
+.resumo-card__sublabel { color: var(--text-secondary); }
+.resumo-card__value { font-weight: 600; }
+
+.resumo-card__value--orcado { color: var(--text-primary); }
+.resumo-card__value--realizado { color: var(--primary-500); }
+.resumo-card__value--positivo { color: var(--success-500); }
+.resumo-card__value--negativo { color: var(--danger-500); }
+
+.resumo-card__var {
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.resumo-card__var--positivo { background: rgba(34,197,94,0.1); color: var(--success-500); }
+.resumo-card__var--negativo { background: rgba(239,68,68,0.1); color: var(--danger-500); }
+
+/* ===== SLICER BAR ===== */
+.pbi-slicer-bar {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.pbi-slicer-bar__label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-tertiary);
+}
+
+.pbi-slicer-group { display: flex; align-items: center; gap: 6px; }
+.pbi-slicer-group label { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+
+.pbi-select, .pbi-input {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 13px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-width: 140px;
+}
+
+.pbi-select:focus, .pbi-input:focus { 
+    outline: none; 
+    border-color: var(--primary-500); 
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.15); 
+}
+
+.pbi-slicer-bar__spacer { flex: 1; }
+
+/* ===== CANVAS ===== */
+.pbi-canvas {
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* ===== PANEL ===== */
+.pbi-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.pbi-panel__header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.pbi-panel__title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pbi-panel__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary-500);
+}
+
+.pbi-panel__body { padding: 0; }
+
+/* ===== TABELA ===== */
+.pbi-table-wrap { overflow-x: auto; }
+
+.pbi-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.pbi-table thead { background: var(--bg-tertiary); }
+
+.pbi-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-tertiary);
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+}
+
+.pbi-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.pbi-table tbody tr:hover { background: var(--bg-secondary); }
+.pbi-table tbody tr:last-child td { border-bottom: none; }
+
+.pbi-table__mes { font-weight: 600; color: var(--text-primary); }
+.pbi-table__valor { text-align: right; font-variant-numeric: tabular-nums; }
+.pbi-table__center { text-align: center; }
+
+.pbi-table__orcado { color: var(--text-secondary); }
+.pbi-table__realizado { color: var(--primary-500); font-weight: 600; }
+.pbi-table__positivo { color: var(--success-500); font-weight: 600; }
+.pbi-table__negativo { color: var(--danger-500); font-weight: 600; }
+
+.pbi-table__var {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.pbi-table__var--positivo { background: rgba(34,197,94,0.1); color: var(--success-500); }
+.pbi-table__var--negativo { background: rgba(239,68,68,0.1); color: var(--danger-500); }
+
+.pbi-table__actions {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+}
+
+.pbi-btn-icon {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.15s;
+    background: transparent;
+}
+
+.pbi-btn-icon:hover { transform: scale(1.1); }
+.pbi-btn-icon--edit { color: var(--primary-500); }
+.pbi-btn-icon--edit:hover { background: rgba(59,130,246,0.1); }
+.pbi-btn-icon--delete { color: var(--danger-500); }
+.pbi-btn-icon--delete:hover { background: rgba(239,68,68,0.1); }
+
+/* ===== PAGINAÇÃO ===== */
+.pbi-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    padding: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.pbi-pagination__btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 0.15s;
+}
+
+.pbi-pagination__btn:hover:not(:disabled):not(.active) {
+    border-color: var(--primary-500);
+    color: var(--primary-600);
+}
+
+.pbi-pagination__btn.active {
+    background: var(--primary-500);
+    color: white;
+    border-color: var(--primary-500);
+}
+
+.pbi-pagination__btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.pbi-pagination__info {
+    padding: 0 12px;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+/* ===== EMPTY ===== */
+.pbi-empty { padding: 48px 24px; text-align: center; color: var(--text-tertiary); }
+.pbi-empty__icon { font-size: 48px; margin-bottom: 16px; }
+.pbi-empty__title { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+
+/* ===== STATUS BAR ===== */
+.pbi-statusbar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 12px 24px;
+    background: var(--card-bg);
+    border-top: 1px solid var(--border-color);
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+.pbi-statusbar__item { display: flex; align-items: center; gap: 5px; }
+.pbi-statusbar__dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
+.pbi-statusbar__spacer { flex: 1; }
+
+/* ===== MODAL ===== */
+.pbi-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.pbi-modal-overlay.active { display: flex; }
+
+.pbi-modal {
+    background: var(--card-bg);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 400px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: modalIn 0.2s ease;
+}
+
+@keyframes modalIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.pbi-modal__header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.pbi-modal__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.pbi-modal__close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+}
+
+.pbi-modal__body { padding: 20px; }
+.pbi-modal__footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.pbi-info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 13px;
+}
+
+.pbi-info-row:last-child { border-bottom: none; }
+.pbi-info-row__label { color: var(--text-secondary); }
+.pbi-info-row__value { color: var(--text-primary); font-weight: 500; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-pbi">
+
+    <!-- HEADER -->
+    <div class="pbi-header">
+        <div class="pbi-header__left">
+            <h1 class="pbi-header__title">
+                <div class="pbi-header__title-bar"></div>
+                Planejado x Realizado
+            </h1>
+            <div class="pbi-header__meta">
+                <span>📅 Ano: <strong>{{ ano_selecionado }}</strong></span>
+                <span>🕐 Atualizado: <strong id="updateTime">--:--</strong></span>
+            </div>
+        </div>
+        <div class="pbi-header__right">
+            <button class="pbi-btn" onclick="window.print()">🖨️ Imprimir</button>
+            <button class="pbi-btn pbi-btn--primary" onclick="exportarExcel()">📊 Excel</button>
+            <a href="{% url 'ERP_ServicesBI:planejado_x_realizado_add' %}" class="pbi-btn pbi-btn--success">➕ Novo Orçamento</a>
+        </div>
+    </div>
+
+    <div class="pbi-canvas">
+
+        <!-- CARDS RESUMO -->
+        <div class="resumo-cards">
+            <!-- RECEITAS -->
+            <div class="resumo-card resumo-card--receitas">
+                <div class="resumo-card__label">📈 RECEITAS</div>
+                <div class="resumo-card__row">
+                    <span class="resumo-card__sublabel">Orçado</span>
+                    <span class="resumo-card__value resumo-card__value--orcado">{{ total_orcado_receitas|currency_br }}</span>
+                </div>
+                <div class="resumo-card__row">
+                    <span class="resumo-card__sublabel">Realizado</span>
+                    <span class="resumo-card__value resumo-card__value--realizado">{{ total_realizado_receitas|currency_br }}</span>
+                </div>
+                <div class="resumo-card__row">
+                    <span class="resumo-card__sublabel">Variação</span>
+                    <span class="resumo-card__var {% if var_receitas >= 0 %}resumo-card__var--positivo{% else %}resumo-card__var--negativo{% endif %}">
+                        {% if var_receitas >= 0 %}▲{% else %}▼{% endif %} {{ var_receitas|floatformat:1 }}%
+                    </span>
+                </div>
+            </div>
+
+            <!-- DESPESAS -->
+            <div class="resumo-card resumo-card--despesas">
+                <div class="resumo-card__label">📉 DESPESAS</div>
+                <div class="resumo-card__row">
+                    <span class="resumo-card__sublabel">Orçado</span>
+                    <span class="resumo-card__value resumo-card__value--orcado">{{ total_orcado_despesas|currency_br }}</span>
+                </div>
+                <div class="resumo-card__row">
+                    <span class="resumo-card__sublabel">Realizado</span>
+                    <span class="resumo-card__value resumo-card__value--realizado">{{ total_realizado_despesas|currency_br }}</span>
+                </div>
+                <div class="resumo-card__row">
+                    <span class="resumo-card__sublabel">Variação</span>
+                    <span class="resumo-card__var {% if var_despesas <= 0 %}resumo-card__var--positivo{% else %}resumo-card__var--negativo{% endif %}">
+                        {% if var_despesas <= 0 %}▼{% else %}▲{% endif %} {{ var_despesas|floatformat:1 }}%
+                    </span>
+                </div>
+            </div>
+
+            <!-- SALDO -->
+            <div class="resumo-card resumo-card--saldo">
+                <div class="resumo-card__label">💰 SALDO</div>
+                <div class="resumo-card__row">
+                    <span class="resumo-card__sublabel">Orçado</span>
+                    <span class="resumo-card__value {% if total_orcado_saldo >= 0 %}resumo-card__value--positivo{% else %}resumo-card__value--negativo{% endif %}">
+                        {{ total_orcado_saldo|currency_br }}
+                    </span>
+                </div>
+                <div class="resumo-card__row">
+                    <span class="resumo-card__sublabel">Realizado</span>
+                    <span class="resumo-card__value {% if total_realizado_saldo >= 0 %}resumo-card__value--positivo{% else %}resumo-card__value--negativo{% endif %}">
+                        {{ total_realizado_saldo|currency_br }}
+                    </span>
+                </div>
+                <div class="resumo-card__row">
+                    <span class="resumo-card__sublabel">Variação</span>
+                    <span class="resumo-card__var {% if var_saldo >= 0 %}resumo-card__var--positivo{% else %}resumo-card__var--negativo{% endif %}">
+                        {% if var_saldo >= 0 %}▲{% else %}▼{% endif %} {{ var_saldo|floatformat:1 }}%
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLICER BAR -->
+        <div class="pbi-slicer-bar">
+            <span class="pbi-slicer-bar__label">Filtros</span>
+            
+            <div class="pbi-slicer-group">
+                <label>Ano</label>
+                <select class="pbi-select" id="anoFilter" onchange="aplicarFiltros()">
+                    {% for a in anos %}
+                    <option value="{{ a }}" {% if ano == a %}selected{% endif %}>{{ a }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="pbi-slicer-group">
+                <label>Mês</label>
+                <select class="pbi-select" id="mesFilter" onchange="aplicarFiltros()">
+                    <option value="">Todos</option>
+                    {% for m in meses %}
+                    <option value="{{ m.0 }}" {% if mes == m.0 %}selected{% endif %}>{{ m.1 }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="pbi-slicer-bar__spacer"></div>
+            
+            <a href="{% url 'ERP_ServicesBI:planejado_x_realizado_list' %}" class="pbi-btn">↺ Limpar</a>
+        </div>
+
+        <!-- TABELA COMPARATIVA -->
+        <div class="pbi-panel">
+            <div class="pbi-panel__header">
+                <h5 class="pbi-panel__title">
+                    <div class="pbi-panel__dot"></div>
+                    Detalhamento Mensal ({{ orcamentos.count }})
+                </h5>
+            </div>
+            <div class="pbi-panel__body">
+                <div class="pbi-table-wrap">
+                    <table class="pbi-table">
+                        <thead>
+                            <tr>
+                                <th>Mês</th>
+                                <th class="pbi-table__valor">Rec. Orçado</th>
+                                <th class="pbi-table__valor">Rec. Realizado</th>
+                                <th class="pbi-table__valor">Desp. Orçado</th>
+                                <th class="pbi-table__valor">Desp. Realizado</th>
+                                <th class="pbi-table__valor">Saldo Orçado</th>
+                                <th class="pbi-table__valor">Saldo Realizado</th>
+                                <th class="pbi-table__center">Var%</th>
+                                <th class="pbi-table__center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for orc in orcamentos %}
+                            <tr>
+                                <td class="pbi-table__mes">{{ orc.get_mes_display|default:orc.mes }}</td>
+                                <td class="pbi-table__valor pbi-table__orcado">{{ orc.receitas_orcadas|default:orc.receitas|currency_br }}</td>
+                                <td class="pbi-table__valor pbi-table__realizado">{{ orc.realizado_receitas|currency_br }}</td>
+                                <td class="pbi-table__valor pbi-table__orcado">{{ orc.despesas_orcadas|default:orc.despesas|currency_br }}</td>
+                                <td class="pbi-table__valor pbi-table__realizado">{{ orc.realizado_despesas|currency_br }}</td>
+                                <td class="pbi-table__valor {% if orc.saldo_previsto > 0 %}pbi-table__positivo{% else %}pbi-table__negativo{% endif %}">
+                                    {{ orc.saldo_previsto|currency_br }}
+                                </td>
+                                <td class="pbi-table__valor {% if orc.realizado_saldo > 0 %}pbi-table__positivo{% else %}pbi-table__negativo{% endif %}">
+                                    {{ orc.realizado_saldo|currency_br }}
+                                </td>
+                                <td class="pbi-table__center">
+                                    {% if orc.variacao %}
+                                        <span class="pbi-table__var {% if orc.variacao >= 0 %}pbi-table__var--positivo{% else %}pbi-table__var--negativo{% endif %}">
+                                            {% if orc.variacao >= 0 %}▲{% else %}▼{% endif %} {{ orc.variacao|floatformat:1 }}%
+                                        </span>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="pbi-table__actions">
+                                        <a href="{% url 'ERP_ServicesBI:planejado_x_realizado_edit' orc.pk %}" class="pbi-btn-icon pbi-btn-icon--edit" title="Editar">
+                                            ✏️
+                                        </a>
+                                        <button class="pbi-btn-icon pbi-btn-icon--delete" onclick="abrirModalExcluir({{ orc.pk }}, '{{ orc.get_mes_display }}', '{{ orc.ano }}')" title="Excluir">
+                                            🗑️
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9">
+                                    <div class="pbi-empty">
+                                        <div class="pbi-empty__icon">📊</div>
+                                        <div class="pbi-empty__title">Nenhum orçamento cadastrado</div>
+                                        <p style="color: var(--text-tertiary); margin-bottom: 16px;">Cadastre seu primeiro orçamento financeiro</p>
+                                        <a href="{% url 'ERP_ServicesBI:planejado_x_realizado_add' %}" class="pbi-btn pbi-btn--primary">➕ Novo Orçamento</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- STATUS BAR -->
+    <div class="pbi-statusbar">
+        <div class="pbi-statusbar__item">
+            <div class="pbi-statusbar__dot"></div>
+            Conectado
+        </div>
+        <div class="pbi-statusbar__item">📅 <span id="statusDate"></span></div>
+        <div class="pbi-statusbar__spacer"></div>
+        <div class="pbi-statusbar__item">ERP ServicesBI v1.0 · Planejado x Realizado</div>
+    </div>
+
+</div>
+
+<!-- MODAL: EXCLUIR -->
+<div class="pbi-modal-overlay" id="modalExcluir">
+    <div class="pbi-modal">
+        <div class="pbi-modal__header">
+            <h3 class="pbi-modal__title" style="color:var(--danger-500);">🗑️ Confirmar Exclusão</h3>
+            <button class="pbi-modal__close" onclick="fecharModal('modalExcluir')">&times;</button>
+        </div>
+        <form method="post" id="formExcluir" action="">
+            {% csrf_token %}
+            <div class="pbi-modal__body" style="text-align:center;">
+                <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
+                <p style="color:var(--text-secondary);margin-bottom:8px;">
+                    Tem certeza que deseja excluir o orçamento de <strong style="color:var(--text-primary);"><span id="excluirMes"></span>/<span id="excluirAno"></span></strong>?
+                </p>
+                <p style="color:var(--danger-500);font-size:13px;">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="pbi-modal__footer" style="justify-content:center;">
+                <button type="button" class="pbi-btn" onclick="fecharModal('modalExcluir')">Cancelar</button>
+                <button type="submit" class="pbi-btn pbi-btn--danger">🗑️ Sim, Excluir</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Inicialização
+document.addEventListener('DOMContentLoaded', function() {
+    const now = new Date();
+    document.getElementById('updateTime').textContent = now.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+    document.getElementById('statusDate').textContent = now.toLocaleDateString('pt-BR', { weekday:'short', day:'2-digit', month:'short', year:'numeric' });
+});
+
+// Filtros
+function aplicarFiltros() {
+    const params = new URLSearchParams();
+    const ano = document.getElementById('anoFilter').value;
+    const mes = document.getElementById('mesFilter').value;
+    
+    if (ano) params.append('ano', ano);
+    if (mes) params.append('mes', mes);
+    
+    window.location.href = '?' + params.toString();
+}
+
+// Modal Excluir
+function abrirModalExcluir(id, mes, ano) {
+    document.getElementById('formExcluir').action = `/financeiro/planejado-x-realizado/${id}/excluir/`;
+    document.getElementById('excluirMes').textContent = mes;
+    document.getElementById('excluirAno').textContent = ano;
+    document.getElementById('modalExcluir').classList.add('active');
+}
+
+function fecharModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+}
+
+// Exportar Excel
+function exportarExcel() {
+    const ano = document.getElementById('anoFilter').value;
+    const mes = document.getElementById('mesFilter').value;
+    
+    const params = new URLSearchParams();
+    if (ano) params.append('ano', ano);
+    if (mes) params.append('mes', mes);
+    
+    window.open(`/financeiro/planejado-x-realizado/excel/?${params.toString()}`, '_blank');
+}
+
+// Fechar modal ao clicar fora
+document.querySelectorAll('.pbi-modal-overlay').forEach(modal => {
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.remove('active');
+        }
+    });
+});
+</script>
+{% endblock %}

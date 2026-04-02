@@ -1,0 +1,1046 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}Contas a Pagar - ERP ServicesBI{% endblock %}
+
+{% block extra_css %}
+<style>
+.dashboard-pbi {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+    min-height: calc(100vh - 60px);
+    background: var(--bg-secondary);
+}
+
+/* ===== HEADER ===== */
+.pbi-header {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.pbi-header__left { display: flex; flex-direction: column; gap: 2px; }
+
+.pbi-header__title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pbi-header__title-bar {
+    width: 4px;
+    height: 22px;
+    background: var(--primary-500);
+    border-radius: 2px;
+}
+
+.pbi-header__meta {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.pbi-header__right { display: flex; align-items: center; gap: 8px; }
+
+.pbi-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    transition: all 0.15s;
+    text-decoration: none;
+}
+
+.pbi-btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
+.pbi-btn--primary { background: var(--primary-500); color: white; border-color: var(--primary-500); }
+.pbi-btn--primary:hover { background: var(--primary-600); color: white; }
+.pbi-btn--success { background: var(--success-500); color: white; border-color: var(--success-500); }
+.pbi-btn--danger { background: var(--danger-500); color: white; border-color: var(--danger-500); }
+.pbi-btn--secondary { background: var(--bg-secondary); color: var(--text-secondary); }
+
+/* ===== CARDS RESUMO (IGUAL PRODUTO) ===== */
+.resumo-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 1200px) { .resumo-cards { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .resumo-cards { grid-template-columns: 1fr; } }
+
+.resumo-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--card-border);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.resumo-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+.resumo-card__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 12px;
+}
+
+.resumo-card--danger .resumo-card__icon { background: rgba(239,68,68,0.1); }
+.resumo-card--warning .resumo-card__icon { background: rgba(245,158,11,0.1); }
+.resumo-card--success .resumo-card__icon { background: rgba(34,197,94,0.1); }
+.resumo-card--info .resumo-card__icon { background: rgba(14,165,233,0.1); }
+
+.resumo-card__label {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.resumo-card__value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.resumo-card__meta {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+/* ===== SLICER BAR ===== */
+.pbi-slicer-bar {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.pbi-slicer-bar__label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-tertiary);
+}
+
+.pbi-slicer-group { display: flex; align-items: center; gap: 6px; }
+.pbi-slicer-group label { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+
+.pbi-select, .pbi-input {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 13px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-width: 140px;
+}
+
+.pbi-select:focus, .pbi-input:focus { 
+    outline: none; 
+    border-color: var(--primary-500); 
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.15); 
+}
+
+.pbi-slicer-bar__spacer { flex: 1; }
+
+/* ===== CANVAS ===== */
+.pbi-canvas {
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* ===== PANEL ===== */
+.pbi-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.pbi-panel__header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.pbi-panel__title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pbi-panel__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary-500);
+}
+
+.pbi-panel__body { padding: 0; }
+
+/* ===== TABELA ===== */
+.pbi-table-wrap { overflow-x: auto; }
+
+.pbi-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.pbi-table thead { background: var(--bg-tertiary); }
+
+.pbi-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-tertiary);
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.pbi-table th:hover { background: var(--bg-secondary); }
+
+.pbi-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.pbi-table tbody tr:hover { background: var(--bg-secondary); }
+.pbi-table tbody tr:last-child td { border-bottom: none; }
+
+.pbi-table__valor {
+    font-weight: 700;
+    color: var(--text-primary);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.pbi-table__actions {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+}
+
+.pbi-btn-icon {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.15s;
+    background: transparent;
+}
+
+.pbi-btn-icon:hover { transform: scale(1.1); }
+.pbi-btn-icon--success { color: var(--success-500); }
+.pbi-btn-icon--success:hover { background: rgba(34,197,94,0.1); }
+.pbi-btn-icon--edit { color: var(--primary-500); }
+.pbi-btn-icon--edit:hover { background: rgba(59,130,246,0.1); }
+.pbi-btn-icon--delete { color: var(--danger-500); }
+.pbi-btn-icon--delete:hover { background: rgba(239,68,68,0.1); }
+
+/* ===== BADGES ===== */
+.pbi-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.pbi-badge--success { background: rgba(34,197,94,0.1); color: #16a34a; }
+.pbi-badge--warning { background: rgba(245,158,11,0.1); color: #d97706; }
+.pbi-badge--danger { background: rgba(239,68,68,0.1); color: #dc2626; }
+
+/* ===== PAGINAÇÃO ===== */
+.pbi-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    padding: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.pbi-pagination__btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 0.15s;
+}
+
+.pbi-pagination__btn:hover:not(:disabled):not(.active) {
+    border-color: var(--primary-500);
+    color: var(--primary-600);
+}
+
+.pbi-pagination__btn.active {
+    background: var(--primary-500);
+    color: white;
+    border-color: var(--primary-500);
+}
+
+.pbi-pagination__btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.pbi-pagination__info {
+    padding: 0 12px;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+/* ===== EMPTY ===== */
+.pbi-empty { padding: 48px 24px; text-align: center; color: var(--text-tertiary); }
+.pbi-empty__icon { font-size: 48px; margin-bottom: 16px; }
+.pbi-empty__title { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+
+/* ===== STATUS BAR ===== */
+.pbi-statusbar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 12px 24px;
+    background: var(--card-bg);
+    border-top: 1px solid var(--border-color);
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+.pbi-statusbar__item { display: flex; align-items: center; gap: 5px; }
+.pbi-statusbar__dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
+.pbi-statusbar__spacer { flex: 1; }
+
+/* ===== MODAL ===== */
+.pbi-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.pbi-modal-overlay.active { display: flex; }
+
+.pbi-modal {
+    background: var(--card-bg);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: modalIn 0.2s ease;
+}
+
+.pbi-modal--lg { max-width: 700px; }
+
+@keyframes modalIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.pbi-modal__header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.pbi-modal__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.pbi-modal__close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+}
+
+.pbi-modal__close:hover { color: var(--text-primary); }
+
+.pbi-modal__body {
+    padding: 20px;
+    overflow-y: auto;
+    max-height: calc(90vh - 140px);
+}
+
+.pbi-modal__footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.pbi-form-group {
+    margin-bottom: 16px;
+}
+
+.pbi-form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.pbi-form-group input,
+.pbi-form-group select,
+.pbi-form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.pbi-form-group input:focus,
+.pbi-form-group select:focus,
+.pbi-form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.15);
+}
+
+.pbi-info-box {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.pbi-info-box__title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 12px 0;
+}
+
+.pbi-info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 13px;
+}
+
+.pbi-info-row:last-child { border-bottom: none; }
+.pbi-info-row__label { color: var(--text-secondary); }
+.pbi-info-row__value { color: var(--text-primary); font-weight: 500; }
+
+/* ===== TOAST ===== */
+.toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+
+.toast {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 220px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    animation: toastIn 0.25s ease;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+@keyframes toastIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-pbi">
+
+    <!-- HEADER -->
+    <div class="pbi-header">
+        <div class="pbi-header__left">
+            <h1 class="pbi-header__title">
+                <div class="pbi-header__title-bar"></div>
+                Contas a Pagar
+            </h1>
+            <div class="pbi-header__meta">
+                <span>📅 Período: <strong>{{ data_inicio|default:"Mês atual" }} até {{ data_fim|default:"Hoje" }}</strong></span>
+                <span>🕐 Atualizado: <strong id="updateTime">--:--</strong></span>
+            </div>
+        </div>
+        <div class="pbi-header__right">
+            <button class="pbi-btn" onclick="window.print()">🖨️ Imprimir</button>
+            <button class="pbi-btn pbi-btn--primary" onclick="abrirModalPDF()">📄 PDF</button>
+            <a href="{% url 'ERP_ServicesBI:conta_pagar_add' %}" class="pbi-btn pbi-btn--success">➕ Nova Conta</a>
+        </div>
+    </div>
+
+    <div class="pbi-canvas">
+
+        <!-- CARDS RESUMO (IGUAL PRODUTO) -->
+        <div class="resumo-cards">
+            <div class="resumo-card resumo-card--danger">
+                <div class="resumo-card__icon">💰</div>
+                <div class="resumo-card__label">Total em Aberto</div>
+                <div class="resumo-card__value" id="cardTotalAberto">R$ 0,00</div>
+                <div class="resumo-card__meta">Contas pendentes</div>
+            </div>
+
+            <div class="resumo-card resumo-card--warning">
+                <div class="resumo-card__icon">⚠️</div>
+                <div class="resumo-card__label">Vencidas</div>
+                <div class="resumo-card__value" id="cardVencidas">0</div>
+                <div class="resumo-card__meta">Atrasadas</div>
+            </div>
+
+            <div class="resumo-card resumo-card--success">
+                <div class="resumo-card__icon">📅</div>
+                <div class="resumo-card__label">A Vencer</div>
+                <div class="resumo-card__value" id="cardAVencer">0</div>
+                <div class="resumo-card__meta">No prazo</div>
+            </div>
+
+            <div class="resumo-card resumo-card--info">
+                <div class="resumo-card__icon">✅</div>
+                <div class="resumo-card__label">Pagas (mês)</div>
+                <div class="resumo-card__value" id="cardPagas">0</div>
+                <div class="resumo-card__meta">Quitadas</div>
+            </div>
+        </div>
+
+        <!-- SLICER BAR -->
+        <div class="pbi-slicer-bar">
+            <span class="pbi-slicer-bar__label">Filtros</span>
+            
+            <div class="pbi-slicer-group">
+                <label>Buscar</label>
+                <input type="text" class="pbi-input" id="searchInput" placeholder="Descrição, fornecedor..." value="{{ search|default:'' }}">
+            </div>
+            
+            <div class="pbi-slicer-group">
+                <label>Status</label>
+                <select class="pbi-select" id="statusFilter">
+                    <option value="">Todos</option>
+                    {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="pbi-slicer-group">
+                <label>Vencimento</label>
+                <input type="date" class="pbi-input" id="vencimentoInicio" value="{{ vencimento_inicio|default:'' }}">
+            </div>
+            
+            <div class="pbi-slicer-group">
+                <label>até</label>
+                <input type="date" class="pbi-input" id="vencimentoFim" value="{{ vencimento_fim|default:'' }}">
+            </div>
+            
+            <div class="pbi-slicer-group">
+                <label>Por página</label>
+                <select class="pbi-select" id="perPage" onchange="aplicarFiltros()">
+                    <option value="10" {% if per_page == '10' %}selected{% endif %}>10</option>
+                    <option value="25" {% if per_page == '25' %}selected{% endif %}>25</option>
+                    <option value="50" {% if per_page == '50' %}selected{% endif %}>50</option>
+                    <option value="100" {% if per_page == '100' %}selected{% endif %}>100</option>
+                </select>
+            </div>
+            
+            <div class="pbi-slicer-bar__spacer"></div>
+            
+            <button class="pbi-btn pbi-btn--primary" onclick="aplicarFiltros()">🔍 Aplicar</button>
+            <a href="{% url 'ERP_ServicesBI:conta_pagar_list' %}" class="pbi-btn">↺ Limpar</a>
+        </div>
+
+        <!-- TABELA -->
+        <div class="pbi-panel">
+            <div class="pbi-panel__header">
+                <h5 class="pbi-panel__title">
+                    <div class="pbi-panel__dot"></div>
+                    Lista de Contas a Pagar ({{ total|default:page_obj.paginator.count }})
+                </h5>
+            </div>
+            <div class="pbi-panel__body">
+                <div class="pbi-table-wrap">
+                    <table class="pbi-table">
+                        <thead>
+                            <tr>
+                                <th onclick="ordenar('id')">ID {% if order_by == 'id' %}▼{% elif order_by == '-id' %}▲{% endif %}</th>
+                                <th onclick="ordenar('fornecedor')">Fornecedor {% if order_by == 'fornecedor' %}▼{% elif order_by == '-fornecedor' %}▲{% endif %}</th>
+                                <th onclick="ordenar('descricao')">Descrição {% if order_by == 'descricao' %}▼{% elif order_by == '-descricao' %}▲{% endif %}</th>
+                                <th onclick="ordenar('data_vencimento')" style="text-align:center">Vencimento {% if order_by == 'data_vencimento' %}▼{% elif order_by == '-data_vencimento' %}▲{% endif %}</th>
+                                <th onclick="ordenar('valor_original')" style="text-align:right">Valor {% if order_by == 'valor_original' %}▼{% elif order_by == '-valor_original' %}▲{% endif %}</th>
+                                <th onclick="ordenar('status')" style="text-align:center">Status {% if order_by == 'status' %}▼{% elif order_by == '-status' %}▲{% endif %}</th>
+                                <th style="text-align:center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for conta in page_obj %}
+                            <tr data-id="{{ conta.id }}" data-valor="{{ conta.valor_saldo|default:conta.valor_original }}" data-status="{{ conta.status }}" data-vencimento="{{ conta.data_vencimento|date:'Y-m-d' }}">
+                                <td class="erp-font-semibold">{{ conta.id }}</td>
+                                <td>{{ conta.fornecedor.nome_razao_social|default:"-" }}</td>
+                                <td>{{ conta.descricao|truncatechars:30 }}</td>
+                                <td style="text-align:center">{{ conta.data_vencimento|date:"d/m/Y" }}</td>
+                                <td class="pbi-table__valor">R$ {{ conta.valor_saldo|default:conta.valor_original|floatformat:2 }}</td>
+                                <td style="text-align:center">
+                                    {% if conta.status == 'quitado' or conta.status == 'pago' %}
+                                        <span class="pbi-badge pbi-badge--success">Pago</span>
+                                    {% elif conta.status == 'parcial' %}
+                                        <span class="pbi-badge pbi-badge--warning">Parcial</span>
+                                    {% else %}
+                                        <span class="pbi-badge pbi-badge--danger">Pendente</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="pbi-table__actions">
+                                        {% if conta.status != 'quitado' and conta.status != 'pago' %}
+                                            <button class="pbi-btn-icon pbi-btn-icon--success" onclick="abrirModalBaixa({{ conta.id }})" title="Baixar">
+                                                💰
+                                            </button>
+                                        {% endif %}
+                                        <a href="{% url 'ERP_ServicesBI:conta_pagar_edit' conta.id %}" class="pbi-btn-icon pbi-btn-icon--edit" title="Editar">
+                                            ✏️
+                                        </a>
+                                        <button class="pbi-btn-icon pbi-btn-icon--delete" onclick="abrirModalExcluir({{ conta.id }})" title="Excluir">
+                                            🗑️
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7">
+                                    <div class="pbi-empty">
+                                        <div class="pbi-empty__icon">💸</div>
+                                        <div class="pbi-empty__title">Nenhuma conta a pagar encontrada</div>
+                                        <p style="color: var(--text-tertiary); margin-bottom: 16px;">Cadastre sua primeira conta</p>
+                                        <a href="{% url 'ERP_ServicesBI:conta_pagar_add' %}" class="pbi-btn pbi-btn--primary">➕ Adicionar</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- PAGINAÇÃO -->
+                {% if page_obj.has_other_pages %}
+                <div class="pbi-pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1{{ query_params }}" class="pbi-pagination__btn">Primeira</a>
+                        <a href="?page={{ page_obj.previous_page_number }}{{ query_params }}" class="pbi-pagination__btn">←</a>
+                    {% else %}
+                        <button class="pbi-pagination__btn" disabled>Primeira</button>
+                        <button class="pbi-pagination__btn" disabled>←</button>
+                    {% endif %}
+                    
+                    <span class="pbi-pagination__info">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                    
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{{ query_params }}" class="pbi-pagination__btn">→</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}{{ query_params }}" class="pbi-pagination__btn">Última</a>
+                    {% else %}
+                        <button class="pbi-pagination__btn" disabled>→</button>
+                        <button class="pbi-pagination__btn" disabled>Última</button>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- STATUS BAR -->
+    <div class="pbi-statusbar">
+        <div class="pbi-statusbar__item">
+            <div class="pbi-statusbar__dot"></div>
+            Conectado
+        </div>
+        <div class="pbi-statusbar__item">📅 <span id="statusDate"></span></div>
+        <div class="pbi-statusbar__spacer"></div>
+        <div class="pbi-statusbar__item">ERP ServicesBI v1.0 · Contas a Pagar</div>
+    </div>
+
+</div>
+
+<!-- MODAL: BAIXA -->
+<div class="pbi-modal-overlay" id="modalBaixa">
+    <div class="pbi-modal pbi-modal--lg">
+        <div class="pbi-modal__header">
+            <h3 class="pbi-modal__title">💰 Baixar Conta a Pagar</h3>
+            <button class="pbi-modal__close" onclick="fecharModal('modalBaixa')">&times;</button>
+        </div>
+        <form method="post" id="formBaixa" action="">
+            {% csrf_token %}
+            <div class="pbi-modal__body">
+                <div class="pbi-info-box">
+                    <h4 class="pbi-info-box__title">Detalhes da Conta</h4>
+                    <div class="pbi-info-row">
+                        <span class="pbi-info-row__label">Fornecedor:</span>
+                        <span class="pbi-info-row__value" id="baixaFornecedor">-</span>
+                    </div>
+                    <div class="pbi-info-row">
+                        <span class="pbi-info-row__label">Descrição:</span>
+                        <span class="pbi-info-row__value" id="baixaDescricao">-</span>
+                    </div>
+                    <div class="pbi-info-row">
+                        <span class="pbi-info-row__label">Vencimento:</span>
+                        <span class="pbi-info-row__value" id="baixaVencimento">-</span>
+                    </div>
+                    <div class="pbi-info-row">
+                        <span class="pbi-info-row__label">Valor Original:</span>
+                        <span class="pbi-info-row__value" id="baixaValorOriginal">-</span>
+                    </div>
+                    <div class="pbi-info-row" id="baixaRowSaldo" style="display:none;">
+                        <span class="pbi-info-row__label">Valor Restante:</span>
+                        <span class="pbi-info-row__value" id="baixaValorSaldo" style="color:var(--danger-500);">-</span>
+                    </div>
+                </div>
+                
+                <div class="pbi-form-group">
+                    <label>Data da Baixa *</label>
+                    <input type="date" name="data_baixa" required value="{% now 'Y-m-d' %}">
+                </div>
+                
+                <div class="pbi-form-group">
+                    <label>Valor Pago *</label>
+                    <input type="text" name="valor_pago" id="valorPago" class="moeda" required placeholder="0,00">
+                </div>
+                
+                <div class="pbi-form-group">
+                    <label>Conta Bancária</label>
+                    <select name="conta_bancaria">
+                        <option value="">Selecione...</option>
+                        <option value="caixa">Caixa</option>
+                        <option value="banco">Banco</option>
+                    </select>
+                </div>
+                
+                <div class="pbi-form-group">
+                    <label>Observações</label>
+                    <textarea name="observacoes" rows="2" placeholder="Observações do pagamento..."></textarea>
+                </div>
+            </div>
+            <div class="pbi-modal__footer">
+                <button type="button" class="pbi-btn" onclick="fecharModal('modalBaixa')">Cancelar</button>
+                <button type="submit" class="pbi-btn pbi-btn--success">💰 Confirmar Baixa</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: EXCLUIR -->
+<div class="pbi-modal-overlay" id="modalExcluir">
+    <div class="pbi-modal">
+        <div class="pbi-modal__header">
+            <h3 class="pbi-modal__title" style="color:var(--danger-500);">🗑️ Confirmar Exclusão</h3>
+            <button class="pbi-modal__close" onclick="fecharModal('modalExcluir')">&times;</button>
+        </div>
+        <form method="post" id="formExcluir" action="">
+            {% csrf_token %}
+            <div class="pbi-modal__body" style="text-align:center;">
+                <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
+                <p style="color:var(--text-secondary);margin-bottom:8px;">
+                    Tem certeza que deseja excluir a conta <strong style="color:var(--text-primary);">#<span id="excluirId"></span></strong>?
+                </p>
+                <div id="excluirDetalhes" style="color:var(--text-tertiary);font-size:13px;margin-bottom:16px;">
+                    <!-- Preenchido via JS -->
+                </div>
+                <p style="color:var(--danger-500);font-size:13px;">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="pbi-modal__footer" style="justify-content:center;">
+                <button type="button" class="pbi-btn" onclick="fecharModal('modalExcluir')">Cancelar</button>
+                <button type="submit" class="pbi-btn pbi-btn--danger">🗑️ Sim, Excluir</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: PDF -->
+<div class="pbi-modal-overlay" id="modalPDF">
+    <div class="pbi-modal">
+        <div class="pbi-modal__header">
+            <h3 class="pbi-modal__title">📄 Gerar Relatório PDF</h3>
+            <button class="pbi-modal__close" onclick="fecharModal('modalPDF')">&times;</button>
+        </div>
+        <div class="pbi-modal__body">
+            <p style="color:var(--text-secondary);margin-bottom:16px;">
+                Selecione as opções para gerar o relatório em PDF:
+            </p>
+            
+            <div class="pbi-form-group">
+                <label>Status</label>
+                <select id="pdfStatus" class="pbi-select">
+                    <option value="">Todos</option>
+                    {% for value, label in status_choices %}
+                    <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="pbi-form-group">
+                <label>Período de Vencimento</label>
+                <div style="display:flex;gap:8px;">
+                    <input type="date" id="pdfDataInicio" class="pbi-input">
+                    <span style="color:var(--text-tertiary);align-self:center;">até</span>
+                    <input type="date" id="pdfDataFim" class="pbi-input">
+                </div>
+            </div>
+        </div>
+        <div class="pbi-modal__footer">
+            <button type="button" class="pbi-btn" onclick="fecharModal('modalPDF')">Cancelar</button>
+            <button type="button" class="pbi-btn pbi-btn--primary" onclick="gerarPDF()">📄 Gerar PDF</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Dados das contas para uso nos modais
+const contasData = JSON.parse('{{ contas_json|escapejs }}');
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', function() {
+    const now = new Date();
+    document.getElementById('updateTime').textContent = now.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+    document.getElementById('statusDate').textContent = now.toLocaleDateString('pt-BR', { weekday:'short', day:'2-digit', month:'short', year:'numeric' });
+    
+    calcularCards();
+    aplicarMascaraMoeda();
+});
+
+// Cards de Resumo
+function calcularCards() {
+    let totalAberto = 0;
+    let vencidas = 0;
+    let aVencer = 0;
+    let pagas = 0;
+    const hoje = new Date();
+    hoje.setHours(0,0,0,0);
+    
+    Object.values(contasData).forEach(conta => {
+        const valor = parseFloat(conta.valorSaldo) || 0;
+        const status = conta.status;
+        const vencimento = new Date(conta.vencimento);
+        
+        if (status === 'quitado' || status === 'pago') {
+            pagas++;
+        } else {
+            totalAberto += valor;
+            if (vencimento < hoje) {
+                vencidas++;
+            } else {
+                aVencer++;
+            }
+        }
+    });
+    
+    document.getElementById('cardTotalAberto').textContent = formatarMoeda(totalAberto);
+    document.getElementById('cardVencidas').textContent = vencidas;
+    document.getElementById('cardAVencer').textContent = aVencer;
+    document.getElementById('cardPagas').textContent = pagas;
+}
+
+// Filtros
+function aplicarFiltros() {
+    const params = new URLSearchParams();
+    
+    const search = document.getElementById('searchInput').value;
+    const status = document.getElementById('statusFilter').value;
+    const vencInicio = document.getElementById('vencimentoInicio').value;
+    const vencFim = document.getElementById('vencimentoFim').value;
+    const perPage = document.getElementById('perPage').value;
+    
+    if (search) params.append('search', search);
+    if (status) params.append('status', status);
+    if (vencInicio) params.append('vencimento_inicio', vencInicio);
+    if (vencFim) params.append('vencimento_fim', vencFim);
+    if (perPage) params.append('per_page', perPage);
+    
+    window.location.href = '?' + params.toString();
+}
+
+function ordenar(campo) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const atual = urlParams.get('order_by') || '';
+    const novo = atual === campo ? '-' + campo : campo;
+    urlParams.set('order_by', novo);
+    window.location.href = '?' + urlParams.toString();
+}
+
+// Modais
+function abrirModalBaixa(id) {
+    const conta = contasData[id];
+    if (!conta) return;
+    
+    document.getElementById('formBaixa').action = `/financeiro/contas-pagar/${id}/baixar/`;
+    document.getElementById('baixaFornecedor').textContent = conta.fornecedor;
+    document.getElementById('baixaDescricao').textContent = conta.descricao;
+    document.getElementById('baixaVencimento').textContent = conta.vencimento;
+    document.getElementById('baixaValorOriginal').textContent = 'R$ ' + conta.valorOriginal.replace('.', ',');
+    
+    const valorPago = parseFloat(conta.valorPago) || 0;
+    if (valorPago > 0) {
+        document.getElementById('baixaRowSaldo').style.display = 'flex';
+        document.getElementById('baixaValorSaldo').textContent = 'R$ ' + conta.valorSaldo.replace('.', ',');
+        document.getElementById('valorPago').value = conta.valorSaldo.replace('.', ',');
+    } else {
+        document.getElementById('baixaRowSaldo').style.display = 'none';
+        document.getElementById('valorPago').value = conta.valorOriginal.replace('.', ',');
+    }
+    
+    document.getElementById('modalBaixa').classList.add('active');
+}
+
+function abrirModalExcluir(id) {
+    const conta = contasData[id];
+    if (!conta) return;
+    
+    document.getElementById('formExcluir').action = `/financeiro/contas-pagar/${id}/excluir/`;
+    document.getElementById('excluirId').textContent = id;
+    document.getElementById('excluirDetalhes').innerHTML = `
+        Descrição: ${conta.descricao}<br>
+        Fornecedor: ${conta.fornecedor}<br>
+        Vencimento: ${conta.vencimento}<br>
+        Valor: R$ ${conta.valorOriginal.replace('.', ',')}
+    `;
+    
+    document.getElementById('modalExcluir').classList.add('active');
+}
+
+function abrirModalPDF() {
+    document.getElementById('modalPDF').classList.add('active');
+}
+
+function fecharModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+}
+
+function gerarPDF() {
+    const status = document.getElementById('pdfStatus').value;
+    const dataInicio = document.getElementById('pdfDataInicio').value;
+    const dataFim = document.getElementById('pdfDataFim').value;
+    
+    const params = new URLSearchParams();
+    if (status) params.append('status', status);
+    if (dataInicio) params.append('data_inicio', dataInicio);
+    if (dataFim) params.append('data_fim', dataFim);
+    
+    window.open(`/financeiro/contas-pagar/pdf/?${params.toString()}`, '_blank');
+    fecharModal('modalPDF');
+}
+
+// Utilitários
+function formatarMoeda(valor) {
+    return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+    }).format(valor);
+}
+
+function aplicarMascaraMoeda() {
+    document.querySelectorAll('.moeda').forEach(input => {
+        input.addEventListener('input', function(e) {
+            var valor = e.target.value.replace(/\D/g, '');
+            valor = (valor / 100).toFixed(2);
+            valor = valor.replace('.', ',');
+            valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+            e.target.value = valor;
+        });
+    });
+}
+
+// Fechar modal ao clicar fora
+document.querySelectorAll('.pbi-modal-overlay').forEach(modal => {
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.remove('active');
+        }
+    });
+});
+</script>
+{% endblock %}

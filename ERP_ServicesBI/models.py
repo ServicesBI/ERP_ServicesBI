@@ -1,21 +1,14 @@
-# -*- coding: utf-8 -*-
-"""
-ERP ServicesBI - Models Organizados por Módulos
-Segurança: Thread-safe sequenciais
-Performance: Otimizado para PostgreSQL
-"""
+
 from django.db import models, transaction
-from django.db.models import Sum, Count, Q
-from django.contrib.auth.models import User
+from django.db.models import Sum, Count, Q, F
+from django.contrib.auth.models import User, Group
 from django.core.validators import MinValueValidator
 from django.utils import timezone
 from django.apps import apps
 from datetime import timedelta
 
-
 # =============================================================================
 # GERENCIADOR DE SEQUENCIAIS - THREAD SAFE
-# =============================================================================
 
 class SequencialManager:
     """
@@ -40,7 +33,6 @@ class SequencialManager:
             
         return f"{prefixo}{novo_id:0{padding}d}"
 
-
 class SequencialMixin(models.Model):
     """
     Mixin que garante geração thread-safe de códigos sequenciais
@@ -64,10 +56,8 @@ class SequencialMixin(models.Model):
         
         super().save(*args, **kwargs)
 
-
 # =============================================================================
 # MÓDULO: CADASTRO - CLIENTES
-# =============================================================================
 
 class Pessoa(models.Model):
     """
@@ -103,7 +93,6 @@ class Pessoa(models.Model):
     def nome(self):
         return self.nome_razao_social or ""
 
-
 class Cliente(Pessoa):
     """Cadastro de clientes do sistema"""
     nome_fantasia = models.CharField(max_length=255, blank=True, null=True)
@@ -135,7 +124,6 @@ class Cliente(Pessoa):
 
 # =============================================================================
 # MÓDULO: CONFIGURAÇÕES - VENDEDOR
-# =============================================================================
 
 class Vendedor(models.Model):
     """Cadastro de vendedores/comissionados do sistema"""
@@ -264,10 +252,8 @@ class Vendedor(models.Model):
             return (self.total_vendas_mes / self.meta_vendas) * 100
         return 0
 
-
 # =============================================================================
 # MÓDULO: CONFIGURAÇÕES - EMPRESA
-# =============================================================================
 
 class Empresa(models.Model):
     """Cadastro da empresa matriz/filial do sistema"""
@@ -294,10 +280,8 @@ class Empresa(models.Model):
     def __str__(self):
         return self.nome_fantasia
     
-
 # =============================================================================
 # MÓDULO: CADASTRO - FORNECEDORES
-# =============================================================================
 
 class Fornecedor(Pessoa):
     """Cadastro de fornecedores do sistema"""
@@ -332,10 +316,8 @@ class Fornecedor(Pessoa):
     def cnpj(self):
         return self.cpf_cnpj if self.tipo_pessoa == 'J' else ''
 
-
 # =============================================================================
 # MÓDULO: CADASTRO - PRODUTOS
-# =============================================================================
 
 class CategoriaProduto(models.Model):
     """Categorias para classificação de produtos"""
@@ -352,7 +334,19 @@ class CategoriaProduto(models.Model):
     
     def __str__(self):
         return self.nome
+    
+class UnidadeMedida(models.Model):
+    sigla = models.CharField(max_length=10, unique=True)
+    nome = models.CharField(max_length=100)
+    ativo = models.BooleanField(default=True)
 
+    class Meta:
+        db_table = 'unidade_medida'
+        verbose_name = 'Unidade de Medida'
+        verbose_name_plural = 'Unidades de Medida'
+
+    def __str__(self):
+        return f"{self.sigla} - {self.nome}"
 
 class Produto(SequencialMixin, models.Model):
     """Cadastro de produtos/serviços do sistema"""
@@ -398,10 +392,8 @@ class Produto(SequencialMixin, models.Model):
     def nome(self):
         return self.descricao
 
-
 # =============================================================================
 # MÓDULO: CADASTRO - CONDIÇÕES E FORMAS DE PAGAMENTO
-# =============================================================================
 
 class CondicaoPagamento(models.Model):
     """Condições de pagamento (prazos e parcelas) - COM CÁLCULO AUTOMÁTICO"""
@@ -492,7 +484,6 @@ class CondicaoPagamento(models.Model):
         """Retorna resumo da condição (ex: 6x Mensal - 180 dias)"""
         return f"{self.parcelas}x {self.get_periodicidade_display()} - {self.prazo_total_dias} dias"
 
-
 class FormaPagamento(models.Model):
     """Formas de pagamento (meios: PIX, Cartão, etc.)"""
     TIPO_CHOICES = [
@@ -520,12 +511,8 @@ class FormaPagamento(models.Model):
     def __str__(self):
         return self.descricao
     
-
-
-    
 # =============================================================================
 # MÓDULO: COMPRAS - COTAÇÃO MÃE
-# =============================================================================
 
 class CotacaoMae(models.Model):
     """
@@ -596,10 +583,8 @@ class CotacaoMae(models.Model):
     def fornecedores_respondidos(self):
         return self.cotacoes_fornecedor.exclude(status='pendente').count()
 
-
 # =============================================================================
 # MÓDULO: COMPRAS - ITENS SOLICITADOS
-# =============================================================================
 
 class ItemSolicitado(models.Model):
     """
@@ -655,10 +640,8 @@ class ItemSolicitado(models.Model):
         """Retorna o código do produto ou vazio"""
         return self.produto.codigo if self.produto else ''
 
-
 # =============================================================================
 # MÓDULO: COMPRAS - COTAÇÃO FORNECEDOR (ATUALIZADO)
-# =============================================================================
 
 class CotacaoFornecedor(models.Model):
     """
@@ -779,10 +762,8 @@ class CotacaoFornecedor(models.Model):
     def total_itens_cotados(self):
         return self.itens.count()
 
-
 # =============================================================================
 # MÓDULO: COMPRAS - ITENS DA COTAÇÃO DO FORNECEDOR
-# =============================================================================
 
 class ItemCotacaoFornecedor(models.Model):
     """
@@ -847,24 +828,79 @@ class ItemCotacaoFornecedor(models.Model):
             self.preco_total = self.preco_unitario * self.quantidade
         super().save(*args, **kwargs)
 
+# =============================================================================
+# MÓDULO: COMPRAS - REGRA DE APROVAÇÃO (NOVO - FASE 1)
+# =============================================================================
+
+class RegraAprovacao(models.Model):
+    """
+    Configuração de alçadas de aprovação para pedidos de compra.
+    Define quem aprova baseado no valor do pedido.
+    """
+    nome = models.CharField(max_length=100, verbose_name='Nome da Regra')
+    valor_minimo = models.DecimalField(
+        max_digits=15, 
+        decimal_places=2, 
+        default=0,
+        verbose_name='Valor Mínimo (R$)'
+    )
+    valor_maximo = models.DecimalField(
+        max_digits=15, 
+        decimal_places=2,
+        verbose_name='Valor Máximo (R$)'
+    )
+    nivel = models.IntegerField(
+        verbose_name='Nível de Aprovação',
+        help_text='1=Primeiro nível, 2=Segundo, etc.'
+    )
+    grupo_aprovador = models.ForeignKey(
+        Group, 
+        on_delete=models.PROTECT,
+        verbose_name='Grupo Aprovador',
+        related_name='regras_aprovacao'
+    )
+    ativo = models.BooleanField(default=True, verbose_name='Ativo')
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Regra de Aprovação'
+        verbose_name_plural = 'Regras de Aprovação'
+        ordering = ['nivel', 'valor_maximo']
+        unique_together = ['nivel', 'grupo_aprovador']
+
+    def __str__(self):
+        return f"{self.nome} (Nível {self.nivel}: R$ {self.valor_minimo} - R$ {self.valor_maximo})"
+
 
 # =============================================================================
-# MÓDULO: COMPRAS - PEDIDO DE COMPRA
+# MÓDULO: COMPRAS - PEDIDO DE COMPRA (ATUALIZADO - FASE 1)
 # =============================================================================
 
 class PedidoCompra(SequencialMixin, models.Model):
+    """
+    Pedido de Compra completo com workflow de aprovação e integrações.
+    """
+    # STATUS DO WORKFLOW EXPANDIDO
     STATUS_CHOICES = [
-        ('pendente', 'Pendente'),
+        ('rascunho', 'Rascunho'),
+        ('em_aprovacao', 'Em Aprovação'),
         ('aprovado', 'Aprovado'),
-        ('parcial', 'Parcial'),
-        ('atendido', 'Atendido'),
+        ('rejeitado', 'Rejeitado'),
+        ('pendente_entrega', 'Pendente de Entrega'),  # Aprovado, aguardando fornecedor
+        ('parcial', 'Entrega Parcial'),
         ('recebido', 'Recebido'),
         ('cancelado', 'Cancelado'),
     ]
     
     numero = models.CharField(max_length=20, unique=True, blank=True)
-    fornecedor = models.ForeignKey(Fornecedor, on_delete=models.PROTECT, related_name='pedidos_compra')
+    fornecedor = models.ForeignKey(
+        Fornecedor, 
+        on_delete=models.PROTECT, 
+        related_name='pedidos_compra'
+    )
     
+    # CAMPOS DE ORIGEM
     cotacao_mae = models.ForeignKey(
         CotacaoMae,
         on_delete=models.SET_NULL,
@@ -882,12 +918,96 @@ class PedidoCompra(SequencialMixin, models.Model):
         verbose_name='Cotação do Fornecedor'
     )
     
+    # DATAS
     data_pedido = models.DateField(auto_now_add=True)
-    data_prevista_entrega = models.DateField()
+    data_prevista_entrega = models.DateField(null=True, blank=True)
+    data_aprovacao = models.DateTimeField(null=True, blank=True)
+    data_recebimento = models.DateTimeField(null=True, blank=True)
+    data_cancelamento = models.DateTimeField(null=True, blank=True)
+    
+    # STATUS E WORKFLOW
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='rascunho',
+        verbose_name='Status'
+    )
+    
+    # CONTROLE DE APROVAÇÃO
+    nivel_aprovacao_necessario = models.IntegerField(
+        default=0,
+        verbose_name='Nível de Aprovação Necessário',
+        help_text='0 = Não precisa de aprovação'
+    )
+    nivel_aprovacao_atual = models.IntegerField(
+        default=0,
+        verbose_name='Nível de Aprovação Atual'
+    )
+    
+    # USUÁRIOS
+    solicitante = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='pedidos_solicitados',
+        verbose_name='Solicitante'
+    )
+    aprovador_atual = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='pedidos_para_aprovar',
+        verbose_name='Aprovador Atual'
+    )
+    usuario_aprovacao = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='pedidos_aprovados',
+        verbose_name='Usuário que Aprovou'
+    )
+    usuario_recebimento = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='pedidos_recebidos',
+        verbose_name='Usuário que Recebeu'
+    )
+    usuario_cancelamento = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='pedidos_cancelados',
+        verbose_name='Usuário que Cancelou'
+    )
+    
+    # VALORES
+    valor_total = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    valor_frete = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    percentual_desconto = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    valor_desconto = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    valor_liquido = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    
+    # CONDIÇÕES COMERCIAIS
     condicao_pagamento = models.CharField(max_length=100, blank=True, verbose_name='Condição de Pagamento')
-    observacoes = models.TextField(blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
-    valor_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    forma_pagamento = models.CharField(max_length=100, blank=True, verbose_name='Forma de Pagamento')
+    prazo_entrega_dias = models.IntegerField(default=0, verbose_name='Prazo de Entrega (dias)')
+    
+    # OBSERVAÇÕES DE WORKFLOW
+    motivo_rejeicao = models.TextField(blank=True, verbose_name='Motivo da Rejeição')
+    observacao_recebimento = models.TextField(blank=True, verbose_name='Observações do Recebimento')
+    observacoes = models.TextField(blank=True, verbose_name='Observações Gerais')
+    
+    # INTEGRAÇÕES (flags de controle)
+    conta_pagar_gerada = models.BooleanField(default=False, verbose_name='Conta a Pagar Gerada?')
+    movimento_estoque_gerado = models.BooleanField(default=False, verbose_name='Movimento de Estoque Gerado?')
+    nota_fiscal_vinculada = models.BooleanField(default=False, verbose_name='Nota Fiscal Vinculada?')
+    
+    # CONTROLE
     ativo = models.BooleanField(default=True)
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
@@ -900,23 +1020,215 @@ class PedidoCompra(SequencialMixin, models.Model):
         verbose_name = 'Pedido de Compra'
         verbose_name_plural = 'Pedidos de Compra'
         ordering = ['-data_pedido']
-    
+        permissions = [
+            ('pode_aprovar_pedido_nivel_1', 'Pode aprovar pedidos nível 1'),
+            ('pode_aprovar_pedido_nivel_2', 'Pode aprovar pedidos nível 2'),
+            ('pode_aprovar_pedido_nivel_3', 'Pode aprovar pedidos nível 3'),
+            ('pode_receber_pedido', 'Pode receber pedidos'),
+            ('pode_cancelar_pedido', 'Pode cancelar pedidos'),
+        ]
+
     def __str__(self):
-        return f"Pedido {self.numero} - {self.fornecedor.nome_razao_social}"
-    
+        return f"PC-{self.numero} - {self.fornecedor.nome_razao_social[:30]}"
+
+    def save(self, *args, **kwargs):
+        # Calcula valor líquido
+        self.valor_desconto = (self.valor_total * self.percentual_desconto) / 100
+        self.valor_liquido = self.valor_total - self.valor_desconto + self.valor_frete
+        super().save(*args, **kwargs)
+
+    def verificar_aprovacao_necessaria(self):
+        """
+        Verifica se o pedido precisa de aprovação baseado no valor.
+        Retorna True se precisar de aprovação.
+        """
+        if self.status != 'rascunho':
+            return False
+            
+        regras = RegraAprovacao.objects.filter(
+            ativo=True,
+            valor_minimo__lte=self.valor_total,
+            valor_maximo__gte=self.valor_total
+        ).order_by('nivel')
+        
+        if regras.exists():
+            maior_regra = regras.last()
+            self.nivel_aprovacao_necessario = maior_regra.nivel
+            self.status = 'em_aprovacao'
+            self.nivel_aprovacao_atual = 0
+            return True
+        else:
+            # Não precisa de aprovação
+            self.nivel_aprovacao_necessario = 0
+            self.status = 'aprovado'
+            self.data_aprovacao = timezone.now()
+            return False
+
+    def pode_ser_aprovado_por(self, usuario):
+        """Verifica se usuário tem permissão para aprovar no nível atual."""
+        if self.status != 'em_aprovacao':
+            return False
+            
+        proximo_nivel = self.nivel_aprovacao_atual + 1
+        
+        # Verifica se usuário está no grupo correto
+        grupo_nome = f'aprovador_nivel_{proximo_nivel}'
+        return usuario.groups.filter(name=grupo_nome).exists()
+
+    def aprovar(self, usuario, observacao=''):
+        """Aprova o pedido no nível atual."""
+        if not self.pode_ser_aprovado_por(usuario):
+            raise PermissionError("Usuário não tem permissão para aprovar este pedido.")
+        
+        proximo_nivel = self.nivel_aprovacao_atual + 1
+        
+        # Registra no histórico
+        PedidoAprovacao.objects.create(
+            pedido=self,
+            usuario=usuario,
+            acao='aprovou',
+            nivel=proximo_nivel,
+            observacao=observacao
+        )
+        
+        self.nivel_aprovacao_atual = proximo_nivel
+        
+        # Verifica se aprovou todos os níveis necessários
+        if self.nivel_aprovacao_atual >= self.nivel_aprovacao_necessario:
+            self.status = 'aprovado'
+            self.data_aprovacao = timezone.now()
+            self.aprovador_atual = None
+            self.usuario_aprovacao = usuario
+        else:
+            # Ainda precisa de mais aprovações
+            self.aprovador_atual = None  # Será definido pelo próximo nível
+        
+        self.save()
+
+    def rejeitar(self, usuario, motivo):
+        """Rejeita o pedido."""
+        if self.status != 'em_aprovacao':
+            raise ValueError("Apenas pedidos em aprovação podem ser rejeitados.")
+        
+        PedidoAprovacao.objects.create(
+            pedido=self,
+            usuario=usuario,
+            acao='rejeitou',
+            nivel=self.nivel_aprovacao_atual + 1,
+            observacao=motivo
+        )
+        
+        self.status = 'rejeitado'
+        self.motivo_rejeicao = motivo
+        self.aprovador_atual = None
+        self.save()
+
+    def cancelar(self, usuario, motivo=''):
+        """Cancela o pedido."""
+        if self.status in ['recebido', 'cancelado']:
+            raise ValueError("Pedido já recebido ou cancelado não pode ser cancelado.")
+        
+        self.status = 'cancelado'
+        self.data_cancelamento = timezone.now()
+        self.usuario_cancelamento = usuario
+        if motivo:
+            self.observacoes = f"{self.observacoes}\nCancelado: {motivo}"
+        self.save()
+
     def calcular_total(self):
-        total = self.itens.aggregate(total=models.Sum('preco_total'))['total'] or 0
+        """Recalcula o total do pedido baseado nos itens."""
+        total = self.itens.aggregate(
+            total=Sum('preco_total')
+        )['total'] or 0
+        
         self.valor_total = total
-        self.save(update_fields=['valor_total'])
+        self.save(update_fields=['valor_total', 'valor_liquido', 'valor_desconto'])
+
+    def percentual_recebido(self):
+        """Retorna percentual de itens recebidos."""
+        total_itens = self.itens.count()
+        if total_itens == 0:
+            return 0
+        
+        itens_completos = self.itens.filter(
+            quantidade_recebida__gte=F('quantidade')
+        ).count()
+        
+        return (itens_completos / total_itens) * 100
+
+    @property
+    def status_display(self):
+        """Retorna o label do status."""
+        return dict(self.STATUS_CHOICES).get(self.status, self.status)
 
 
 # =============================================================================
-# MÓDULO: COMPRAS - ITENS DO PEDIDO DE COMPRA
+# MÓDULO: COMPRAS - HISTÓRICO DE APROVAÇÃO (NOVO - FASE 1)
+# =============================================================================
+
+class PedidoAprovacao(models.Model):
+    """
+    Histórico de aprovações, rejeições e encaminhamentos do pedido.
+    """
+    ACAO_CHOICES = [
+        ('aprovou', 'Aprovou'),
+        ('rejeitou', 'Rejeitou'),
+        ('encaminhou', 'Encaminhou'),
+    ]
+    
+    pedido = models.ForeignKey(
+        PedidoCompra,
+        on_delete=models.CASCADE,
+        related_name='historico_aprovacoes',
+        verbose_name='Pedido'
+    )
+    usuario = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name='Usuário'
+    )
+    acao = models.CharField(
+        max_length=20,
+        choices=ACAO_CHOICES,
+        verbose_name='Ação'
+    )
+    nivel = models.IntegerField(
+        verbose_name='Nível da Ação',
+        help_text='Nível de aprovação em que a ação foi tomada'
+    )
+    data = models.DateTimeField(auto_now_add=True, verbose_name='Data')
+    observacao = models.TextField(blank=True, verbose_name='Observação')
+    
+    class Meta:
+        verbose_name = 'Histórico de Aprovação'
+        verbose_name_plural = 'Históricos de Aprovação'
+        ordering = ['-data']
+
+    def __str__(self):
+        return f"{self.get_acao_display()} - {self.pedido.numero} (Nível {self.nivel})"
+
+
+# =============================================================================
+# MÓDULO: COMPRAS - ITENS DO PEDIDO DE COMPRA (ATUALIZADO - FASE 1)
 # =============================================================================
 
 class ItemPedidoCompra(models.Model):
-    pedido = models.ForeignKey(PedidoCompra, on_delete=models.CASCADE, related_name='itens')
-    produto = models.ForeignKey(Produto, on_delete=models.PROTECT)
+    """
+    Item do pedido de compra com controle de recebimento (3-Way Matching).
+    """
+    pedido = models.ForeignKey(
+        PedidoCompra,
+        on_delete=models.CASCADE,
+        related_name='itens',
+        verbose_name='Pedido'
+    )
+    produto = models.ForeignKey(
+        Produto,
+        on_delete=models.PROTECT,
+        verbose_name='Produto',
+        related_name='itens_pedido'
+    )
     
     item_cotacao_origem = models.ForeignKey(
         ItemCotacaoFornecedor,
@@ -932,23 +1244,135 @@ class ItemPedidoCompra(models.Model):
     preco_unitario = models.DecimalField(max_digits=10, decimal_places=4, default=0)
     preco_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    quantidade_recebida = models.DecimalField(max_digits=10, decimal_places=3, default=0)
+    
+    # CAMPOS PARA 3-WAY MATCHING
+    quantidade_recebida = models.DecimalField(
+        max_digits=10,
+        decimal_places=3,
+        default=0,
+        verbose_name='Quantidade Recebida'
+    )
+    quantidade_conferida = models.DecimalField(
+        max_digits=10,
+        decimal_places=3,
+        default=0,
+        verbose_name='Quantidade Conferida (Física)'
+    )
+    preco_unitario_recebido = models.DecimalField(
+        max_digits=10,
+        decimal_places=4,
+        null=True,
+        blank=True,
+        verbose_name='Preço Unitário Recebido'
+    )
+    
+    # DIVERGÊNCIAS
+    divergencia_encontrada = models.BooleanField(
+        default=False,
+        verbose_name='Divergência Encontrada?'
+    )
+    TIPO_DIVERGENCIA_CHOICES = [
+        ('quantidade_maior', 'Quantidade Maior que o Pedido'),
+        ('quantidade_menor', 'Quantidade Menor que o Pedido'),
+        ('preco_diferente', 'Preço Diferente do Pedido'),
+        ('qualidade', 'Problema de Qualidade'),
+        ('atraso', 'Atraso na Entrega'),
+        ('produto_errado', 'Produto Errado'),
+        ('avaria', 'Avaria no Transporte'),
+    ]
+    tipo_divergencia = models.CharField(
+        max_length=50,
+        blank=True,
+        choices=TIPO_DIVERGENCIA_CHOICES,
+        verbose_name='Tipo de Divergência'
+    )
+    observacao_divergencia = models.TextField(
+        blank=True,
+        verbose_name='Observação da Divergência'
+    )
+    
+    # CONTROLE
+    recebido_completo = models.BooleanField(
+        default=False,
+        verbose_name='Recebido Completo?'
+    )
+    data_ultimo_recebimento = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Data do Último Recebimento'
+    )
     
     class Meta:
         verbose_name = 'Item do Pedido'
         verbose_name_plural = 'Itens do Pedido'
-    
+        ordering = ['id']
+
+    def __str__(self):
+        return f"{self.descricao[:30]} - {self.quantidade} UN"
+
     def save(self, *args, **kwargs):
+        # Calcula preço total
         self.preco_total = self.quantidade * self.preco_unitario
-        self.subtotal = self.preco_total
+        
+        # Preenche descrição se vazia
         if not self.descricao and self.produto:
             self.descricao = self.produto.descricao
+        
+        # Verifica se recebeu completo
+        if self.quantidade_recebida >= self.quantidade:
+            self.recebido_completo = True
+        else:
+            self.recebido_completo = False
+        
         super().save(*args, **kwargs)
+
+    def saldo_receber(self):
+        """Retorna quantidade pendente de recebimento."""
+        return self.quantidade - self.quantidade_recebida
+
+    def verificar_divergencia(self, qtd_recebida, preco_recebido=None):
+        """
+        Verifica se há divergência entre pedido e recebimento.
+        Retorna (tem_divergencia, tipo_divergencia).
+        """
+        if qtd_recebida > self.quantidade:
+            return True, 'quantidade_maior'
+        
+        if qtd_recebida < self.saldo_receber():
+            return True, 'quantidade_menor'
+        
+        if preco_recebido and preco_recebido != self.preco_unitario:
+            return True, 'preco_diferente'
+        
+        return False, None
+
+    def registrar_recebimento(self, quantidade, usuario, preco_recebido=None, observacao=''):
+        """Registra recebimento parcial ou total do item."""
+        self.quantidade_recebida += quantidade
+        self.data_ultimo_recebimento = timezone.now()
+        
+        if preco_recebido:
+            self.preco_unitario_recebido = preco_recebido
+        
+        # Verifica divergências
+        tem_div, tipo_div = self.verificar_divergencia(
+            self.quantidade_recebida, 
+            preco_recebido
+        )
+        
+        if tem_div:
+            self.divergencia_encontrada = True
+            self.tipo_divergencia = tipo_div
+            self.observacao_divergencia = observacao
+        
+        self.save()
+        
+        # Atualiza status do pedido
+        self.pedido.save()
 
 
 # =============================================================================
 # MÓDULO: COMPRAS - NOTA FISCAL DE ENTRADA
-# =============================================================================
 
 class NotaFiscalEntrada(models.Model):
     STATUS_CHOICES = [
@@ -1006,10 +1430,8 @@ class NotaFiscalEntrada(models.Model):
                 estoque_atual=models.F('estoque_atual') + item.quantidade
             )
 
-
 # =============================================================================
 # MÓDULO: COMPRAS - ITENS DA NOTA FISCAL DE ENTRADA
-# =============================================================================
 
 class ItemNotaFiscalEntrada(models.Model):
     nota_fiscal = models.ForeignKey(NotaFiscalEntrada, on_delete=models.CASCADE, related_name='itens')
@@ -1028,10 +1450,8 @@ class ItemNotaFiscalEntrada(models.Model):
         self.subtotal = self.preco_total
         super().save(*args, **kwargs)
 
-
 # =============================================================================
 # MÓDULO: VENDAS - ORÇAMENTO
-# =============================================================================
 
 class Orcamento(SequencialMixin, models.Model):
     STATUS_CHOICES = [
@@ -1073,10 +1493,8 @@ class Orcamento(SequencialMixin, models.Model):
         self.valor_total = total
         self.save(update_fields=['valor_total'])
 
-
 # =============================================================================
 # MÓDULO: VENDAS - ITENS DO ORÇAMENTO
-# =============================================================================
 
 class ItemOrcamento(models.Model):
     orcamento = models.ForeignKey(Orcamento, on_delete=models.CASCADE, related_name='itens')
@@ -1096,10 +1514,8 @@ class ItemOrcamento(models.Model):
         self.subtotal = self.preco_total
         super().save(*args, **kwargs)
 
-
 # =============================================================================
 # MÓDULO: VENDAS - PEDIDO DE VENDA
-# =============================================================================
 
 class PedidoVenda(SequencialMixin, models.Model):
     STATUS_CHOICES = [
@@ -1141,10 +1557,8 @@ class PedidoVenda(SequencialMixin, models.Model):
         self.valor_total = total
         self.save(update_fields=['valor_total'])
 
-
 # =============================================================================
 # MÓDULO: VENDAS - ITENS DO PEDIDO DE VENDA
-# =============================================================================
 
 class ItemPedidoVenda(models.Model):
     pedido = models.ForeignKey(PedidoVenda, on_delete=models.CASCADE, related_name='itens')
@@ -1165,10 +1579,8 @@ class ItemPedidoVenda(models.Model):
         self.subtotal = self.preco_total
         super().save(*args, **kwargs)
 
-
 # =============================================================================
 # MÓDULO: VENDAS - NOTA FISCAL DE SAÍDA
-# =============================================================================
 
 class NotaFiscalSaida(models.Model):
     STATUS_CHOICES = [
@@ -1238,10 +1650,8 @@ class NotaFiscalSaida(models.Model):
             status='pendente'
         )
 
-
 # =============================================================================
 # MÓDULO: VENDAS - ITENS DA NOTA FISCAL DE SAÍDA
-# =============================================================================
 
 class ItemNotaFiscalSaida(models.Model):
     nota_fiscal = models.ForeignKey(NotaFiscalSaida, on_delete=models.CASCADE, related_name='itens')
@@ -1260,10 +1670,8 @@ class ItemNotaFiscalSaida(models.Model):
         self.subtotal = self.preco_total
         super().save(*args, **kwargs)
 
-
 # =============================================================================
 # MÓDULO: FINANCEIRO - CATEGORIA FINANCEIRA
-# =============================================================================
 
 class CategoriaFinanceira(models.Model):
     TIPO_CHOICES = [
@@ -1308,10 +1716,8 @@ class CategoriaFinanceira(models.Model):
     def __str__(self):
         return f"{self.codigo} - {self.nome}"
 
-
 # =============================================================================
 # MÓDULO: FINANCEIRO - CENTRO DE CUSTO
-# =============================================================================
 
 class CentroCusto(models.Model):
     TIPO_CHOICES = [
@@ -1338,10 +1744,8 @@ class CentroCusto(models.Model):
     def __str__(self):
         return f"{self.nome} ({self.get_tipo_display()})"
 
-
 # =============================================================================
 # MÓDULO: FINANCEIRO - ORÇAMENTO FINANCEIRO
-# =============================================================================
 
 class OrcamentoFinanceiro(models.Model):
     PERIODO_CHOICES = [
@@ -1380,19 +1784,40 @@ class OrcamentoFinanceiro(models.Model):
         periodo_str = f"{self.mes:02d}" if self.mes else (f"Q{self.trimestre}" if self.trimestre else 'Anual')
         return f"{self.categoria} - {self.ano}/{periodo_str}"
 
-
 # =============================================================================
 # MÓDULO: FINANCEIRO - EXTRATO BANCÁRIO
-# =============================================================================
 
 class ExtratoBancario(models.Model):
+    STATUS_CHOICES = [
+        ('pendente', 'Pendente'),
+        ('processando', 'Processando'),
+        ('conciliado', 'Conciliado'),
+        ('divergente', 'Divergente'),
+    ]
+    
     conta_bancaria = models.CharField(max_length=100)
+    banco = models.CharField(max_length=100, blank=True)
+    agencia = models.CharField(max_length=20, blank=True)
+    conta = models.CharField(max_length=20, blank=True)
+    descricao = models.CharField(max_length=255, blank=True)
+    
     data_arquivo = models.DateField()
+    data_inicial = models.DateField(null=True, blank=True)
+    data_final = models.DateField(null=True, blank=True)
     data_upload = models.DateTimeField(auto_now_add=True)
     data_importacao = models.DateTimeField(auto_now_add=True)
+    data_processamento = models.DateTimeField(null=True, blank=True)
+    
     arquivo = models.FileField(upload_to='extratos/%Y/%m/')
-    importado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    
+    saldo_inicial = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    saldo_final = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    
+    importado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='extratos_importados')
     processado = models.BooleanField(default=False)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
+    
+    observacoes = models.TextField(blank=True)
     
     class Meta:
         ordering = ['-data_arquivo']
@@ -1401,11 +1826,18 @@ class ExtratoBancario(models.Model):
     
     def __str__(self):
         return f"Extrato {self.conta_bancaria} - {self.data_arquivo}"
+    
+    @property
+    def total_lancamentos(self):
+        return self.lancamentos.count()
+    
+    def save(self, *args, **kwargs):
+        self.processado = (self.status in ['conciliado', 'divergente'])
+        super().save(*args, **kwargs)
 
 
 # =============================================================================
 # MÓDULO: FINANCEIRO - LANÇAMENTO DO EXTRATO
-# =============================================================================
 
 class LancamentoExtrato(models.Model):
     TIPO_CHOICES = [
@@ -1446,10 +1878,8 @@ class LancamentoExtrato(models.Model):
         self.conciliado = (self.status == 'conciliado')
         super().save(*args, **kwargs)
 
-
 # =============================================================================
 # MÓDULO: FINANCEIRO - CONTAS A RECEBER
-# =============================================================================
 
 class ContaReceber(models.Model):
     STATUS_CHOICES = [
@@ -1527,10 +1957,8 @@ class ContaReceber(models.Model):
         
         self.save()
 
-
 # =============================================================================
 # MÓDULO: FINANCEIRO - CONTAS A PAGAR
-# =============================================================================
 
 class ContaPagar(models.Model):
     STATUS_CHOICES = [
@@ -1608,10 +2036,8 @@ class ContaPagar(models.Model):
         
         self.save()
 
-
 # =============================================================================
 # MÓDULO: FLUXO DE CAIXA
-# =============================================================================
 
 class MovimentoCaixa(models.Model):
     TIPO_CHOICES = [
@@ -1636,10 +2062,8 @@ class MovimentoCaixa(models.Model):
     def __str__(self):
         return f"{self.descricao} - {self.tipo} - R$ {self.valor}"
 
-
 # =============================================================================
 # MÓDULO: DRE - CONFIGURAÇÃO
-# =============================================================================
 
 class ConfiguracaoDRE(models.Model):
     """
@@ -1735,10 +2159,8 @@ class ConfiguracaoDRE(models.Model):
     def __str__(self):
         return f"Config DRE - {self.empresa.nome_fantasia} ({self.get_regime_tributario_display()})"
 
-
 # =============================================================================
 # MÓDULO: DRE - LINHA DRE
-# =============================================================================
 
 class LinhaDRE(models.Model):
     """
@@ -1845,10 +2267,8 @@ class LinhaDRE(models.Model):
             return []
         return [g.strip() for g in self.grupos_dre.split(',')]
 
-
 # =============================================================================
 # MÓDULO: DRE - RELATÓRIO DRE
-# =============================================================================
 
 class RelatorioDRE(models.Model):
     """
@@ -1949,10 +2369,8 @@ class RelatorioDRE(models.Model):
             return 0
         return (self.lucro_liquido / self.receita_liquida) * 100
 
-
 # =============================================================================
 # MÓDULO: DRE - ITENS DO RELATÓRIO
-# =============================================================================
 
 class ItemRelatorioDRE(models.Model):
     """
@@ -2010,10 +2428,8 @@ class ItemRelatorioDRE(models.Model):
     def __str__(self):
         return f"{self.linha_dre.descricao}: R$ {self.valor}"
 
-
 # =============================================================================
 # MÓDULO: ESTOQUE - MOVIMENTAÇÃO
-# =============================================================================
 
 class MovimentacaoEstoque(models.Model):
     TIPO_CHOICES = [
@@ -2057,10 +2473,8 @@ class MovimentacaoEstoque(models.Model):
             self.produto.estoque_atual += self.quantidade
         self.produto.save(update_fields=['estoque_atual'])
 
-
 # =============================================================================
 # MÓDULO: ESTOQUE - INVENTÁRIO
-# =============================================================================
 
 class Inventario(SequencialMixin, models.Model):
     STATUS_CHOICES = [
@@ -2102,10 +2516,8 @@ class Inventario(SequencialMixin, models.Model):
                 item.produto.estoque_atual = item.quantidade_contada
                 item.produto.save(update_fields=['estoque_atual'])
 
-
 # =============================================================================
 # MÓDULO: ESTOQUE - ITENS DO INVENTÁRIO
-# =============================================================================
 
 class ItemInventario(models.Model):
     inventario = models.ForeignKey(Inventario, on_delete=models.CASCADE, related_name='itens')
@@ -2127,10 +2539,8 @@ class ItemInventario(models.Model):
         self.quantidade_fisica = self.quantidade_contada
         super().save(*args, **kwargs)
 
-
 # =============================================================================
 # MÓDULO: ESTOQUE - TRANSFERÊNCIA
-# =============================================================================
 
 class TransferenciaEstoque(SequencialMixin, models.Model):
     STATUS_CHOICES = [
@@ -2170,10 +2580,8 @@ class TransferenciaEstoque(SequencialMixin, models.Model):
             self.deposito_destino = self.destino
         super().save(*args, **kwargs)
 
-
 # =============================================================================
 # MÓDULO: ESTOQUE - ITENS DA TRANSFERÊNCIA
-# =============================================================================
 
 class ItemTransferencia(models.Model):
     transferencia = models.ForeignKey(TransferenciaEstoque, on_delete=models.CASCADE, related_name='itens')
@@ -2183,3 +2591,190 @@ class ItemTransferencia(models.Model):
     class Meta:
         verbose_name = 'Item da Transferência'
         verbose_name_plural = 'Itens da Transferência'
+
+# =============================================================================
+# MÓDULO: ESTOQUE - DEPÓSITO
+
+class Deposito(models.Model):
+    """Cadastro de depósitos/armazéns do sistema"""
+    codigo = models.CharField(max_length=20, unique=True)
+    nome = models.CharField(max_length=100)
+    descricao = models.TextField(blank=True, null=True)
+    endereco = models.CharField(max_length=255, blank=True, null=True)
+    responsavel = models.CharField(max_length=100, blank=True, null=True)
+    ativo = models.BooleanField(default=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Depósito'
+        verbose_name_plural = 'Depósitos'
+        ordering = ['nome']
+        db_table = 'estoque_deposito'
+
+    def __str__(self):
+        return f"{self.codigo} - {self.nome}"
+
+
+# =============================================================================
+# MÓDULO: ESTOQUE - SALDO POR DEPÓSITO
+
+class SaldoEstoque(models.Model):
+    """Controle de saldo de estoque por depósito"""
+    produto = models.ForeignKey(
+        Produto,
+        on_delete=models.PROTECT,
+        related_name='saldos_por_deposito'
+    )
+    deposito = models.ForeignKey(
+        Deposito,
+        on_delete=models.PROTECT,
+        related_name='saldos'
+    )
+    quantidade = models.DecimalField(
+        max_digits=10,
+        decimal_places=3,
+        default=0,
+        verbose_name='Quantidade em Estoque'
+    )
+    quantidade_reservada = models.DecimalField(
+        max_digits=10,
+        decimal_places=3,
+        default=0,
+        verbose_name='Quantidade Reservada'
+    )
+    quantidade_disponivel = models.DecimalField(
+        max_digits=10,
+        decimal_places=3,
+        default=0,
+        verbose_name='Quantidade Disponível'
+    )
+    data_ultimo_movimento = models.DateTimeField(null=True, blank=True)
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Saldo de Estoque'
+        verbose_name_plural = 'Saldos de Estoque'
+        unique_together = ['produto', 'deposito']
+        ordering = ['produto__descricao', 'deposito__nome']
+        db_table = 'estoque_saldo'
+
+    def __str__(self):
+        return f"{self.produto.descricao[:30]} - {self.deposito.nome}: {self.quantidade}"
+
+    def save(self, *args, **kwargs):
+        # Calcula quantidade disponível
+        self.quantidade_disponivel = self.quantidade - self.quantidade_reservada
+        super().save(*args, **kwargs)
+
+    @property
+    def saldo_disponivel(self):
+        return self.quantidade - self.quantidade_reservada
+    
+class EntradaNFE(models.Model):
+    """
+    Registro de entrada de Nota Fiscal Eletrônica no estoque
+    """
+    STATUS_CHOICES = [
+        ('pendente', 'Pendente'),
+        ('em_processamento', 'Em Processamento'),
+        ('finalizada', 'Finalizada'),
+        ('cancelada', 'Cancelada'),
+    ]
+    
+    numero_nfe = models.CharField(max_length=20, verbose_name='Número NF-e')
+    serie = models.CharField(max_length=3, default='1', verbose_name='Série')
+    chave_acesso = models.CharField(max_length=44, blank=True, verbose_name='Chave de Acesso')
+    fornecedor = models.ForeignKey(
+        Fornecedor,
+        on_delete=models.PROTECT,
+        related_name='entradas_nfe',
+        verbose_name='Fornecedor'
+    )
+    pedido_compra = models.ForeignKey(
+        PedidoCompra,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='entradas_nfe',
+        verbose_name='Pedido de Compra'
+    )
+    deposito = models.ForeignKey(
+        Deposito,
+        on_delete=models.PROTECT,
+        related_name='entradas_nfe',
+        verbose_name='Depósito de Destino'
+    )
+    data_emissao = models.DateField(verbose_name='Data de Emissão')
+    data_entrada = models.DateTimeField(auto_now_add=True, verbose_name='Data de Entrada')
+    valor_total = models.DecimalField(max_digits=15, decimal_places=2, default=0, verbose_name='Valor Total')
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pendente',
+        verbose_name='Status'
+    )
+    observacoes = models.TextField(blank=True, verbose_name='Observações')
+    usuario = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name='entradas_nfe',
+        verbose_name='Usuário'
+    )
+    
+    class Meta:
+        verbose_name = 'Entrada de NF-e'
+        verbose_name_plural = 'Entradas de NF-e'
+        ordering = ['-data_entrada']
+    
+    def __str__(self):
+        return f"NF-e {self.numero_nfe} - {self.fornecedor.nome_razao_social}"
+
+
+class ItemEntradaNFE(models.Model):
+    """
+    Itens da Nota Fiscal de Entrada
+    """
+    entrada = models.ForeignKey(
+        EntradaNFE,
+        on_delete=models.CASCADE,
+        related_name='itens',
+        verbose_name='Entrada NF-e'
+    )
+    produto = models.ForeignKey(
+        Produto,
+        on_delete=models.PROTECT,
+        related_name='itens_entrada_nfe',
+        verbose_name='Produto'
+    )
+    quantidade = models.DecimalField(
+        max_digits=10,
+        decimal_places=3,
+        default=0,
+        verbose_name='Quantidade'
+    )
+    valor_unitario = models.DecimalField(
+        max_digits=10,
+        decimal_places=4,
+        default=0,
+        verbose_name='Valor Unitário'
+    )
+    valor_total = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        verbose_name='Valor Total'
+    )
+    observacoes = models.TextField(blank=True, verbose_name='Observações')
+    
+    class Meta:
+        verbose_name = 'Item da Entrada NF-e'
+        verbose_name_plural = 'Itens da Entrada NF-e'
+        ordering = ['id']
+    
+    def __str__(self):
+        return f"{self.produto.descricao} - {self.quantidade} UN"
+    
+    def save(self, *args, **kwargs):
+        self.valor_total = self.quantidade * self.valor_unitario
+        super().save(*args, **kwargs)

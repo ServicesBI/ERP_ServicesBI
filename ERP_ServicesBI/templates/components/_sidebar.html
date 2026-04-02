@@ -18,49 +18,49 @@
             </li>
 
             <!-- 2. Cadastro -->
-            <li class="erp-sidebar__item {% if 'cadastro' in request.path %}open{% endif %}">
-                <a href="#" class="erp-sidebar__link {% if 'cadastro' in request.path %}active{% endif %}" onclick="toggleSubmenu(this)">
+            <li class="erp-sidebar__item {% if 'clientes' in request.path or 'vendedores' in request.path or 'empresas' in request.path or 'fornecedores' in request.path or 'produtos' in request.path %}open{% endif %}">
+                <a href="#" class="erp-sidebar__link" onclick="toggleSubmenu(this)">
                     <span class="erp-sidebar__icon">📁</span>
                     <span>Cadastro</span>
                     <span class="erp-sidebar__arrow">▶</span>
                 </a>
                 <ul class="erp-sidebar__submenu">
-                    <li><a href="{% url 'ERP_ServicesBI:cliente_manager' %}" class="erp-sidebar__submenu-link {% if 'cadastro/clientes' in request.path %}active{% endif %}">Clientes</a></li>
-                    <li><a href="{% url 'ERP_ServicesBI:vendedor_manager' %}" class="erp-sidebar__submenu-link {% if 'cadastro/vendedores' in request.path %}active{% endif %}">Vendedores</a></li>
-                    <li><a href="{% url 'ERP_ServicesBI:empresa_list' %}" class="erp-sidebar__submenu-link {% if 'cadastro/empresas' in request.path %}active{% endif %}">Empresas</a></li>
-                    <li><a href="{% url 'ERP_ServicesBI:fornecedor_manager' %}" class="erp-sidebar__submenu-link {% if 'cadastro/fornecedores' in request.path %}active{% endif %}">Fornecedores</a></li>
-                    <li><a href="{% url 'ERP_ServicesBI:produto_list' %}" class="erp-sidebar__submenu-link {% if 'cadastro/produtos' in request.path %}active{% endif %}">Produtos</a></li>
+                    <li><a href="{% url 'ERP_ServicesBI:cliente_manager' %}" class="erp-sidebar__submenu-link {% if 'clientes' in request.path %}active{% endif %}">Clientes</a></li>
+                    <li><a href="{% url 'ERP_ServicesBI:vendedor_manager' %}" class="erp-sidebar__submenu-link {% if 'vendedores' in request.path %}active{% endif %}">Vendedores</a></li>
+                    <li><a href="{% url 'ERP_ServicesBI:empresa_list' %}" class="erp-sidebar__submenu-link {% if 'empresas' in request.path %}active{% endif %}">Empresas</a></li>
+                    <li><a href="{% url 'ERP_ServicesBI:fornecedor_manager' %}" class="erp-sidebar__submenu-link {% if 'fornecedores' in request.path %}active{% endif %}">Fornecedores</a></li>
+                    <li><a href="{% url 'ERP_ServicesBI:produto_list' %}" class="erp-sidebar__submenu-link {% if 'produtos' in request.path %}active{% endif %}">Produtos</a></li>
                 </ul>
             </li>
 
             <!-- 3. Compras -->
             <li class="erp-sidebar__item {% if 'compras' in request.path %}open{% endif %}">
-                <a href="#" class="erp-sidebar__link {% if 'compras' in request.path %}active{% endif %}" onclick="toggleSubmenu(this)">
+                <a href="#" class="erp-sidebar__link" onclick="toggleSubmenu(this)">
                     <span class="erp-sidebar__icon">🛒</span>
                     <span>Compras</span>
                     <span class="erp-sidebar__arrow">▶</span>
                 </a>
                 <ul class="erp-sidebar__submenu">
                     <li>
-                        <a href="{% url 'ERP_ServicesBI:cotacao_manager' %}" 
-                           class="erp-sidebar__submenu-link {% if 'compras/cotacoes' in request.path %}active{% endif %}">
+                        <a href="{% url 'ERP_ServicesBI:cotacao_manager' %}"
+                           class="erp-sidebar__submenu-link {% if 'cotacoes' in request.path %}active{% endif %}">
                             Cotações Comparativas
                         </a>
                     </li>
                     <li>
-                        <a href="{% url 'ERP_ServicesBI:pedido_compra_manager' %}" 
+                        <a href="{% url 'ERP_ServicesBI:pedido_compra_manager' %}"
                            class="erp-sidebar__submenu-link {% if 'compras/pedidos' in request.path %}active{% endif %}">
                             Pedidos de Compra
                         </a>
                     </li>
                     <li>
-                        <a href="{% url 'ERP_ServicesBI:nota_fiscal_entrada_manager' %}" 
+                        <a href="{% url 'ERP_ServicesBI:nota_fiscal_entrada_manager' %}"
                            class="erp-sidebar__submenu-link {% if 'compras/notas-fiscais' in request.path %}active{% endif %}">
                             Notas Fiscais de Entrada
                         </a>
                     </li>
                     <li>
-                        <a href="{% url 'ERP_ServicesBI:relatorio_compras' %}" 
+                        <a href="{% url 'ERP_ServicesBI:relatorio_compras' %}"
                            class="erp-sidebar__submenu-link {% if 'compras/relatorios' in request.path %}active{% endif %}">
                             📊 Relatório de Compras
                         </a>
@@ -70,84 +70,130 @@
 
             <!-- 4. Vendas -->
             <li class="erp-sidebar__item {% if 'vendas' in request.path %}open{% endif %}">
-                <a href="#" class="erp-sidebar__link {% if 'vendas' in request.path %}active{% endif %}" onclick="toggleSubmenu(this)">
+                <a href="#" class="erp-sidebar__link" onclick="toggleSubmenu(this)">
                     <span class="erp-sidebar__icon">💰</span>
                     <span>Vendas</span>
                     <span class="erp-sidebar__arrow">▶</span>
                 </a>
                 <ul class="erp-sidebar__submenu">
-                    <li><a href="{% url 'ERP_ServicesBI:orcamento_list' %}" class="erp-sidebar__submenu-link {% if 'vendas/orcamentos' in request.path %}active{% endif %}">Orçamentos</a></li>
-                    <li><a href="{% url 'ERP_ServicesBI:pedido_venda_list' %}" class="erp-sidebar__submenu-link {% if 'vendas/pedidos' in request.path %}active{% endif %}">Pedidos de Venda</a></li>
-                    <li><a href="{% url 'ERP_ServicesBI:nota_fiscal_saida_list' %}" class="erp-sidebar__submenu-link {% if 'vendas/notas-fiscais' in request.path %}active{% endif %}">Notas Fiscais de Saída</a></li>
-                    <li><a href="{% url 'ERP_ServicesBI:relatorio_vendas' %}" class="erp-sidebar__submenu-link {% if 'vendas/relatorios' in request.path %}active{% endif %}">📊 Relatório de Vendas</a></li>
+                    <li>
+                        <a href="{% url 'ERP_ServicesBI:orcamento_manager' %}"
+                           class="erp-sidebar__submenu-link {% if 'orcamentos' in request.path %}active{% endif %}">
+                            Orçamentos
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'ERP_ServicesBI:pedido_venda_manager' %}"
+                           class="erp-sidebar__submenu-link {% if 'vendas/pedidos' in request.path %}active{% endif %}">
+                            Pedidos de Venda
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'ERP_ServicesBI:nota_fiscal_saida_manager' %}"
+                           class="erp-sidebar__submenu-link {% if 'vendas/notas-fiscais' in request.path %}active{% endif %}">
+                            Notas Fiscais de Saída
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'ERP_ServicesBI:relatorio_vendas' %}"
+                           class="erp-sidebar__submenu-link {% if 'vendas/relatorios' in request.path %}active{% endif %}">
+                            📊 Relatório de Vendas
+                        </a>
+                    </li>
                 </ul>
             </li>
 
             <!-- 5. Financeiro -->
-            <li class="erp-sidebar__item {% if 'financeiro' in request.path %}open{% endif %}">
-                <a href="#" class="erp-sidebar__link {% if 'financeiro' in request.path %}active{% endif %}" onclick="toggleSubmenu(this)">
+            <li class="erp-sidebar__item {% if 'fluxo-caixa' in request.path or 'contas-receber' in request.path or 'contas-pagar' in request.path or 'conciliacao-bancaria' in request.path or 'dre' in request.path or 'planejado-realizado' in request.path or request.resolver_match.url_name == 'relatorio_financeiro' %}open{% endif %}">
+                <a href="#" class="erp-sidebar__link" onclick="toggleSubmenu(this)">
                     <span class="erp-sidebar__icon">📊</span>
                     <span>Financeiro</span>
                     <span class="erp-sidebar__arrow">▶</span>
                 </a>
                 <ul class="erp-sidebar__submenu">
-                    <li><a href="{% url 'ERP_ServicesBI:categoria_financeira_list' %}" class="erp-sidebar__submenu-link {% if 'financeiro/categorias' in request.path %}active{% endif %}">Categorias Financeiras</a></li>
-                    <li><a href="{% url 'ERP_ServicesBI:centro_custo_list' %}" class="erp-sidebar__submenu-link {% if 'financeiro/centros-custo' in request.path %}active{% endif %}">Centros de Custo</a></li>
-                    <li><a href="{% url 'ERP_ServicesBI:orcamento_financeiro_list' %}" class="erp-sidebar__submenu-link {% if 'financeiro/orcamentos' in request.path %}active{% endif %}">Orçamento Financeiro</a></li>
-                    <li><a href="{% url 'ERP_ServicesBI:conta_receber_list' %}" class="erp-sidebar__submenu-link {% if 'financeiro/contas-receber' in request.path %}active{% endif %}">Contas a Receber</a></li>
-                    <li><a href="{% url 'ERP_ServicesBI:conta_pagar_list' %}" class="erp-sidebar__submenu-link {% if 'financeiro/contas-pagar' in request.path %}active{% endif %}">Contas a Pagar</a></li>
+                    <li>
+                        <a href="{% url 'ERP_ServicesBI:relatorio_financeiro' %}"
+                           class="erp-sidebar__submenu-link {% if request.resolver_match.url_name == 'relatorio_financeiro' %}active{% endif %}">
+                            📈 Relatório Financeiro
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'ERP_ServicesBI:fluxo_caixa_list' %}"
+                           class="erp-sidebar__submenu-link {% if 'fluxo-caixa' in request.path %}active{% endif %}">
+                            💵 Fluxo de Caixa
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'ERP_ServicesBI:conta_receber_list' %}"
+                           class="erp-sidebar__submenu-link {% if 'contas-receber' in request.path %}active{% endif %}">
+                            📥 Contas a Receber
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'ERP_ServicesBI:conta_pagar_list' %}"
+                           class="erp-sidebar__submenu-link {% if 'contas-pagar' in request.path %}active{% endif %}">
+                            📤 Contas a Pagar
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'ERP_ServicesBI:conciliacao_bancaria_list' %}"
+                           class="erp-sidebar__submenu-link {% if 'conciliacao-bancaria' in request.path %}active{% endif %}">
+                            🏦 Conciliação Bancária
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'ERP_ServicesBI:dre_list' %}"
+                           class="erp-sidebar__submenu-link {% if 'dre' in request.path %}active{% endif %}">
+                            📉 DRE Gerencial
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'ERP_ServicesBI:planejado_x_realizado_list' %}"
+                           class="erp-sidebar__submenu-link {% if 'planejado-realizado' in request.path %}active{% endif %}">
+                            ⚖️ Planejado x Realizado
+                        </a>
+                    </li>
                 </ul>
             </li>
 
-            <!-- 6. Fluxo de Caixa -->
-            <li class="erp-sidebar__item {% if 'fluxo-caixa' in request.path %}open{% endif %}">
-                <a href="#" class="erp-sidebar__link {% if 'fluxo-caixa' in request.path %}active{% endif %}" onclick="toggleSubmenu(this)">
-                    <span class="erp-sidebar__icon">💵</span>
-                    <span>Fluxo de Caixa</span>
-                    <span class="erp-sidebar__arrow">▶</span>
-                </a>
-                <ul class="erp-sidebar__submenu">
-                    <li><a href="{% url 'ERP_ServicesBI:fluxo_caixa' %}" class="erp-sidebar__submenu-link {% if 'fluxo-caixa' in request.path %}active{% endif %}">Fluxo de Caixa</a></li>
-                </ul>
-            </li>
-
-            <!-- 7. Conciliação Bancária -->
-            <li class="erp-sidebar__item {% if 'conciliacao' in request.path %}open{% endif %}">
-                <a href="#" class="erp-sidebar__link {% if 'conciliacao' in request.path %}active{% endif %}" onclick="toggleSubmenu(this)">
-                    <span class="erp-sidebar__icon">🏦</span>
-                    <span>Conciliação Bancária</span>
-                    <span class="erp-sidebar__arrow">▶</span>
-                </a>
-                <ul class="erp-sidebar__submenu">
-                    <li><a href="{% url 'ERP_ServicesBI:conciliacao_list' %}" class="erp-sidebar__submenu-link {% if 'conciliacao' in request.path %}active{% endif %}">Conciliação Bancária</a></li>
-                </ul>
-            </li>
-
-            <!-- 8. DRE Gerencial -->
-            <li class="erp-sidebar__item {% if 'dre' in request.path %}open{% endif %}">
-                <a href="#" class="erp-sidebar__link {% if 'dre' in request.path %}active{% endif %}" onclick="toggleSubmenu(this)">
-                    <span class="erp-sidebar__icon">📈</span>
-                    <span>DRE Gerencial</span>
-                    <span class="erp-sidebar__arrow">▶</span>
-                </a>
-                <ul class="erp-sidebar__submenu">
-                    <li><a href="{% url 'ERP_ServicesBI:dre_gerencial' %}" class="erp-sidebar__submenu-link {% if 'dre' in request.path %}active{% endif %}">DRE Gerencial</a></li>
-                </ul>
-            </li>
-
-            <!-- 9. Estoque -->
+            <!-- 6. Estoque -->
             <li class="erp-sidebar__item {% if 'estoque' in request.path %}open{% endif %}">
-                <a href="#" class="erp-sidebar__link {% if 'estoque' in request.path %}active{% endif %}" onclick="toggleSubmenu(this)">
+                <a href="#" class="erp-sidebar__link" onclick="toggleSubmenu(this)">
                     <span class="erp-sidebar__icon">📦</span>
                     <span>Estoque</span>
                     <span class="erp-sidebar__arrow">▶</span>
                 </a>
                 <ul class="erp-sidebar__submenu">
-                    <li><a href="{% url 'ERP_ServicesBI:movimentacao_estoque_list' %}" class="erp-sidebar__submenu-link {% if 'estoque/movimentacoes' in request.path %}active{% endif %}">Movimentações</a></li>
-                    <li><a href="{% url 'ERP_ServicesBI:inventario_list' %}" class="erp-sidebar__submenu-link {% if 'estoque/inventarios' in request.path %}active{% endif %}">Inventário</a></li>
-                    <li><a href="{% url 'ERP_ServicesBI:transferencia_list' %}" class="erp-sidebar__submenu-link {% if 'estoque/transferencias' in request.path %}active{% endif %}">Transferências</a></li>
-                    <li><a href="{% url 'ERP_ServicesBI:relatorio_estoque' %}" class="erp-sidebar__submenu-link {% if 'estoque/relatorio-posicao' in request.path %}active{% endif %}">📊 Relatório de Estoque</a></li>
-                    <li><a href="{% url 'ERP_ServicesBI:relatorio_movimentacoes' %}" class="erp-sidebar__submenu-link {% if 'estoque/relatorio-movimentacoes' in request.path %}active{% endif %}">📊 Relatório de Movimentações</a></li>
+                    <li>
+                        <a href="{% url 'ERP_ServicesBI:movimentacao_estoque_list' %}"
+                           class="erp-sidebar__submenu-link {% if 'movimentacoes' in request.path %}active{% endif %}">
+                            Movimentações
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'ERP_ServicesBI:inventario_list' %}"
+                           class="erp-sidebar__submenu-link {% if 'inventarios' in request.path %}active{% endif %}">
+                            Inventário
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'ERP_ServicesBI:transferencia_list' %}"
+                           class="erp-sidebar__submenu-link {% if 'transferencias' in request.path %}active{% endif %}">
+                            Transferências
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'ERP_ServicesBI:relatorio_estoque' %}"
+                           class="erp-sidebar__submenu-link {% if 'relatorio-posicao' in request.path %}active{% endif %}">
+                            📊 Relatório de Estoque
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'ERP_ServicesBI:relatorio_movimentacoes' %}"
+                           class="erp-sidebar__submenu-link {% if 'relatorio-movimentacoes' in request.path %}active{% endif %}">
+                            📊 Relatório de Movimentações
+                        </a>
+                    </li>
                 </ul>
             </li>
 

@@ -1,296 +1,525 @@
 {% extends 'base.html' %}
-
 {% load custom_filters %}
 
 {% block title %}Relatório de Vendas - ERP ServicesBI{% endblock %}
 
 {% block extra_css %}
 <style>
-.erp-page-header {
-    margin-bottom: 24px;
-}
-
-.erp-page-header__title {
-    margin: 0;
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--gray-800);
-}
-
-.erp-page-header__subtitle {
-    margin: 4px 0 0 0;
-    color: var(--gray-500);
-    font-size: 14px;
-}
-
-/* Cards de resumo */
-.erp-report-cards {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 20px;
-}
-
-.erp-report-card {
-    background: white;
-    border-radius: var(--radius);
-    padding: 16px;
-    box-shadow: var(--shadow);
-    border-left: 4px solid;
-}
-
-.erp-report-card--blue { border-left-color: var(--primary-600); }
-.erp-report-card--green { border-left-color: var(--success); }
-.erp-report-card--orange { border-left-color: var(--warning); }
-.erp-report-card--purple { border-left-color: #8b5cf6; }
-
-.erp-report-card__label {
-    margin: 0 0 4px 0;
-    font-size: 11px;
-    color: var(--gray-500);
-    text-transform: uppercase;
-    font-weight: 600;
-}
-
-.erp-report-card__value {
-    margin: 0;
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--gray-800);
-}
-
-.erp-report-card__trend {
-    margin: 4px 0 0 0;
-    font-size: 11px;
-    font-weight: 500;
-}
-
-.erp-report-card__trend--up { color: var(--success); }
-.erp-report-card__trend--down { color: var(--danger); }
-
-.erp-report-card__meta {
-    margin: 4px 0 0 0;
-    font-size: 11px;
-    color: var(--gray-500);
-}
-
-/* GRÁFICOS - ALTURA AUMENTADA PARA 250px */
-.erp-report-charts {
-    display: grid;
-    gap: 16px;
-    margin-bottom: 20px;
-}
-
-.erp-report-charts--2-1 {
-    grid-template-columns: 2fr 1fr;
-}
-
-/* Container do gráfico com altura aumentada */
-.erp-chart-container {
-    background: white;
-    border-radius: var(--radius);
-    padding: 12px;
-    box-shadow: var(--shadow);
-    height: 300px; /* AUMENTADO de 200px para 250px */
-    position: relative;
-}
-
-.erp-chart-container__title {
-    margin: 0 0 8px 0;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--gray-700);
-    height: 20px;
-}
-
-.erp-chart-container__canvas {
-    position: absolute;
-    top: 32px;
-    left: 12px;
-    right: 12px;
-    bottom: 12px;
-}
-
-/* Filtros */
-.erp-report-filters {
-    background: white;
-    border-radius: var(--radius);
-    padding: 16px;
-    box-shadow: var(--shadow);
-    margin-bottom: 20px;
-}
-
-.erp-report-filters__form {
+.dashboard-pbi {
     display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+    min-height: calc(100vh - 60px);
+    background: var(--bg-secondary);
+}
+
+/* ===== HEADER ===== */
+.pbi-header {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
     gap: 12px;
-    align-items: flex-end;
+}
+
+.pbi-header__left { display: flex; flex-direction: column; gap: 2px; }
+
+.pbi-header__title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pbi-header__title-bar {
+    width: 4px;
+    height: 22px;
+    background: var(--primary-500);
+    border-radius: 2px;
+}
+
+.pbi-header__meta {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.pbi-header__right { display: flex; align-items: center; gap: 8px; }
+
+.pbi-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    transition: all 0.15s;
+}
+
+.pbi-btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
+.pbi-btn--primary { background: var(--primary-500); color: white; border-color: var(--primary-500); }
+.pbi-btn--primary:hover { background: var(--primary-600); color: white; }
+.pbi-btn--success { background: var(--success-500); color: white; border-color: var(--success-500); }
+.pbi-btn--success:hover { background: var(--success-600); color: white; }
+
+/* ===== SLICER BAR ===== */
+.pbi-slicer-bar {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
     flex-wrap: wrap;
 }
 
-.erp-report-filters__form .erp-form-group {
-    margin: 0;
+.pbi-slicer-bar__label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-tertiary);
 }
 
-.erp-report-filters__form .erp-label {
-    font-size: 12px;
-    margin-bottom: 4px;
-}
+.pbi-slicer-group { display: flex; align-items: center; gap: 6px; }
+.pbi-slicer-group label { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
 
-.erp-report-filters__form .erp-input,
-.erp-report-filters__form .erp-select {
-    padding: 6px 10px;
+.pbi-select, .pbi-input {
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
     font-size: 13px;
-    min-width: 150px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    cursor: pointer;
+    min-width: 130px;
 }
 
-.erp-report-filters__actions {
-    margin-top: 12px;
+.pbi-select:focus, .pbi-input:focus { 
+    outline: none; 
+    border-color: var(--primary-500); 
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.15); 
+}
+
+.pbi-slicer-divider { width: 1px; height: 20px; background: var(--border-color); }
+.pbi-slicer-bar__spacer { flex: 1; }
+
+/* ===== CANVAS ===== */
+.pbi-canvas {
+    padding: 20px 24px;
     display: flex;
-    gap: 8px;
-    padding-top: 12px;
-    border-top: 1px solid var(--gray-200);
+    flex-direction: column;
+    gap: 16px;
 }
 
-/* Tabela */
-.erp-report-table-card {
-    background: white;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
+/* ===== KPI CARDS ===== */
+.pbi-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+}
+
+@media (max-width: 1100px) { .pbi-kpi-row { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px)  { .pbi-kpi-row { grid-template-columns: 1fr; } }
+
+.pbi-kpi {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 20px;
+    cursor: default;
+    transition: transform 0.15s, box-shadow 0.15s;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pbi-kpi:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+
+.pbi-kpi__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.pbi-kpi__label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-tertiary);
+}
+
+.pbi-kpi__icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.pbi-kpi--primary .pbi-kpi__icon { background: rgba(59,130,246,0.1); }
+.pbi-kpi--success .pbi-kpi__icon { background: rgba(34,197,94,0.1); }
+.pbi-kpi--warning .pbi-kpi__icon { background: rgba(245,158,11,0.1); }
+.pbi-kpi--purple .pbi-kpi__icon { background: rgba(139,92,246,0.1); }
+
+.pbi-kpi__value {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+}
+
+.pbi-kpi__sparkline-wrap {
+    height: 32px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.pbi-kpi__sparkline {
+    height: 32px !important;
+    max-height: 32px;
+    width: 100%;
+}
+
+.pbi-kpi__bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 2px;
+}
+
+.pbi-kpi__trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+
+.pbi-kpi__trend--up { color: #16a34a; background: rgba(34,197,94,0.1); }
+.pbi-kpi__trend--down { color: #dc2626; background: rgba(239,68,68,0.1); }
+.pbi-kpi__trend--neutral { color: var(--text-secondary); background: var(--bg-secondary); }
+
+.pbi-kpi__subtitle {
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+/* ===== GRÁFICOS ===== */
+.pbi-charts-row { display: grid; gap: 14px; }
+.pbi-charts-row--3-1 { grid-template-columns: 3fr 1fr; }
+.pbi-charts-row--1-1 { grid-template-columns: 1fr 1fr; }
+.pbi-charts-row--full { grid-template-columns: 1fr; }
+
+@media (max-width: 900px) {
+    .pbi-charts-row--3-1, .pbi-charts-row--1-1 { grid-template-columns: 1fr; }
+}
+
+/* ===== PANEL ===== */
+.pbi-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: box-shadow 0.15s;
+}
+
+.pbi-panel:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+
+.pbi-panel__header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.pbi-panel__title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pbi-panel__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary-500);
+    flex-shrink: 0;
+}
+
+.pbi-panel__body { padding: 16px 20px; }
+.pbi-panel__body--no-pad { padding: 0; }
+
+.pbi-chart-container { position: relative; width: 100%; height: 280px; }
+.pbi-chart-container--sm { height: 240px; }
+
+/* ===== RANKING ===== */
+.pbi-ranking { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 2px; }
+
+.pbi-ranking__item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.pbi-ranking__item:last-child { border-bottom: none; }
+
+.pbi-ranking__pos {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+}
+
+.pbi-ranking__pos--1 { background: rgba(245,158,11,0.15); color: #d97706; }
+.pbi-ranking__pos--2 { background: rgba(100,116,139,0.15); color: #475569; }
+.pbi-ranking__pos--3 { background: rgba(249,115,22,0.15); color: #c2410c; }
+
+.pbi-ranking__info { flex: 1; min-width: 0; }
+
+.pbi-ranking__name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pbi-ranking__bar {
+    height: 3px;
+    background: var(--bg-tertiary);
+    border-radius: 2px;
+    margin-top: 6px;
     overflow: hidden;
 }
 
-.erp-report-table-card__header {
-    padding: 16px;
-    border-bottom: 1px solid var(--gray-200);
+.pbi-ranking__bar-fill {
+    height: 100%;
+    background: var(--primary-500);
+    border-radius: 2px;
+    transition: width 0.6s ease;
 }
 
-.erp-report-table-card__title {
-    margin: 0;
-    font-size: 16px;
+.pbi-ranking__val {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+/* ===== TABELA ===== */
+.pbi-table-wrap { overflow-x: auto; }
+
+.pbi-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.pbi-table thead { background: var(--bg-tertiary); }
+
+.pbi-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-tertiary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.pbi-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.pbi-table tbody tr { transition: background 0.1s; }
+.pbi-table tbody tr:hover { background: var(--bg-secondary); }
+.pbi-table tbody tr:last-child td { border-bottom: none; }
+
+.pbi-table .erp-text-right { text-align: right; }
+.pbi-table .erp-text-center { text-align: center; }
+.pbi-table .erp-font-semibold { font-weight: 600; color: var(--text-primary); }
+
+/* ===== STATUS BAR ===== */
+.pbi-statusbar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 8px 24px;
+    background: var(--card-bg);
+    border-top: 1px solid var(--border-color);
+    font-size: 11px;
+    color: var(--text-tertiary);
+    flex-wrap: wrap;
+}
+
+.pbi-statusbar__item { display: flex; align-items: center; gap: 5px; }
+.pbi-statusbar__dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
+.pbi-statusbar__spacer { flex: 1; }
+
+/* ===== EMPTY ===== */
+.pbi-empty { padding: 40px 20px; text-align: center; color: var(--text-tertiary); }
+.pbi-empty__icon { font-size: 40px; opacity: 0.3; margin-bottom: 12px; }
+.pbi-empty__text { font-size: 13px; }
+
+/* ===== TOAST ===== */
+.toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+
+.toast {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 220px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    animation: toastIn 0.25s ease;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+@keyframes toastIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ===== FILTROS EXPANDÍVEIS ===== */
+.pbi-filters-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.pbi-filters-panel__header {
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.pbi-filters-panel__header:hover { background: var(--bg-secondary); }
+
+.pbi-filters-panel__title {
+    font-size: 13px;
     font-weight: 600;
-    color: var(--gray-800);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-/* Empty state */
-.erp-empty {
-    padding: 32px 24px;
-    text-align: center;
-    color: var(--gray-500);
+.pbi-filters-panel__body {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+    display: none;
 }
 
-.erp-empty__icon {
-    font-size: 32px;
-    margin-bottom: 8px;
+.pbi-filters-panel__body--open { display: block; }
+
+.pbi-filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
 }
 
-.erp-empty__title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--gray-700);
-}
+.pbi-filter-group { display: flex; flex-direction: column; gap: 4px; }
+.pbi-filter-group label { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
 
-/* Responsividade */
-@media (max-width: 1200px) {
-    .erp-report-cards {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .erp-report-charts--2-1 {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 768px) {
-    .erp-report-cards {
-        grid-template-columns: 1fr;
-    }
+.pbi-filters-actions {
+    display: flex;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="erp-page-header">
-    <h2 class="erp-page-header__title">RELATÓRIO DE VENDAS</h2>
-    <p class="erp-page-header__subtitle">Análise completa do faturamento</p>
-</div>
+<div class="dashboard-pbi">
 
-{% if messages %}
-    {% for message in messages %}
-        {% if message.tags == 'error' %}
-        <div class="erp-alert erp-alert--error erp-mb-4">
-            {{ message }}
+    <div class="pbi-header">
+        <div class="pbi-header__left">
+            <h1 class="pbi-header__title">
+                <div class="pbi-header__title-bar"></div>
+                Relatório de Vendas
+            </h1>
+            <div class="pbi-header__meta">
+                <span>📅 Período: <strong id="periodText">{{ data_inicial|default:"Mês atual" }} até {{ data_final|default:"Hoje" }}</strong></span>
+                <span>🕐 Atualizado: <strong id="updateTime">--:--</strong></span>
+            </div>
         </div>
-        {% else %}
-        <div class="erp-alert erp-alert--success erp-mb-4">
-            {{ message }}
+        <div class="pbi-header__right">
+            <button class="pbi-btn" onclick="location.reload()">🔄 Atualizar</button>
+            <button class="pbi-btn" onclick="window.print()">🖨️ Imprimir</button>
+            <button class="pbi-btn pbi-btn--success" onclick="exportarExcel()">📊 Excel</button>
         </div>
-        {% endif %}
-    {% endfor %}
-{% endif %}
+    </div>
 
-<!-- CARDS DE RESUMO -->
-<div class="erp-report-cards">
-    <div class="erp-report-card erp-report-card--blue">
-        <p class="erp-report-card__label">Faturamento Total</p>
-        <p class="erp-report-card__value">{{ total_faturamento|default:0|currency_br }}</p>
-        <p class="erp-report-card__trend {% if var_faturamento >= 0 %}erp-report-card__trend--up{% else %}erp-report-card__trend--down{% endif %}">
-            {% if var_faturamento >= 0 %}▲{% else %}▼{% endif %} {{ var_faturamento|default:0|floatformat:1 }}%
-        </p>
-    </div>
-    
-    <div class="erp-report-card erp-report-card--green">
-        <p class="erp-report-card__label">Notas Fiscais</p>
-        <p class="erp-report-card__value">{{ total_nfs|default:0 }}</p>
-        <p class="erp-report-card__trend {% if var_nfs >= 0 %}erp-report-card__trend--up{% else %}erp-report-card__trend--down{% endif %}">
-            {% if var_nfs >= 0 %}▲{% else %}▼{% endif %} {{ var_nfs|default:0|floatformat:1 }}%
-        </p>
-    </div>
-    
-    <div class="erp-report-card erp-report-card--orange">
-        <p class="erp-report-card__label">Ticket Médio</p>
-        <p class="erp-report-card__value">{{ ticket_medio|default:0|currency_br }}</p>
-        <p class="erp-report-card__meta">Média por NF</p>
-    </div>
-    
-    <div class="erp-report-card erp-report-card--purple">
-        <p class="erp-report-card__label">Clientes Ativos</p>
-        <p class="erp-report-card__value">{{ clientes_ativos|default:0 }}</p>
-        <p class="erp-report-card__meta">No período</p>
-    </div>
-</div>
-
-<!-- GRÁFICOS - ALTURA AUMENTADA -->
-<div class="erp-report-charts erp-report-charts--2-1">
-    <div class="erp-chart-container">
-        <h3 class="erp-chart-container__title">📈 Evolução Mensal (12 Meses)</h3>
-        <canvas id="graficoLinha" class="erp-chart-container__canvas"></canvas>
-    </div>
-    
-    <div class="erp-chart-container">
-        <h3 class="erp-chart-container__title">🍩 Top 5 Clientes</h3>
-        <canvas id="graficoRosca" class="erp-chart-container__canvas"></canvas>
-    </div>
-</div>
-
-<div class="erp-chart-container erp-mb-4">
-    <h3 class="erp-chart-container__title">📊 Top 10 Produtos Mais Vendidos</h3>
-    <canvas id="graficoBarras" class="erp-chart-container__canvas"></canvas>
-</div>
-
-<!-- FILTROS -->
-<div class="erp-report-filters">
-    <form method="get" class="erp-report-filters__form">
-        <div class="erp-form-group">
-            <label class="erp-label">Data Inicial</label>
-            <input type="date" name="data_inicial" value="{{ data_inicial|default:'' }}" class="erp-input">
+    <div class="pbi-slicer-bar">
+        <span class="pbi-slicer-bar__label">Visão</span>
+        <div class="pbi-slicer-group">
+            <label>Período</label>
+            <select class="pbi-select" id="filterPeriodo" onchange="aplicarFiltroPeriodo(this.value)">
+                <option value="30" selected>Últimos 30 dias</option>
+                <option value="90">Últimos 3 meses</option>
+                <option value="180">Últimos 6 meses</option>
+                <option value="365">Último ano</option>
+                <option value="custom">Personalizado</option>
+            </select>
         </div>
-        <div class="erp-form-group">
-            <label class="erp-label">Data Final</label>
-            <input type="date" name="data_final" value="{{ data_final|default:'' }}" class="erp-input">
-        </div>
-        <div class="erp-form-group">
-            <label class="erp-label">Cliente</label>
-            <select name="cliente" class="erp-select">
-                <option value="">Todos</option>
+        <div class="pbi-slicer-divider"></div>
+        <div class="pbi-slicer-group">
+            <label>Cliente</label>
+            <select class="pbi-select" name="cliente" id="filterCliente" onchange="this.form.submit()">
+                <option value="">Todos os clientes</option>
                 {% for cliente in clientes %}
                 <option value="{{ cliente.id }}" {% if cliente_selecionado == cliente.id %}selected{% endif %}>
                     {{ cliente.nome_razao_social }}
@@ -298,194 +527,536 @@
                 {% endfor %}
             </select>
         </div>
-        <button type="submit" class="erp-btn erp-btn--primary">
-            <span>🔍</span> Filtrar
-        </button>
-        <a href="{% url 'ERP_ServicesBI:relatorio_vendas' %}" class="erp-btn erp-btn--secondary">
-            <span>❌</span> Limpar
-        </a>
-    </form>
-    
-    <div class="erp-report-filters__actions">
-        <button onclick="window.print()" class="erp-btn erp-btn--primary">
-            <span>📄</span> Imprimir
-        </button>
-        <button onclick="exportarExcel()" class="erp-btn erp-btn--success">
-            <span>📊</span> Exportar Excel
-        </button>
+        <div class="pbi-slicer-bar__spacer"></div>
+        <span style="font-size:12px; color:var(--text-tertiary);">
+            <strong style="color:var(--primary-500);">{{ total_nfs|default:0 }}</strong> notas emitidas
+        </span>
     </div>
-</div>
 
-<!-- TABELA -->
-<div class="erp-report-table-card">
-    <div class="erp-report-table-card__header">
-        <h3 class="erp-report-table-card__title">📋 Detalhamento de Vendas</h3>
-    </div>
-    <div class="erp-table-container">
-        <table class="erp-table" id="tabelaVendas">
-            <thead>
-                <tr>
-                    <th>Data</th>
-                    <th>Cliente</th>
-                    <th>NF</th>
-                    <th class="erp-text-center">Itens</th>
-                    <th class="erp-text-right">Valor Total</th>
-                    <th>Produtos</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for nota in notas %}
-                <tr>
-                    <td>{{ nota.data_emissao|date:"d/m/Y" }}</td>
-                    <td>{{ nota.cliente.nome_razao_social }}</td>
-                    <td>{{ nota.numero_nf }}</td>
-                    <td class="erp-text-center">{{ nota.itens.count }}</td>
-                    <td class="erp-text-right erp-font-semibold">{{ nota.valor_total|currency_br }}</td>
-                    <td style="font-size: 12px; color: var(--gray-500);">
-                        {% for item in nota.itens.all|slice:":3" %}
-                            {{ item.produto.descricao }}{% if not forloop.last %}, {% endif %}
+    <div class="pbi-canvas">
+
+        <!-- KPI CARDS -->
+        <div class="pbi-kpi-row">
+
+            <div class="pbi-kpi pbi-kpi--primary">
+                <div class="pbi-kpi__top">
+                    <span class="pbi-kpi__label">Faturamento Total</span>
+                    <div class="pbi-kpi__icon">💰</div>
+                </div>
+                <div class="pbi-kpi__value">{{ total_faturamento|default:0|currency_br }}</div>
+                <div class="pbi-kpi__sparkline-wrap">
+                    <canvas class="pbi-kpi__sparkline" id="spark0"></canvas>
+                </div>
+                <div class="pbi-kpi__bottom">
+                    <span class="pbi-kpi__trend {% if var_faturamento >= 0 %}pbi-kpi__trend--up{% else %}pbi-kpi__trend--down{% endif %}">
+                        {% if var_faturamento >= 0 %}▲{% else %}▼{% endif %} {{ var_faturamento|default:0|floatformat:1 }}%
+                    </span>
+                    <span class="pbi-kpi__subtitle">vs período anterior</span>
+                </div>
+            </div>
+
+            <div class="pbi-kpi pbi-kpi--success">
+                <div class="pbi-kpi__top">
+                    <span class="pbi-kpi__label">Notas Fiscais</span>
+                    <div class="pbi-kpi__icon">📄</div>
+                </div>
+                <div class="pbi-kpi__value">{{ total_nfs|default:0 }}</div>
+                <div class="pbi-kpi__sparkline-wrap">
+                    <canvas class="pbi-kpi__sparkline" id="spark1"></canvas>
+                </div>
+                <div class="pbi-kpi__bottom">
+                    <span class="pbi-kpi__trend {% if var_nfs >= 0 %}pbi-kpi__trend--up{% else %}pbi-kpi__trend--down{% endif %}">
+                        {% if var_nfs >= 0 %}▲{% else %}▼{% endif %} {{ var_nfs|default:0|floatformat:1 }}%
+                    </span>
+                    <span class="pbi-kpi__subtitle">vs período anterior</span>
+                </div>
+            </div>
+
+            <div class="pbi-kpi pbi-kpi--warning">
+                <div class="pbi-kpi__top">
+                    <span class="pbi-kpi__label">Ticket Médio</span>
+                    <div class="pbi-kpi__icon">🎯</div>
+                </div>
+                <div class="pbi-kpi__value">{{ ticket_medio|default:0|currency_br }}</div>
+                <div class="pbi-kpi__sparkline-wrap">
+                    <canvas class="pbi-kpi__sparkline" id="spark2"></canvas>
+                </div>
+                <div class="pbi-kpi__bottom">
+                    <span class="pbi-kpi__trend pbi-kpi__trend--neutral">— Média</span>
+                    <span class="pbi-kpi__subtitle">por nota fiscal</span>
+                </div>
+            </div>
+
+            <div class="pbi-kpi pbi-kpi--purple">
+                <div class="pbi-kpi__top">
+                    <span class="pbi-kpi__label">Clientes Ativos</span>
+                    <div class="pbi-kpi__icon">👥</div>
+                </div>
+                <div class="pbi-kpi__value">{{ clientes_ativos|default:0 }}</div>
+                <div class="pbi-kpi__sparkline-wrap">
+                    <canvas class="pbi-kpi__sparkline" id="spark3"></canvas>
+                </div>
+                <div class="pbi-kpi__bottom">
+                    <span class="pbi-kpi__trend pbi-kpi__trend--neutral">— No período</span>
+                    <span class="pbi-kpi__subtitle">distintos</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- LINHA 1: Evolução + Top Clientes -->
+        <div class="pbi-charts-row pbi-charts-row--3-1">
+            <div class="pbi-panel">
+                <div class="pbi-panel__header">
+                    <h5 class="pbi-panel__title">
+                        <div class="pbi-panel__dot"></div>
+                        Evolução de Vendas (12 Meses)
+                    </h5>
+                </div>
+                <div class="pbi-panel__body">
+                    <div class="pbi-chart-container" id="chartMain"></div>
+                </div>
+            </div>
+
+            <div class="pbi-panel">
+                <div class="pbi-panel__header">
+                    <h5 class="pbi-panel__title">
+                        <div class="pbi-panel__dot" style="background:#8b5cf6"></div>
+                        Top 5 Clientes
+                    </h5>
+                </div>
+                <div class="pbi-panel__body pbi-panel__body--no-pad">
+                    <div class="pbi-chart-container pbi-chart-container--sm" id="chartPie"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LINHA 2: Top Produtos -->
+        <div class="pbi-charts-row pbi-charts-row--full">
+            <div class="pbi-panel">
+                <div class="pbi-panel__header">
+                    <h5 class="pbi-panel__title">
+                        <div class="pbi-panel__dot" style="background:#f59e0b"></div>
+                        Top 10 Produtos Mais Vendidos
+                    </h5>
+                </div>
+                <div class="pbi-panel__body">
+                    <div class="pbi-chart-container" id="chartProdutos"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LINHA 3: Ranking de Clientes -->
+        <div class="pbi-charts-row pbi-charts-row--1-1">
+            <div class="pbi-panel">
+                <div class="pbi-panel__header">
+                    <h5 class="pbi-panel__title">
+                        <div class="pbi-panel__dot" style="background:#22c55e"></div>
+                        Ranking de Clientes
+                    </h5>
+                </div>
+                <div class="pbi-panel__body">
+                    <ul class="pbi-ranking" id="rankingClientes">
+                        {% for cliente in top_clientes_list %}
+                        <li class="pbi-ranking__item">
+                            <div class="pbi-ranking__pos {% if forloop.counter == 1 %}pbi-ranking__pos--1{% elif forloop.counter == 2 %}pbi-ranking__pos--2{% elif forloop.counter == 3 %}pbi-ranking__pos--3{% endif %}">{{ forloop.counter }}</div>
+                            <div class="pbi-ranking__info">
+                                <div class="pbi-ranking__name">{{ cliente.nome }}</div>
+                                <div class="pbi-ranking__bar"><div class="pbi-ranking__bar-fill" style="width:{{ cliente.percentual }}%"></div></div>
+                            </div>
+                            <div class="pbi-ranking__val">{{ cliente.valor|currency_br }}</div>
+                        </li>
+                        {% empty %}
+                        <li class="pbi-empty">
+                            <div class="pbi-empty__icon">👥</div>
+                            <div class="pbi-empty__text">Nenhum cliente no período</div>
+                        </li>
                         {% endfor %}
-                        {% if nota.itens.count > 3 %}...{% endif %}
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="6">
-                        <div class="erp-empty">
-                            <div class="erp-empty__icon">📋</div>
-                            <div class="erp-empty__title">Nenhuma venda encontrada</div>
-                            <p style="color: var(--gray-500);">No período selecionado</p>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="pbi-panel">
+                <div class="pbi-panel__header">
+                    <h5 class="pbi-panel__title">
+                        <div class="pbi-panel__dot" style="background:#ef4444"></div>
+                        Resumo por Categoria
+                    </h5>
+                </div>
+                <div class="pbi-panel__body">
+                    <ul class="pbi-ranking" id="rankingCategorias">
+                        {% for cat in categorias_vendas %}
+                        <li class="pbi-ranking__item">
+                            <div class="pbi-ranking__pos">{{ forloop.counter }}</div>
+                            <div class="pbi-ranking__info">
+                                <div class="pbi-ranking__name">{{ cat.nome }}</div>
+                                <div class="pbi-ranking__bar"><div class="pbi-ranking__bar-fill" style="width:{{ cat.percentual }}%; background:{{ cat.cor }}"></div></div>
+                            </div>
+                            <div class="pbi-ranking__val">{{ cat.valor|currency_br }}</div>
+                        </li>
+                        {% empty %}
+                        <li class="pbi-empty">
+                            <div class="pbi-empty__icon">📊</div>
+                            <div class="pbi-empty__text">Sem dados de categoria</div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- FILTROS AVANÇADOS -->
+        <div class="pbi-filters-panel">
+            <div class="pbi-filters-panel__header" onclick="toggleFilters()">
+                <h5 class="pbi-filters-panel__title">
+                    <span>🔍</span> Filtros Avançados
+                </h5>
+                <span id="filterToggleIcon">▼</span>
+            </div>
+            <div class="pbi-filters-panel__body" id="filtersBody">
+                <form method="get" id="advancedFiltersForm">
+                    <div class="pbi-filters-grid">
+                        <div class="pbi-filter-group">
+                            <label>Data Inicial</label>
+                            <input type="date" name="data_inicial" value="{{ data_inicial|default:'' }}" class="pbi-input">
                         </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        <div class="pbi-filter-group">
+                            <label>Data Final</label>
+                            <input type="date" name="data_final" value="{{ data_final|default:'' }}" class="pbi-input">
+                        </div>
+                        <div class="pbi-filter-group">
+                            <label>Cliente</label>
+                            <select name="cliente" class="pbi-select">
+                                <option value="">Todos</option>
+                                {% for cliente in clientes %}
+                                <option value="{{ cliente.id }}" {% if cliente_selecionado == cliente.id %}selected{% endif %}>
+                                    {{ cliente.nome_razao_social }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="pbi-filters-actions">
+                        <button type="submit" class="pbi-btn pbi-btn--primary">Aplicar Filtros</button>
+                        <a href="{% url 'ERP_ServicesBI:relatorio_vendas' %}" class="pbi-btn">Limpar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- TABELA DE VENDAS -->
+        <div class="pbi-panel">
+            <div class="pbi-panel__header">
+                <h5 class="pbi-panel__title">
+                    <div class="pbi-panel__dot" style="background:#06b6d4"></div>
+                    Detalhamento de Vendas
+                </h5>
+                <span style="font-size:12px; color:var(--text-tertiary);" id="totalMovLabel">{{ notas|length }} registros</span>
+            </div>
+            <div class="pbi-panel__body pbi-panel__body--no-pad">
+                <div class="pbi-table-wrap">
+                    <table class="pbi-table" id="tabelaVendas">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Cliente</th>
+                                <th>NF</th>
+                                <th style="text-align:center">Itens</th>
+                                <th style="text-align:right">Valor Total</th>
+                                <th>Produtos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for nota in notas %}
+                            <tr>
+                                <td>{{ nota.data_emissao|date:"d/m/Y" }}</td>
+                                <td style="font-weight:500; color:var(--text-primary);">{{ nota.cliente.nome_razao_social }}</td>
+                                <td>{{ nota.numero_nf }}</td>
+                                <td style="text-align:center">{{ nota.itens.count }}</td>
+                                <td style="text-align:right; font-weight:600; color:var(--text-primary);">{{ nota.valor_total|currency_br }}</td>
+                                <td style="font-size: 12px; color: var(--text-tertiary);">
+                                    {% for item in nota.itens.all|slice:":3" %}
+                                        {{ item.produto.descricao }}{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                    {% if nota.itens.count > 3 %}...{% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6">
+                                    <div class="pbi-empty">
+                                        <div class="pbi-empty__icon">📋</div>
+                                        <div class="pbi-empty__text">Nenhuma venda encontrada no período selecionado</div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </div>
+
+    <div class="pbi-statusbar">
+        <div class="pbi-statusbar__item">
+            <div class="pbi-statusbar__dot"></div>
+            Conectado
+        </div>
+        <div class="pbi-statusbar__item">📅 <span id="statusDate"></span></div>
+        <div class="pbi-statusbar__spacer"></div>
+        <div class="pbi-statusbar__item">ERP ServicesBI v1.0 · Módulo Vendas</div>
+    </div>
+
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<div class="toast-container" id="toastContainer"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
 <script>
-// Configuração comum
-const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-        legend: {
-            labels: {
-                boxWidth: 10,
-                font: { size: 10 },
-                padding: 8
-            }
-        }
-    }
-};
+function formatMoeda(v) {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
+}
 
-// Gráfico de Linha
-const ctxLinha = document.getElementById('graficoLinha').getContext('2d');
-new Chart(ctxLinha, {
-    type: 'line',
-    data: {
-        labels: {{ meses_labels|safe|default:'[]' }},
-        datasets: [{
-            label: 'Faturamento',
-            data: {{ meses_valores|safe|default:'[]' }},
-            borderColor: '#2563eb',
-            backgroundColor: 'rgba(37, 99, 235, 0.1)',
-            borderWidth: 2,
-            fill: true,
-            tension: 0.4,
-            pointRadius: 3
-        }, {
-            label: 'Qtd NFs',
-            data: {{ meses_qtd|safe|default:'[]' }},
-            borderColor: '#22c55e',
-            borderWidth: 2,
-            borderDash: [5, 5],
-            yAxisID: 'y1',
-            tension: 0.4,
-            pointRadius: 2
-        }]
-    },
-    options: {
-        ...chartOptions,
-        interaction: { intersect: false, mode: 'index' },
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    font: { size: 9 },
-                    callback: v => 'R$ ' + v.toLocaleString('pt-BR')
+function formatData(d) {
+    if (!d) return '-';
+    var dt = new Date(d + 'T00:00:00');
+    return dt.toLocaleDateString('pt-BR');
+}
+
+function getTheme() {
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    return {
+        text: isDark ? '#94a3b8' : '#64748b',
+        grid: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+        tooltip: isDark ? '#1e293b' : '#ffffff',
+        tooltipT: isDark ? '#f1f5f9' : '#1e293b',
+    };
+}
+
+/* ===== DADOS DO BACKEND ===== */
+var meses    = {{ meses_labels|safe|default:'[]' }};
+var faturamento = {{ meses_valores|safe|default:'[]' }};
+var qtdNFs = {{ meses_qtd|safe|default:'[]' }};
+var clientesLabels = {{ clientes_labels|safe|default:'[]' }};
+var clientesValores = {{ clientes_valores|safe|default:'[]' }};
+var produtosLabels = {{ produtos_labels|safe|default:'[]' }};
+var produtosValores = {{ produtos_valores|safe|default:'[]' }};
+
+/* ===== SPARKLINES ===== */
+var sparkColors = ['#3b82f6', '#22c55e', '#f59e0b', '#8b5cf6'];
+
+function initSparklines() {
+    var datasets = [
+        faturamento.length > 0 ? faturamento : [0,0,0,0,0,0],
+        qtdNFs.length > 0 ? qtdNFs : [0,0,0,0,0,0],
+        faturamento.length > 0 ? faturamento.map((v, i) => v / (qtdNFs[i] || 1)) : [0,0,0,0,0,0],
+        []
+    ];
+    
+    // Simulação de clientes ativos (últimos 6 meses)
+    datasets[3] = [{{ clientes_ativos|default:0 }}, {{ clientes_ativos|default:0 }}, {{ clientes_ativos|default:0 }}, {{ clientes_ativos|default:0 }}, {{ clientes_ativos|default:0 }}, {{ clientes_ativos|default:0 }}];
+
+    for (var i = 0; i < 4; i++) {
+        var canvas = document.getElementById('spark' + i);
+        if (!canvas) continue;
+        var data = datasets[i];
+        new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: meses.length > 0 ? meses : ['','','','','',''],
+                datasets: [{
+                    data: data,
+                    borderColor: sparkColors[i],
+                    borderWidth: 1.5,
+                    pointRadius: 0,
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: sparkColors[i] + '15'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                scales: { x: { display: false }, y: { display: false } },
+                animation: { duration: 600 }
+            }
+        });
+    }
+}
+
+/* ===== GRÁFICOS ECHARTS ===== */
+var charts = {};
+
+function initCharts() {
+    if (typeof echarts === 'undefined') return;
+    var t = getTheme();
+
+    /* Evolução de Vendas - Gráfico Principal */
+    var el1 = document.getElementById('chartMain');
+    if (el1) {
+        var c1 = echarts.init(el1);
+        charts.main = c1;
+        c1.setOption({
+            tooltip: {
+                trigger: 'axis',
+                backgroundColor: t.tooltip,
+                textStyle: { color: t.tooltipT, fontSize: 12 },
+                borderColor: 'transparent',
+                formatter: function(p) {
+                    return '<b>' + p[0].name + '</b><br>' +
+                        p.map(function(s) {
+                            var val = s.seriesName === 'Faturamento' ? formatMoeda(s.value) : s.value + ' NFs';
+                            return '<span style="color:' + s.color + '">●</span> ' + s.seriesName + ': ' + val;
+                        }).join('<br>');
                 }
             },
-            y1: {
-                type: 'linear',
-                display: true,
-                position: 'right',
-                grid: { drawOnChartArea: false },
-                ticks: { font: { size: 9 } }
-            },
-            x: { ticks: { font: { size: 9 } } }
-        }
-    }
-});
-
-// Gráfico de Rosca
-const ctxRosca = document.getElementById('graficoRosca').getContext('2d');
-new Chart(ctxRosca, {
-    type: 'doughnut',
-    data: {
-        labels: {{ clientes_labels|safe|default:'[]' }},
-        datasets: [{
-            data: {{ clientes_valores|safe|default:'[]' }},
-            backgroundColor: ['#2563eb', '#22c55e', '#f59e0b', '#8b5cf6', '#ef4444'],
-            borderWidth: 0
-        }]
-    },
-    options: {
-        ...chartOptions,
-        cutout: '60%',
-        plugins: {
             legend: {
-                position: 'bottom',
-                labels: { boxWidth: 8, font: { size: 9 }, padding: 6 }
-            }
-        }
+                data: ['Faturamento', 'Qtd NFs'],
+                bottom: 0,
+                textStyle: { color: t.text, fontSize: 12 },
+                icon: 'circle',
+                itemWidth: 8, itemHeight: 8
+            },
+            grid: { left: 12, right: 12, bottom: 40, top: 12, containLabel: true },
+            xAxis: {
+                type: 'category', data: meses, boundaryGap: false,
+                axisLine: { lineStyle: { color: t.grid } },
+                axisTick: { show: false },
+                axisLabel: { color: t.text, fontSize: 11 }
+            },
+            yAxis: [
+                {
+                    type: 'value', name: 'R$',
+                    splitLine: { lineStyle: { color: t.grid, type: 'dashed' } },
+                    axisLabel: { color: t.text, fontSize: 11, formatter: v => 'R$' + (v/1000).toFixed(0) + 'k' }
+                },
+                {
+                    type: 'value', name: 'NFs',
+                    splitLine: { show: false },
+                    axisLabel: { color: t.text, fontSize: 11 }
+                }
+            ],
+            series: [
+                {
+                    name: 'Faturamento', type: 'line', smooth: 0.5, data: faturamento,
+                    itemStyle: { color: '#3b82f6' },
+                    lineStyle: { width: 2.5 },
+                    areaStyle: { color: { type:'linear', x:0,y:0,x2:0,y2:1,
+                        colorStops:[{offset:0,color:'rgba(59,130,246,0.2)'},{offset:1,color:'rgba(59,130,246,0)'}]}}
+                },
+                {
+                    name: 'Qtd NFs', type: 'line', smooth: 0.5, yAxisIndex: 1, data: qtdNFs,
+                    itemStyle: { color: '#22c55e' },
+                    lineStyle: { width: 2, type: 'dashed' },
+                    symbol: 'circle', symbolSize: 6
+                }
+            ]
+        });
     }
-});
 
-// Gráfico de Barras
-const ctxBarras = document.getElementById('graficoBarras').getContext('2d');
-new Chart(ctxBarras, {
-    type: 'bar',
-    data: {
-        labels: {{ produtos_labels|safe|default:'[]' }},
-        datasets: [{
-            label: 'Total Vendido',
-            data: {{ produtos_valores|safe|default:'[]' }},
-            backgroundColor: '#2563eb',
-            borderRadius: 2
-        }]
-    },
-    options: {
-        ...chartOptions,
-        plugins: { legend: { display: false } },
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    font: { size: 9 },
-                    callback: v => 'R$ ' + (v/1000).toFixed(0) + 'k'
+    /* Donut Top Clientes */
+    var el2 = document.getElementById('chartPie');
+    if (el2) {
+        var c2 = echarts.init(el2);
+        charts.pie = c2;
+        var pieColors = ['#3b82f6', '#22c55e', '#f59e0b', '#8b5cf6', '#ef4444'];
+        var pieData = clientesLabels.map(function(name, i) {
+            return { value: clientesValores[i] || 0, name: name, itemStyle: { color: pieColors[i % pieColors.length] } };
+        });
+        if (pieData.length === 0) {
+            pieData = [{ value: 1, name: 'Sem dados', itemStyle: { color: '#e2e8f0' } }];
+        }
+        c2.setOption({
+            tooltip: { trigger: 'item', backgroundColor: t.tooltip, textStyle: { color: t.tooltipT, fontSize: 12 }, formatter: '{b}: {c} ({d}%)' },
+            legend: { bottom: 0, textStyle: { color: t.text, fontSize: 11 }, icon: 'circle', itemWidth: 8, itemHeight: 8 },
+            series: [{
+                type: 'pie', radius: ['42%','70%'], center: ['50%','42%'],
+                label: { show: false },
+                emphasis: { label: { show: true, fontSize: 12, fontWeight: 'bold', color: t.tooltipT } },
+                data: pieData
+            }]
+        });
+    }
+
+    /* Barras Top Produtos */
+    var el3 = document.getElementById('chartProdutos');
+    if (el3) {
+        var c3 = echarts.init(el3);
+        charts.produtos = c3;
+        c3.setOption({
+            tooltip: {
+                trigger: 'axis',
+                backgroundColor: t.tooltip,
+                textStyle: { color: t.tooltipT, fontSize: 12 },
+                axisPointer: { type: 'shadow' },
+                formatter: function(p) {
+                    return '<b>' + p[0].name + '</b><br>Total: ' + formatMoeda(p[0].value);
                 }
             },
-            x: {
-                ticks: { font: { size: 8 }, maxRotation: 45, minRotation: 45 }
-            }
-        }
+            grid: { left: 12, right: 12, bottom: 60, top: 12, containLabel: true },
+            xAxis: {
+                type: 'category', data: produtosLabels,
+                axisLine: { lineStyle: { color: t.grid } },
+                axisTick: { show: false },
+                axisLabel: { color: t.text, fontSize: 10, rotate: 45, interval: 0 }
+            },
+            yAxis: {
+                type: 'value',
+                splitLine: { lineStyle: { color: t.grid, type: 'dashed' } },
+                axisLabel: { color: t.text, fontSize: 11, formatter: v => 'R$' + (v/1000).toFixed(0) + 'k' }
+            },
+            series: [{
+                type: 'bar', barWidth: '50%', data: produtosValores,
+                itemStyle: {
+                    borderRadius: [6,6,0,0],
+                    color: new echarts.graphic.LinearGradient(0,0,0,1,[
+                        {offset:0, color:'#f59e0b'}, {offset:1, color:'#d97706'}
+                    ])
+                }
+            }]
+        });
     }
-});
 
-// Exportar Excel
+    window.addEventListener('resize', function() {
+        Object.values(charts).forEach(function(c){ c && c.resize(); });
+    });
+}
+
+/* ===== FILTROS ===== */
+function toggleFilters() {
+    var body = document.getElementById('filtersBody');
+    var icon = document.getElementById('filterToggleIcon');
+    if (body.classList.contains('pbi-filters-panel__body--open')) {
+        body.classList.remove('pbi-filters-panel__body--open');
+        icon.textContent = '▼';
+    } else {
+        body.classList.add('pbi-filters-panel__body--open');
+        icon.textContent = '▲';
+    }
+}
+
+function aplicarFiltroPeriodo(dias) {
+    if (dias === 'custom') {
+        toggleFilters();
+        return;
+    }
+    var hoje = new Date();
+    var inicio = new Date();
+    inicio.setDate(hoje.getDate() - parseInt(dias));
+    
+    document.querySelector('input[name="data_inicial"]').value = inicio.toISOString().split('T')[0];
+    document.querySelector('input[name="data_final"]').value = hoje.toISOString().split('T')[0];
+    document.getElementById('advancedFiltersForm').submit();
+}
+
+/* ===== EXPORTAR EXCEL ===== */
 function exportarExcel() {
     const tabela = document.getElementById('tabelaVendas');
     let csv = [];
@@ -495,15 +1066,42 @@ function exportarExcel() {
     
     tabela.querySelectorAll('tbody tr').forEach(tr => {
         const row = [];
-        tr.querySelectorAll('td').forEach(td => row.push(td.innerText));
-        csv.push(row.join(';'));
+        tr.querySelectorAll('td').forEach(td => row.push(td.innerText.replace(/\n/g, ' ').trim()));
+        if (row.some(cell => cell)) csv.push(row.join(';'));
     });
     
-    const blob = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(['\uFEFF' + csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = 'relatorio_vendas.csv';
+    link.download = 'relatorio_vendas_' + new Date().toISOString().split('T')[0] + '.csv';
     link.click();
+    
+    showToast('Exportação iniciada!', 'success');
 }
+
+function showToast(msg, type) {
+    var container = document.getElementById('toastContainer');
+    var toast = document.createElement('div');
+    toast.className = 'toast toast--' + type;
+    toast.textContent = msg;
+    container.appendChild(toast);
+    setTimeout(function() { toast.remove(); }, 3000);
+}
+
+/* ===== INIT ===== */
+document.addEventListener('DOMContentLoaded', function() {
+    var now = new Date();
+    document.getElementById('updateTime').textContent = now.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+    document.getElementById('statusDate').textContent = now.toLocaleDateString('pt-BR', { weekday:'short', day:'2-digit', month:'short', year:'numeric' });
+    
+    setTimeout(initCharts, 200);
+    setTimeout(initSparklines, 100);
+});
+
+window.addEventListener('themeChanged', function() {
+    Object.values(charts).forEach(function(c){ c && c.dispose(); });
+    charts = {};
+    setTimeout(initCharts, 100);
+});
 </script>
 {% endblock %}

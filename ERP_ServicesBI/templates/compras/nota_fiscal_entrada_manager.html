@@ -272,6 +272,7 @@ html[data-theme="dark"] {
 .btn-acao--editar:hover { background: var(--primary-100); color: var(--primary-600); }
 .btn-acao--excluir:hover { background: var(--danger-light); color: var(--danger-600); }
 .btn-acao--visualizar:hover { background: var(--info-light); color: var(--info-600); }
+.btn-acao--confirmar:hover { background: var(--success-light); color: var(--success-600); }
 
 /* Paginacao */
 .pagination-bar {
@@ -363,6 +364,43 @@ html[data-theme="dark"] {
     font-size: 14px;
     color: var(--text-secondary);
     margin-top: 4px;
+}
+
+/* Banner de pedido vinculado */
+.pedido-vinculado-banner {
+    display: none;
+    background: linear-gradient(135deg, var(--info-light), #e0f2fe);
+    border: 1px solid var(--info-300, #7dd3fc);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    align-items: center;
+    gap: 16px;
+}
+
+.pedido-vinculado-banner.active {
+    display: flex;
+}
+
+.pedido-vinculado-banner__icon {
+    font-size: 28px;
+    flex-shrink: 0;
+}
+
+.pedido-vinculado-banner__info {
+    flex: 1;
+}
+
+.pedido-vinculado-banner__title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--info-700, #0369a1);
+    margin-bottom: 2px;
+}
+
+.pedido-vinculado-banner__detail {
+    font-size: 13px;
+    color: var(--info-600, #0284c7);
 }
 
 /* Form card */
@@ -798,10 +836,9 @@ html[data-theme="dark"] {
         
         <select name="status" class="form-select" style="width: 180px;" onchange="this.form.submit()">
             <option value="">Todos os status</option>
-            <option value="PENDENTE" {% if status == 'PENDENTE' %}selected{% endif %}>Pendente</option>
-            <option value="PROCESSADA" {% if status == 'PROCESSADA' %}selected{% endif %}>Processada</option>
-            <option value="CONFIRMADA" {% if status == 'CONFIRMADA' %}selected{% endif %}>Confirmada</option>
-            <option value="CANCELADA" {% if status == 'CANCELADA' %}selected{% endif %}>Cancelada</option>
+            <option value="pendente" {% if status == 'pendente' %}selected{% endif %}>Pendente</option>
+            <option value="confirmada" {% if status == 'confirmada' %}selected{% endif %}>Confirmada</option>
+            <option value="cancelada" {% if status == 'cancelada' %}selected{% endif %}>Cancelada</option>
         </select>
 
         {% if search or status %}
@@ -823,16 +860,16 @@ html[data-theme="dark"] {
                     <th>Data Entrada</th>
                     <th width="120">Valor Total</th>
                     <th>Status</th>
-                    <th width="140">Ações</th>
+                    <th width="160">Ações</th>
                 </tr>
             </thead>
             <tbody>
                 {% for nota in notas %}
                 <tr id="linha-{{ nota.id }}">
-                    <td class="col-numero">{{ nota.numero }}</td>
+                    <td class="col-numero">{{ nota.numero_nf }}</td>
                     <td>{{ nota.serie|default:"—" }}</td>
                     <td class="col-fornecedor">{{ nota.fornecedor.nome_razao_social }}</td>
-                    <td>{{ nota.data_emissao|date:"d/m/Y" }}</td>
+                    <td>{{ nota.data_emissao|date:"d/m/Y"|default:"—" }}</td>
                     <td>{{ nota.data_entrada|date:"d/m/Y"|default:"—" }}</td>
                     <td class="col-valor">R$ {{ nota.valor_total|floatformat:2 }}</td>
                     <td>
@@ -846,15 +883,17 @@ html[data-theme="dark"] {
                                     onclick="visualizarNota({{ nota.id }})">
                                 👁️
                             </button>
-                            {% if nota.status == 'PENDENTE' or nota.status == 'PROCESSADA' %}
+                            {% if nota.status == 'pendente' %}
+                            <button type="button" class="btn-acao btn-acao--confirmar" title="Confirmar Entrada"
+                                    onclick="confirmarNotaDireto({{ nota.id }}, '{{ nota.numero_nf }}')">
+                                ✅
+                            </button>
                             <button type="button" class="btn-acao btn-acao--editar" title="Editar"
                                     onclick="editarNota({{ nota.id }})">
                                 ✏️
                             </button>
-                            {% endif %}
-                            {% if nota.status == 'PENDENTE' %}
                             <button type="button" class="btn-acao btn-acao--excluir" title="Excluir"
-                                    onclick="abrirModalExclusao({{ nota.id }}, '{{ nota.numero }}', '{{ nota.fornecedor.nome_razao_social|escapejs }}')">
+                                    onclick="abrirModalExclusao({{ nota.id }}, '{{ nota.numero_nf }}', '{{ nota.fornecedor.nome_razao_social|escapejs }}')">
                                 🗑️
                             </button>
                             {% endif %}
@@ -880,7 +919,6 @@ html[data-theme="dark"] {
             </tbody>
         </table>
 
-        <!-- PAGINAÇÃO -->
         {% if notas.has_other_pages %}
         <div class="pagination-bar">
             <div class="pagination-info">
@@ -916,10 +954,10 @@ html[data-theme="dark"] {
         {% endif %}
     </div>
 </div>
+
 <!-- ==================== FORM INLINE ==================== -->
 <div id="modo-form" class="form-inline-container">
 
-    <!-- FORM HEADER -->
     <div class="form-inline-header">
         <div class="form-inline-header__title">
             <h2 id="form-titulo">Nova Nota Fiscal</h2>
@@ -928,6 +966,19 @@ html[data-theme="dark"] {
         <button type="button" class="erp-btn erp-btn--secondary" onclick="voltarParaLista()">
             ← Voltar para Lista
         </button>
+    </div>
+
+    <!-- ✅ NOVO: Banner de pedido vinculado -->
+    <div class="pedido-vinculado-banner" id="banner-pedido">
+        <div class="pedido-vinculado-banner__icon">📦</div>
+        <div class="pedido-vinculado-banner__info">
+            <div class="pedido-vinculado-banner__title" id="banner-pedido-titulo">
+                NF gerada a partir do Pedido
+            </div>
+            <div class="pedido-vinculado-banner__detail" id="banner-pedido-detalhe">
+                Itens e valores foram puxados automaticamente do pedido de compra.
+            </div>
+        </div>
     </div>
 
     <!-- DADOS DA NF -->
@@ -943,23 +994,17 @@ html[data-theme="dark"] {
             </div>
             
             <div class="form-group">
-                <label class="form-label" for="nf-serie">
-                    Série
-                </label>
+                <label class="form-label" for="nf-serie">Série</label>
                 <input type="text" id="nf-serie" class="form-input" placeholder="001" maxlength="3">
             </div>
             
             <div class="form-group">
-                <label class="form-label" for="nf-chave">
-                    Chave de Acesso
-                </label>
+                <label class="form-label" for="nf-chave">Chave de Acesso</label>
                 <input type="text" id="nf-chave" class="form-input" placeholder="44 dígitos" maxlength="44">
             </div>
             
             <div class="form-group">
-                <label class="form-label" for="nf-modelo">
-                    Modelo
-                </label>
+                <label class="form-label" for="nf-modelo">Modelo</label>
                 <select id="nf-modelo" class="form-select">
                     <option value="55">NF-e (55)</option>
                     <option value="65">NFC-e (65)</option>
@@ -985,9 +1030,7 @@ html[data-theme="dark"] {
             </div>
             
             <div class="form-group">
-                <label class="form-label" for="nf-pedido">
-                    Pedido de Origem
-                </label>
+                <label class="form-label" for="nf-pedido">Pedido de Origem</label>
                 <select id="nf-pedido" class="form-select">
                     <option value="">Nenhum (avulsa)</option>
                     {% for pedido in pedidos_abertos %}
@@ -1013,9 +1056,7 @@ html[data-theme="dark"] {
             </div>
             
             <div class="form-group">
-                <label class="form-label" for="nf-condicao">
-                    Condição de Pagamento
-                </label>
+                <label class="form-label" for="nf-condicao">Condição de Pagamento</label>
                 <select id="nf-condicao" class="form-select">
                     <option value="">Selecione...</option>
                     {% for condicao in condicoes_pagamento %}
@@ -1027,9 +1068,7 @@ html[data-theme="dark"] {
             </div>
             
             <div class="form-group">
-                <label class="form-label" for="nf-forma">
-                    Forma de Pagamento
-                </label>
+                <label class="form-label" for="nf-forma">Forma de Pagamento</label>
                 <select id="nf-forma" class="form-select">
                     <option value="">Selecione...</option>
                     {% for forma in formas_pagamento %}
@@ -1067,16 +1106,10 @@ html[data-theme="dark"] {
                         <input type="text" class="item-unidade" value="UN" placeholder="UN">
                     </td>
                     <td class="col-valor">
-                        <div class="input-group">
-                            <span class="input-prefix">R$</span>
-                            <input type="text" class="item-valor" placeholder="0,00" onchange="calcularTotalItem(this)">
-                        </div>
+                        <input type="text" class="item-valor" placeholder="0,00" onchange="calcularTotalItem(this)">
                     </td>
                     <td class="col-valor">
-                        <div class="input-group">
-                            <span class="input-prefix">R$</span>
-                            <input type="text" class="item-total" placeholder="0,00" readonly>
-                        </div>
+                        <input type="text" class="item-total" placeholder="0,00" readonly style="font-weight:600;">
                     </td>
                     <td class="col-acao">
                         <button type="button" class="btn-acao btn-acao--excluir" onclick="removerItem(this)">🗑️</button>
@@ -1089,7 +1122,6 @@ html[data-theme="dark"] {
             <span>➕</span> Adicionar Item
         </button>
 
-        <!-- TOTAIS DA NF -->
         <div class="totais-nf">
             <div class="totais-grid">
                 <div class="total-item">
@@ -1118,10 +1150,10 @@ html[data-theme="dark"] {
             Cancelar
         </button>
         <div class="form-actions__right">
-            <button type="button" class="erp-btn erp-btn--primary" onclick="salvarNota('PENDENTE')">
+            <button type="button" class="erp-btn erp-btn--primary" onclick="salvarNota('pendente')">
                 💾 Salvar como Pendente
             </button>
-            <button type="button" class="erp-btn erp-btn--success" onclick="salvarNota('CONFIRMADA')">
+            <button type="button" class="erp-btn erp-btn--success" onclick="confirmarEntrada()">
                 ✅ Confirmar Entrada
             </button>
         </div>
@@ -1132,9 +1164,7 @@ html[data-theme="dark"] {
 <div class="modal-overlay" id="modalExclusao">
     <div class="modal-exclusao">
         <div class="modal-exclusao__header">
-            <div class="modal-exclusao__title">
-                ⚠️ Confirmar Exclusão
-            </div>
+            <div class="modal-exclusao__title">⚠️ Confirmar Exclusão</div>
             <button type="button" class="modal-exclusao__close" onclick="fecharModalExclusao()">×</button>
         </div>
         <div class="modal-exclusao__body">
@@ -1164,6 +1194,7 @@ html[data-theme="dark"] {
 </div>
 
 {% endblock %}
+
 {% block extra_js %}
 <script>
 // ============================================================================
@@ -1171,6 +1202,7 @@ html[data-theme="dark"] {
 // ============================================================================
 let notaId = null;
 let notaIdExcluir = null;
+let pedidoVinculadoId = null;
 
 // ============================================================================
 // NAVEGAÇÃO MODO LISTA ↔ FORM
@@ -1178,10 +1210,10 @@ let notaIdExcluir = null;
 
 function novaNota() {
     notaId = null;
+    pedidoVinculadoId = null;
     
-    // Resetar formulário
     document.getElementById('nf-numero').value = '';
-    document.getElementById('nf-serie').value = '';
+    document.getElementById('nf-serie').value = '1';
     document.getElementById('nf-chave').value = '';
     document.getElementById('nf-modelo').value = '55';
     document.getElementById('nf-fornecedor').value = '';
@@ -1191,43 +1223,134 @@ function novaNota() {
     document.getElementById('nf-condicao').value = '';
     document.getElementById('nf-forma').value = '';
     
-    // Resetar itens
-    document.getElementById('itens-tbody').innerHTML = `
+    document.getElementById('banner-pedido').classList.remove('active');
+    
+    resetarItens();
+    atualizarTotaisNF();
+    document.getElementById('form-titulo').textContent = 'Nova Nota Fiscal';
+    
+    document.getElementById('modo-lista').style.display = 'none';
+    document.getElementById('modo-form').classList.add('active');
+}
+
+function resetarItens() {
+    document.getElementById('itens-tbody').innerHTML = criarLinhaItemHTML('', 0, 'UN', 0, 0);
+}
+
+function criarLinhaItemHTML(produto, qtd, unidade, valorUnit, valorTotal) {
+    return `
         <tr class="item-row">
             <td class="col-produto">
-                <input type="text" class="item-produto" placeholder="Nome do produto">
+                <input type="text" class="item-produto" value="${produto}" placeholder="Nome do produto">
             </td>
             <td class="col-qtd">
-                <input type="number" class="item-quantidade" placeholder="0" min="0.01" step="0.01" onchange="calcularTotalItem(this)">
+                <input type="number" class="item-quantidade" value="${qtd || ''}" placeholder="0" min="0.01" step="0.01" onchange="calcularTotalItem(this)">
             </td>
             <td class="col-un">
-                <input type="text" class="item-unidade" value="UN" placeholder="UN">
+                <input type="text" class="item-unidade" value="${unidade || 'UN'}" placeholder="UN">
             </td>
             <td class="col-valor">
-                <div class="input-group">
-                    <span class="input-prefix">R$</span>
-                    <input type="text" class="item-valor" placeholder="0,00" onchange="calcularTotalItem(this)">
-                </div>
+                <input type="text" class="item-valor" value="${valorUnit ? formatarMoeda(valorUnit) : ''}" placeholder="0,00" onchange="calcularTotalItem(this)">
             </td>
             <td class="col-valor">
-                <div class="input-group">
-                    <span class="input-prefix">R$</span>
-                    <input type="text" class="item-total" placeholder="0,00" readonly>
-                </div>
+                <input type="text" class="item-total" value="${valorTotal ? formatarMoeda(valorTotal) : ''}" readonly style="font-weight:600;">
             </td>
             <td class="col-acao">
                 <button type="button" class="btn-acao btn-acao--excluir" onclick="removerItem(this)">🗑️</button>
             </td>
         </tr>
     `;
-    
-    atualizarTotaisNF();
-    document.getElementById('form-titulo').textContent = 'Nova Nota Fiscal';
-    
-    // Mostrar form, esconder lista
-    document.getElementById('modo-lista').style.display = 'none';
-    document.getElementById('modo-form').classList.add('active');
 }
+
+// ============================================================================
+// ✅ CORREÇÃO PRINCIPAL: Carregar dados do pedido ao selecionar
+// ============================================================================
+
+document.getElementById('nf-pedido').addEventListener('change', function() {
+    const pedidoId = this.value;
+    if (!pedidoId) {
+        document.getElementById('banner-pedido').classList.remove('active');
+        pedidoVinculadoId = null;
+        return;
+    }
+    
+    pedidoVinculadoId = pedidoId;
+    
+    // ✅ USA A NOVA API que retorna dados completos + itens
+    fetch(`/api/pedido/${pedidoId}/dados-para-nfe/`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) {
+                mostrarToast(data.message || 'Erro ao carregar pedido', 'warning');
+                return;
+            }
+            
+            // Verifica se já existe NF
+            if (data.ja_existe_nf) {
+                mostrarToast(data.message, 'warning');
+                document.getElementById('banner-pedido-titulo').textContent = 
+                    `Já existe NF ${data.nf_existente.numero} vinculada a este pedido`;
+                document.getElementById('banner-pedido-detalhe').textContent = 
+                    `Status: ${data.nf_existente.status} | Valor: R$ ${formatarMoeda(data.nf_existente.valor_total)}`;
+                document.getElementById('banner-pedido').classList.add('active');
+                return;
+            }
+            
+            const pedido = data.pedido;
+            
+            // Preenche campos do cabeçalho
+            document.getElementById('nf-fornecedor').value = pedido.fornecedor_id;
+            if (pedido.condicao_pagamento_id) {
+                document.getElementById('nf-condicao').value = pedido.condicao_pagamento_id;
+            }
+            if (pedido.forma_pagamento_id) {
+                document.getElementById('nf-forma').value = pedido.forma_pagamento_id;
+            }
+            document.getElementById('nf-data-emissao').value = new Date().toISOString().split('T')[0];
+            
+            // ✅ Preenche itens do pedido
+            if (data.itens && data.itens.length > 0) {
+                const tbody = document.getElementById('itens-tbody');
+                tbody.innerHTML = '';
+                
+                data.itens.forEach(item => {
+                    tbody.innerHTML += criarLinhaItemHTML(
+                        item.produto_nome,
+                        item.quantidade,
+                        item.unidade,
+                        item.valor_unitario,
+                        item.valor_total
+                    );
+                });
+                
+                atualizarTotaisNF();
+            }
+            
+            // Mostra banner
+            document.getElementById('banner-pedido-titulo').textContent = 
+                `NF vinculada ao Pedido ${pedido.numero} — ${pedido.fornecedor_nome}`;
+            document.getElementById('banner-pedido-detalhe').textContent = 
+                `${data.itens.length} itens importados | Valor do pedido: R$ ${formatarMoeda(pedido.valor_total)}`;
+            document.getElementById('banner-pedido').classList.add('active');
+            
+            mostrarToast(`${data.itens.length} itens carregados do pedido ${pedido.numero}`, 'success');
+        })
+        .catch(err => {
+            console.error('Erro ao carregar pedido:', err);
+            // Fallback: tenta API simples
+            fetch(`/api/pedido/${pedidoId}/dados-simples/`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('nf-fornecedor').value = data.fornecedor_id;
+                    }
+                });
+        });
+});
+
+// ============================================================================
+// EDITAR / VISUALIZAR NOTA EXISTENTE
+// ============================================================================
 
 function editarNota(id) {
     notaId = id;
@@ -1236,7 +1359,6 @@ function editarNota(id) {
         .then(r => r.json())
         .then(data => {
             if (data.success) {
-                // Preencher dados
                 document.getElementById('nf-numero').value = data.numero;
                 document.getElementById('nf-serie').value = data.serie || '';
                 document.getElementById('nf-chave').value = data.chave_acesso || '';
@@ -1248,39 +1370,27 @@ function editarNota(id) {
                 document.getElementById('nf-condicao').value = data.condicao_pagamento_id || '';
                 document.getElementById('nf-forma').value = data.forma_pagamento_id || '';
                 
-                // Preencher itens
+                if (data.pedido_id) {
+                    document.getElementById('banner-pedido-titulo').textContent = 
+                        `NF vinculada ao Pedido`;
+                    document.getElementById('banner-pedido-detalhe').textContent = 
+                        `${data.itens.length} itens | Valor: R$ ${formatarMoeda(data.valor_total)}`;
+                    document.getElementById('banner-pedido').classList.add('active');
+                } else {
+                    document.getElementById('banner-pedido').classList.remove('active');
+                }
+                
                 if (data.itens && data.itens.length > 0) {
                     const tbody = document.getElementById('itens-tbody');
                     tbody.innerHTML = '';
                     data.itens.forEach(item => {
-                        tbody.innerHTML += `
-                            <tr class="item-row">
-                                <td class="col-produto">
-                                    <input type="text" class="item-produto" value="${item.produto}" placeholder="Nome do produto">
-                                </td>
-                                <td class="col-qtd">
-                                    <input type="number" class="item-quantidade" value="${item.quantidade}" placeholder="0" min="0.01" step="0.01" onchange="calcularTotalItem(this)">
-                                </td>
-                                <td class="col-un">
-                                    <input type="text" class="item-unidade" value="${item.unidade}" placeholder="UN">
-                                </td>
-                                <td class="col-valor">
-                                    <div class="input-group">
-                                        <span class="input-prefix">R$</span>
-                                        <input type="text" class="item-valor" value="${formatarMoeda(item.valor_unitario)}" placeholder="0,00" onchange="calcularTotalItem(this)">
-                                    </div>
-                                </td>
-                                <td class="col-valor">
-                                    <div class="input-group">
-                                        <span class="input-prefix">R$</span>
-                                        <input type="text" class="item-total" value="${formatarMoeda(item.valor_total)}" placeholder="0,00" readonly>
-                                    </div>
-                                </td>
-                                <td class="col-acao">
-                                    <button type="button" class="btn-acao btn-acao--excluir" onclick="removerItem(this)">🗑️</button>
-                                </td>
-                            </tr>
-                        `;
+                        tbody.innerHTML += criarLinhaItemHTML(
+                            item.produto,
+                            item.quantidade,
+                            item.unidade,
+                            item.valor_unitario,
+                            item.valor_total
+                        );
                     });
                 }
                 
@@ -1298,24 +1408,23 @@ function editarNota(id) {
 
 function visualizarNota(id) {
     editarNota(id);
-    // Desabilitar todos os inputs
-    document.querySelectorAll('#modo-form input, #modo-form select, #modo-form button').forEach(el => {
-        if (!el.classList.contains('btn-acao--excluir') || !el.closest('.item-row')) {
+    setTimeout(() => {
+        document.querySelectorAll('#modo-form input, #modo-form select').forEach(el => {
             el.disabled = true;
-        }
-    });
-    document.querySelector('.form-actions').style.display = 'none';
+        });
+        document.querySelector('.form-actions .form-actions__right').style.display = 'none';
+    }, 500);
 }
 
 function voltarParaLista() {
     document.getElementById('modo-form').classList.remove('active');
     document.getElementById('modo-lista').style.display = 'block';
+    document.getElementById('banner-pedido').classList.remove('active');
     
-    // Reabilitar inputs
     document.querySelectorAll('#modo-form input, #modo-form select, #modo-form button').forEach(el => {
         el.disabled = false;
     });
-    document.querySelector('.form-actions').style.display = 'flex';
+    document.querySelector('.form-actions .form-actions__right').style.display = 'flex';
     
     location.reload();
 }
@@ -1326,37 +1435,9 @@ function voltarParaLista() {
 
 function adicionarItem() {
     const tbody = document.getElementById('itens-tbody');
-    
-    const novaLinha = document.createElement('tr');
-    novaLinha.className = 'item-row';
-    novaLinha.innerHTML = `
-        <td class="col-produto">
-            <input type="text" class="item-produto" placeholder="Nome do produto">
-        </td>
-        <td class="col-qtd">
-            <input type="number" class="item-quantidade" placeholder="0" min="0.01" step="0.01" onchange="calcularTotalItem(this)">
-        </td>
-        <td class="col-un">
-            <input type="text" class="item-unidade" value="UN" placeholder="UN">
-        </td>
-        <td class="col-valor">
-            <div class="input-group">
-                <span class="input-prefix">R$</span>
-                <input type="text" class="item-valor" placeholder="0,00" onchange="calcularTotalItem(this)">
-            </div>
-        </td>
-        <td class="col-valor">
-            <div class="input-group">
-                <span class="input-prefix">R$</span>
-                <input type="text" class="item-total" placeholder="0,00" readonly>
-            </div>
-        </td>
-        <td class="col-acao">
-            <button type="button" class="btn-acao btn-acao--excluir" onclick="removerItem(this)">🗑️</button>
-        </td>
-    `;
-    
-    tbody.appendChild(novaLinha);
+    const temp = document.createElement('tbody');
+    temp.innerHTML = criarLinhaItemHTML('', 0, 'UN', 0, 0);
+    tbody.appendChild(temp.firstElementChild);
 }
 
 function removerItem(btn) {
@@ -1365,7 +1446,6 @@ function removerItem(btn) {
         mostrarToast('A nota deve ter pelo menos um item', 'warning');
         return;
     }
-    
     btn.closest('tr').remove();
     atualizarTotaisNF();
 }
@@ -1373,7 +1453,8 @@ function removerItem(btn) {
 function calcularTotalItem(elemento) {
     const row = elemento.closest('tr');
     const qtd = parseFloat(row.querySelector('.item-quantidade').value) || 0;
-    const valor = parseFloat(row.querySelector('.item-valor').value.replace(/\./g, '').replace(',', '.')) || 0;
+    const valorStr = row.querySelector('.item-valor').value || '0';
+    const valor = parseFloat(valorStr.replace(/\./g, '').replace(',', '.')) || 0;
     const total = qtd * valor;
     
     row.querySelector('.item-total').value = formatarMoeda(total);
@@ -1383,98 +1464,43 @@ function calcularTotalItem(elemento) {
 function atualizarTotaisNF() {
     let totalProdutos = 0;
     document.querySelectorAll('.item-total').forEach(input => {
-        totalProdutos += parseFloat(input.value.replace(/\./g, '').replace(',', '.')) || 0;
+        const val = input.value || '0';
+        totalProdutos += parseFloat(val.replace(/\./g, '').replace(',', '.')) || 0;
     });
     
-    // Frete e impostos (simplificado - pode expandir)
-    const frete = 0;
-    const impostos = totalProdutos * 0.18; // 18% estimado de impostos
-    
-    const totalNF = totalProdutos + frete + impostos;
+    const totalNF = totalProdutos;
     
     document.getElementById('total-produtos').textContent = 'R$ ' + formatarMoeda(totalProdutos);
-    document.getElementById('total-frete').textContent = 'R$ ' + formatarMoeda(frete);
-    document.getElementById('total-impostos').textContent = 'R$ ' + formatarMoeda(impostos);
+    document.getElementById('total-frete').textContent = 'R$ 0,00';
+    document.getElementById('total-impostos').textContent = 'R$ 0,00';
     document.getElementById('total-nf').textContent = 'R$ ' + formatarMoeda(totalNF);
 }
 
 function formatarMoeda(valor) {
-    if (!valor) return '0,00';
-    return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (!valor && valor !== 0) return '0,00';
+    return parseFloat(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 // ============================================================================
-// PEDIDO DE ORIGEM - PREENCHE FORNECEDOR
-// ============================================================================
-
-document.getElementById('nf-pedido').addEventListener('change', function() {
-    const pedidoId = this.value;
-    if (!pedidoId) return;
-    
-    fetch(`/api/pedido/${pedidoId}/dados-simples/`)
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                document.getElementById('nf-fornecedor').value = data.fornecedor_id;
-                document.getElementById('nf-condicao').value = data.condicao_pagamento_id || '';
-                document.getElementById('nf-forma').value = data.forma_pagamento_id || '';
-            }
-        })
-        .catch(err => {
-            console.error('Erro ao carregar pedido:', err);
-        });
-});
-
-// ============================================================================
-// SALVAR NOTA
+// SALVAR NOTA FISCAL
 // ============================================================================
 
 function salvarNota(status) {
-    // Validações
     const numero = document.getElementById('nf-numero').value.trim();
     const fornecedorId = document.getElementById('nf-fornecedor').value;
     const dataEmissao = document.getElementById('nf-data-emissao').value;
     const dataEntrada = document.getElementById('nf-data-entrada').value;
     
-    if (!numero) {
-        mostrarToast('Informe o número da nota fiscal', 'warning');
-        return;
-    }
-    if (!fornecedorId) {
-        mostrarToast('Selecione o fornecedor', 'warning');
-        return;
-    }
-    if (!dataEmissao) {
-        mostrarToast('Informe a data de emissão', 'warning');
-        return;
-    }
-    if (!dataEntrada) {
-        mostrarToast('Informe a data de entrada', 'warning');
-        return;
-    }
+    if (!numero) { mostrarToast('Informe o número da nota fiscal', 'warning'); return; }
+    if (!fornecedorId) { mostrarToast('Selecione o fornecedor', 'warning'); return; }
+    if (!dataEmissao) { mostrarToast('Informe a data de emissão', 'warning'); return; }
     
-    // Coletar itens
-    const itens = [];
-    let temItemValido = false;
+    const itens = coletarItens();
     
-    document.querySelectorAll('.item-row').forEach(row => {
-        const produto = row.querySelector('.item-produto').value.trim();
-        const quantidade = parseFloat(row.querySelector('.item-quantidade').value);
-        const unidade = row.querySelector('.item-unidade').value.trim();
-        const valor = parseFloat(row.querySelector('.item-valor').value.replace(/\./g, '').replace(',', '.'));
-        
-        if (produto && quantidade > 0 && valor > 0) {
-            itens.push({
-                produto: produto,
-                quantidade: quantidade,
-                unidade: unidade || 'UN',
-                valor_unitario: valor
-            });
-            temItemValido = true;
-        }
-    });
+    // ✅ Se tem pedido vinculado e não tem itens manuais, deixa o backend puxar
+    const pedidoId = document.getElementById('nf-pedido').value || null;
     
-    if (!temItemValido) {
+    if (itens.length === 0 && !pedidoId) {
         mostrarToast('Adicione pelo menos um item válido', 'warning');
         return;
     }
@@ -1486,9 +1512,9 @@ function salvarNota(status) {
         chave_acesso: document.getElementById('nf-chave').value,
         modelo: document.getElementById('nf-modelo').value,
         fornecedor_id: fornecedorId,
-        pedido_id: document.getElementById('nf-pedido').value || null,
+        pedido_id: pedidoId,
         data_emissao: dataEmissao,
-        data_entrada: dataEntrada,
+        data_entrada: dataEntrada || new Date().toISOString().split('T')[0],
         condicao_pagamento_id: document.getElementById('nf-condicao').value || null,
         forma_pagamento_id: document.getElementById('nf-forma').value || null,
         status: status,
@@ -1508,6 +1534,128 @@ function salvarNota(status) {
         if (data.success) {
             mostrarToast(data.message, 'success');
             setTimeout(() => voltarParaLista(), 1500);
+        } else {
+            throw new Error(data.message);
+        }
+    })
+    .catch(err => {
+        mostrarToast('Erro: ' + err.message, 'danger');
+    });
+}
+
+function coletarItens() {
+    const itens = [];
+    document.querySelectorAll('.item-row').forEach(row => {
+        const produto = row.querySelector('.item-produto').value.trim();
+        const quantidade = parseFloat(row.querySelector('.item-quantidade').value);
+        const unidade = row.querySelector('.item-unidade').value.trim();
+        const valorStr = row.querySelector('.item-valor').value || '0';
+        const valor = parseFloat(valorStr.replace(/\./g, '').replace(',', '.'));
+        
+        if (produto && quantidade > 0 && valor > 0) {
+            itens.push({
+                produto: produto,
+                quantidade: quantidade,
+                unidade: unidade || 'UN',
+                valor_unitario: valor
+            });
+        }
+    });
+    return itens;
+}
+
+// ============================================================================
+// ✅ NOVO: Confirmar entrada (salva + confirma + estoque)
+// ============================================================================
+
+function confirmarEntrada() {
+    const numero = document.getElementById('nf-numero').value.trim();
+    const fornecedorId = document.getElementById('nf-fornecedor').value;
+    const dataEmissao = document.getElementById('nf-data-emissao').value;
+    
+    if (!numero) { mostrarToast('Informe o número da nota fiscal', 'warning'); return; }
+    if (!fornecedorId) { mostrarToast('Selecione o fornecedor', 'warning'); return; }
+    if (!dataEmissao) { mostrarToast('Informe a data de emissão', 'warning'); return; }
+    
+    const itens = coletarItens();
+    const pedidoId = document.getElementById('nf-pedido').value || null;
+    
+    if (itens.length === 0 && !pedidoId) {
+        mostrarToast('Adicione pelo menos um item válido', 'warning');
+        return;
+    }
+    
+    // Primeiro salva como pendente
+    const dados = {
+        id: notaId,
+        numero: numero,
+        serie: document.getElementById('nf-serie').value,
+        chave_acesso: document.getElementById('nf-chave').value,
+        modelo: document.getElementById('nf-modelo').value,
+        fornecedor_id: fornecedorId,
+        pedido_id: pedidoId,
+        data_emissao: dataEmissao,
+        data_entrada: document.getElementById('nf-data-entrada').value || new Date().toISOString().split('T')[0],
+        condicao_pagamento_id: document.getElementById('nf-condicao').value || null,
+        forma_pagamento_id: document.getElementById('nf-forma').value || null,
+        status: 'pendente',
+        itens: itens
+    };
+    
+    fetch('/api/nota-fiscal/salvar/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(dados)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (!data.success) throw new Error(data.message);
+        
+        // Agora confirma (que dá entrada no estoque)
+        return fetch(`/api/nota-fiscal/${data.id}/confirmar/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        });
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            let msg = '✅ ' + data.message;
+            if (data.conta_pagar) {
+                msg += ` | Conta a pagar: R$ ${formatarMoeda(data.conta_pagar.valor)}`;
+            }
+            mostrarToast(msg, 'success');
+            setTimeout(() => voltarParaLista(), 2000);
+        } else {
+            throw new Error(data.message);
+        }
+    })
+    .catch(err => {
+        mostrarToast('Erro: ' + err.message, 'danger');
+    });
+}
+
+// ============================================================================
+// ✅ NOVO: Confirmar NF direto da lista
+// ============================================================================
+
+function confirmarNotaDireto(id, numero) {
+    if (!confirm(`Confirmar a NF ${numero}?\n\nIsso irá:\n• Dar entrada no estoque\n• Gerar conta a pagar\n• Atualizar o pedido vinculado`)) {
+        return;
+    }
+    
+    fetch(`/api/nota-fiscal/${id}/confirmar/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken') }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            mostrarToast('✅ ' + data.message, 'success');
+            setTimeout(() => location.reload(), 1500);
         } else {
             throw new Error(data.message);
         }
@@ -1540,15 +1688,12 @@ function executarExclusao() {
     
     fetch(`/api/nota-fiscal/${notaIdExcluir}/excluir/`, {
         method: 'POST',
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken')
-        }
+        headers: { 'X-CSRFToken': getCookie('csrftoken') }
     })
     .then(r => r.json())
     .then(data => {
         if (data.success) {
             fecharModalExclusao();
-            
             const linha = document.getElementById(`linha-${notaIdExcluir}`);
             if (linha) {
                 linha.style.transition = 'all 0.4s ease';
@@ -1556,7 +1701,6 @@ function executarExclusao() {
                 linha.style.transform = 'translateX(-30px)';
                 setTimeout(() => location.reload(), 400);
             }
-            
             mostrarToast(data.message, 'success');
         } else {
             throw new Error(data.message);
@@ -1568,12 +1712,10 @@ function executarExclusao() {
     });
 }
 
-// Fechar modal ao clicar fora
 document.getElementById('modalExclusao').addEventListener('click', function(e) {
     if (e.target === this) fecharModalExclusao();
 });
 
-// Fechar com ESC
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') fecharModalExclusao();
 });
@@ -1586,13 +1728,9 @@ function mostrarToast(mensagem, tipo) {
     const toast = document.createElement('div');
     toast.className = `erp-alert erp-alert--${tipo}`;
     toast.style.cssText = `
-        position: fixed;
-        top: 90px;
-        right: 20px;
-        z-index: 9999;
-        min-width: 300px;
-        animation: slideIn 0.3s ease;
-        box-shadow: var(--shadow-lg);
+        position: fixed; top: 90px; right: 20px; z-index: 9999;
+        min-width: 300px; max-width: 500px;
+        animation: slideIn 0.3s ease; box-shadow: var(--shadow-lg);
     `;
     toast.innerHTML = mensagem;
     document.body.appendChild(toast);
@@ -1618,12 +1756,29 @@ function getCookie(name) {
     return v;
 }
 
-// CSS para animações do toast
 const s = document.createElement('style');
 s.textContent = `
     @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
 `;
 document.head.appendChild(s);
+
+// ============================================================================
+// ✅ CORREÇÃO: Auto-abrir form quando vem de "Gerar NF-e" do pedido
+// ============================================================================
+(function() {
+    var pedidoPreselect = "{{ pedido_preselect }}";
+    if (pedidoPreselect) {
+        novaNota();
+        
+        // Seleciona o pedido e dispara o change para puxar dados completos
+        var select = document.getElementById('nf-pedido');
+        if (select) {
+            select.value = pedidoPreselect;
+            // Dispara o change que agora usa api_pedido_dados_para_nfe
+            select.dispatchEvent(new Event('change'));
+        }
+    }
+})();
 </script>
 {% endblock %}

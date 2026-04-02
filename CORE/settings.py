@@ -55,8 +55,8 @@ ROOT_URLCONF = 'CORE.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'ERP_ServicesBI' / 'templates'],
-        'APP_DIRS': True,
+        'DIRS': [],  # ← CORRIGIDO: Deixado vazio pois APP_DIRS=True já busca nos apps
+        'APP_DIRS': True,  # ← ESSENCIAL: Busca templates em cada app instalado
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',

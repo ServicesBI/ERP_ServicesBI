@@ -1,0 +1,660 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load form_tags %}
+
+{% block title %}Conciliação Bancária{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="fas fa-university text-primary me-2"></i>
+                Conciliação Bancária
+            </h2>
+            <p class="text-muted mb-0">
+                {% if object %}
+                    Editando conciliação #{{ object.id }}
+                {% else %}
+                    Nova conciliação
+                {% endif %}
+            </p>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'ERP_ServicesBI:conciliacao_bancaria_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    <!-- Mensagens -->
+    {% include 'partials/messages.html' %}
+
+    <form method="post" id="conciliacaoForm" class="needs-validation" novalidate>
+        {% csrf_token %}
+
+        <div class="row">
+            <!-- Coluna Principal - Dados da Conciliação -->
+            <div class="col-lg-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle text-info me-2"></i>
+                            Dados da Conciliação
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Conta Bancária -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.conta_bancaria.id_for_label }}" class="form-label">
+                                    Conta Bancária <span class="text-danger">*</span>
+                                </label>
+                                {{ form.conta_bancaria|add_class:"form-select" }}
+                                {% if form.conta_bancaria.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.conta_bancaria.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Data da Conciliação -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.data_conciliacao.id_for_label }}" class="form-label">
+                                    Data da Conciliação <span class="text-danger">*</span>
+                                </label>
+                                {{ form.data_conciliacao|add_class:"form-control"|attr:"type:date" }}
+                                {% if form.data_conciliacao.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.data_conciliacao.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Período Inicial -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.data_inicial.id_for_label }}" class="form-label">
+                                    Período Inicial <span class="text-danger">*</span>
+                                </label>
+                                {{ form.data_inicial|add_class:"form-control"|attr:"type:date" }}
+                                {% if form.data_inicial.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.data_inicial.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Período Final -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.data_final.id_for_label }}" class="form-label">
+                                    Período Final <span class="text-danger">*</span>
+                                </label>
+                                {{ form.data_final|add_class:"form-control"|attr:"type:date" }}
+                                {% if form.data_final.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.data_final.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Observações -->
+                        <div class="mb-3">
+                            <label for="{{ form.observacoes.id_for_label }}" class="form-label">
+                                Observações
+                            </label>
+                            {{ form.observacoes|add_class:"form-control"|attr:"rows:3" }}
+                            {% if form.observacoes.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.observacoes.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Extrato Bancário -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-file-invoice-dollar text-success me-2"></i>
+                            Lançamentos do Extrato
+                        </h5>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="btnImportarExtrato">
+                            <i class="fas fa-upload me-1"></i> Importar OFX
+                        </button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="tabelaExtrato">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Descrição</th>
+                                        <th>Documento</th>
+                                        <th class="text-end">Valor</th>
+                                        <th>Tipo</th>
+                                        <th>Status</th>
+                                        <th width="80">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for extrato in extratos %}
+                                    <tr class="extrato-item" data-id="{{ extrato.id }}" data-valor="{{ extrato.valor }}">
+                                        <td>{{ extrato.data|date:"d/m/Y" }}</td>
+                                        <td>{{ extrato.descricao }}</td>
+                                        <td>{{ extrato.numero_documento|default:"-" }}</td>
+                                        <td class="text-end fw-bold {% if extrato.tipo == 'C' %}text-success{% else %}text-danger{% endif %}">
+                                            {% if extrato.tipo == 'C' %}+{% else %}-{% endif %}
+                                            R$ {{ extrato.valor|floatformat:2 }}
+                                        </td>
+                                        <td>
+                                            {% if extrato.tipo == 'C' %}
+                                                <span class="badge bg-success">Crédito</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Débito</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if extrato.conciliado %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check me-1"></i> Conciliado
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-warning text-dark">
+                                                    <i class="fas fa-clock me-1"></i> Pendente
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-outline-primary btn-conciliar" 
+                                                    data-extrato-id="{{ extrato.id }}"
+                                                    {% if extrato.conciliado %}disabled{% endif %}>
+                                                <i class="fas fa-link"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="7" class="text-center py-4 text-muted">
+                                            <i class="fas fa-inbox fa-2x mb-2"></i><br>
+                                            Nenhum lançamento importado. Clique em "Importar OFX" para começar.
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <td colspan="3" class="text-end fw-bold">Totais:</td>
+                                        <td class="text-end fw-bold" id="totalExtrato">R$ 0,00</td>
+                                        <td colspan="3"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lançamentos do Sistema -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-exchange-alt text-primary me-2"></i>
+                            Lançamentos do Sistema
+                        </h5>
+                        <div class="input-group input-group-sm w-auto">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" id="buscarLancamento" placeholder="Buscar lançamento...">
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="tabelaLancamentos">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="40">
+                                            <input type="checkbox" class="form-check-input" id="selectAll">
+                                        </th>
+                                        <th>Data</th>
+                                        <th>Descrição</th>
+                                        <th>Origem</th>
+                                        <th class="text-end">Valor</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for lancamento in lancamentos_sistema %}
+                                    <tr class="lancamento-item" data-valor="{{ lancamento.valor }}">
+                                        <td>
+                                            <input type="checkbox" class="form-check-input check-lancamento" 
+                                                   name="lancamentos_selecionados" value="{{ lancamento.id }}">
+                                        </td>
+                                        <td>{{ lancamento.data|date:"d/m/Y" }}</td>
+                                        <td>{{ lancamento.descricao }}</td>
+                                        <td>
+                                            <span class="badge bg-info">{{ lancamento.get_origem_display }}</span>
+                                        </td>
+                                        <td class="text-end fw-bold {% if lancamento.tipo == 'R' %}text-success{% else %}text-danger{% endif %}">
+                                            {% if lancamento.tipo == 'R' %}+{% else %}-{% endif %}
+                                            R$ {{ lancamento.valor|floatformat:2 }}
+                                        </td>
+                                        <td>
+                                            {% if lancamento.conciliado %}
+                                                <span class="badge bg-secondary">Conciliado</span>
+                                            {% else %}
+                                                <span class="badge bg-light text-dark">Disponível</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4 text-muted">
+                                            Nenhum lançamento disponível para conciliação neste período.
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Coluna Lateral - Resumo e Ações -->
+            <div class="col-lg-4">
+                <!-- Resumo da Conciliação -->
+                <div class="card shadow-sm mb-4 border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-calculator me-2"></i>
+                            Resumo
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Saldo Inicial:</span>
+                            <span class="fw-bold" id="saldoInicial">R$ {{ conta.saldo_inicial|default:"0,00" }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Total Créditos:</span>
+                            <span class="fw-bold text-success" id="totalCreditos">R$ 0,00</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Total Débitos:</span>
+                            <span class="fw-bold text-danger" id="totalDebitos">R$ 0,00</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Saldo Calculado:</span>
+                            <span class="fw-bold" id="saldoCalculado">R$ 0,00</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Saldo Extrato:</span>
+                            <span class="fw-bold text-primary" id="saldoExtrato">R$ 0,00</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Diferença:</span>
+                            <span class="badge bg-success fs-6" id="diferenca">R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ações -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-cogs text-secondary me-2"></i>
+                            Ações
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-outline-info" id="btnAutoConciliar">
+                                <i class="fas fa-magic me-1"></i> Auto-Conciliar
+                            </button>
+                            <button type="button" class="btn btn-outline-warning" id="btnMarcarTodos">
+                                <i class="fas fa-check-double me-1"></i> Marcar Todos
+                            </button>
+                            <button type="button" class="btn btn-outline-danger" id="btnDesmarcarTodos">
+                                <i class="fas fa-eraser me-1"></i> Limpar Seleção
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informações -->
+                <div class="card shadow-sm bg-light">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="fas fa-lightbulb text-warning me-1"></i>
+                            Dicas
+                        </h6>
+                        <ul class="small text-muted mb-0 ps-3">
+                            <li>Importe o extrato bancário no formato OFX</li>
+                            <li>Use a auto-conciliação para valores exatos</li>
+                            <li>Verifique lançamentos pendentes antes de finalizar</li>
+                            <li>A diferença deve ser zero para concluir</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botões de Ação do Formulário -->
+        <div class="card shadow-sm mt-4">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    {% if object %}
+                    <a href="{% url 'ERP_ServicesBI:conciliacao_bancaria_detail' object.pk %}" class="btn btn-outline-info me-2">
+                        <i class="fas fa-eye me-1"></i> Visualizar
+                    </a>
+                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalExcluir">
+                        <i class="fas fa-trash me-1"></i> Excluir
+                    </button>
+                    {% endif %}
+                </div>
+                <div>
+                    <a href="{% url 'ERP_ServicesBI:conciliacao_bancaria_list' %}" class="btn btn-outline-secondary me-2">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-lg" id="btnSalvar">
+                        <i class="fas fa-save me-1"></i>
+                        {% if object %}Atualizar{% else %}Salvar{% endif %} Conciliação
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Modal de Conciliação Manual -->
+<div class="modal fade" id="modalConciliar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Conciliar Lançamento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Extrato Bancário</h6>
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <p class="mb-1"><strong>Data:</strong> <span id="modalExtratoData">-</span></p>
+                                <p class="mb-1"><strong>Descrição:</strong> <span id="modalExtratoDescricao">-</span></p>
+                                <p class="mb-1"><strong>Valor:</strong> <span id="modalExtratoValor" class="fw-bold">-</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted">Lançamento do Sistema</h6>
+                        <div id="lancamentosSugeridos">
+                            <!-- Preenchido via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnConfirmarConciliacao">
+                    <i class="fas fa-check me-1"></i> Confirmar Conciliação
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Importação OFX -->
+<div class="modal fade" id="modalImportarOFX" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Importar Extrato OFX</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formImportarOFX" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="arquivoOFX" class="form-label">Selecione o arquivo OFX</label>
+                        <input type="file" class="form-control" id="arquivoOFX" name="arquivo" accept=".ofx,.OFX">
+                        <div class="form-text">Arquivos suportados: OFX (Open Financial Exchange)</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnProcessarOFX">
+                    <i class="fas fa-upload me-1"></i> Importar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+{% if object %}
+<div class="modal fade" id="modalExcluir" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir esta conciliação bancária?</p>
+                <p class="text-danger mb-0"><strong>Esta ação não pode ser desfeita.</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form action="{% url 'ERP_ServicesBI:conciliacao_bancaria_delete' object.pk %}" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i> Excluir
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Variáveis globais
+    let extratoSelecionado = null;
+    let lancamentosSelecionados = [];
+
+    // Calcular totais do extrato
+    function calcularTotais() {
+        let totalCreditos = 0;
+        let totalDebitos = 0;
+        
+        $('.extrato-item').each(function() {
+            const valor = parseFloat($(this).data('valor')) || 0;
+            const tipo = $(this).find('.badge').text().trim() === 'Crédito' ? 'C' : 'D';
+            
+            if (tipo === 'C') {
+                totalCreditos += valor;
+            } else {
+                totalDebitos += valor;
+            }
+        });
+
+        const totalExtrato = totalCreditos - totalDebitos;
+        
+        $('#totalCreditos').text('R$ ' + totalCreditos.toFixed(2).replace('.', ','));
+        $('#totalDebitos').text('R$ ' + totalDebitos.toFixed(2).replace('.', ','));
+        $('#saldoExtrato').text('R$ ' + totalExtrato.toFixed(2).replace('.', ','));
+        
+        calcularDiferenca();
+    }
+
+    // Calcular diferença
+    function calcularDiferenca() {
+        // Implementar lógica de cálculo do saldo
+        const diferenca = 0; // Calcular baseado nos valores
+        $('#diferenca').text('R$ ' + diferenca.toFixed(2).replace('.', ','));
+    }
+
+    // Botão Importar OFX
+    $('#btnImportarExtrato').click(function() {
+        $('#modalImportarOFX').modal('show');
+    });
+
+    // Processar importação OFX
+    $('#btnProcessarOFX').click(function() {
+        const formData = new FormData($('#formImportarOFX')[0]);
+        
+        $.ajax({
+            url: '{% url "ERP_ServicesBI:conciliacao_importar_ofx" %}',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert('Erro ao importar: ' + response.message);
+                }
+            },
+            error: function() {
+                alert('Erro ao processar arquivo OFX');
+            }
+        });
+    });
+
+    // Botão Conciliar
+    $('.btn-conciliar').click(function() {
+        extratoSelecionado = $(this).data('extrato-id');
+        const row = $(this).closest('tr');
+        
+        $('#modalExtratoData').text(row.find('td:eq(0)').text());
+        $('#modalExtratoDescricao').text(row.find('td:eq(1)').text());
+        $('#modalExtratoValor').text(row.find('td:eq(3)').text());
+        
+        // Buscar lançamentos sugeridos
+        buscarLancamentosSugeridos(row.data('valor'));
+        
+        $('#modalConciliar').modal('show');
+    });
+
+    // Buscar lançamentos sugeridos
+    function buscarLancamentosSugeridos(valor) {
+        $.ajax({
+            url: '{% url "ERP_ServicesBI:conciliacao_buscar_lancamentos" %}',
+            type: 'GET',
+            data: {
+                valor: valor,
+                conta_id: $('#id_conta_bancaria').val()
+            },
+            success: function(response) {
+                let html = '';
+                if (response.lancamentos.length > 0) {
+                    response.lancamentos.forEach(function(lanc) {
+                        html += `
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="lancamento_conciliar" 
+                                       value="${lanc.id}" id="lanc_${lanc.id}">
+                                <label class="form-check-label" for="lanc_${lanc.id}">
+                                    <strong>${lanc.data}</strong> - ${lanc.descricao}<br>
+                                    <small class="text-muted">R$ ${lanc.valor}</small>
+                                </label>
+                            </div>
+                        `;
+                    });
+                } else {
+                    html = '<p class="text-muted">Nenhum lançamento sugerido encontrado.</p>';
+                }
+                $('#lancamentosSugeridos').html(html);
+            }
+        });
+    }
+
+    // Confirmar conciliação
+    $('#btnConfirmarConciliacao').click(function() {
+        const lancamentoId = $('input[name="lancamento_conciliar"]:checked').val();
+        
+        if (!lancamentoId) {
+            alert('Selecione um lançamento para conciliar');
+            return;
+        }
+
+        $.ajax({
+            url: '{% url "ERP_ServicesBI:conciliacao_realizar" %}',
+            type: 'POST',
+            data: {
+                extrato_id: extratoSelecionado,
+                lancamento_id: lancamentoId,
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    $('#modalConciliar').modal('hide');
+                    location.reload();
+                } else {
+                    alert('Erro: ' + response.message);
+                }
+            }
+        });
+    });
+
+    // Auto-conciliar
+    $('#btnAutoConciliar').click(function() {
+        $.ajax({
+            url: '{% url "ERP_ServicesBI:conciliacao_auto" %}',
+            type: 'POST',
+            data: {
+                conciliacao_id: '{{ object.id|default:"" }}',
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert('Auto-conciliação realizada: ' + response.conciliados + ' lançamentos');
+                    location.reload();
+                }
+            }
+        });
+    });
+
+    // Selecionar todos os lançamentos
+    $('#selectAll').change(function() {
+        $('.check-lancamento').prop('checked', $(this).is(':checked'));
+    });
+
+    // Marcar/Desmarcar todos
+    $('#btnMarcarTodos').click(function() {
+        $('.check-lancamento').prop('checked', true);
+        $('#selectAll').prop('checked', true);
+    });
+
+    $('#btnDesmarcarTodos').click(function() {
+        $('.check-lancamento').prop('checked', false);
+        $('#selectAll').prop('checked', false);
+    });
+
+    // Buscar lançamentos
+    $('#buscarLancamento').keyup(function() {
+        const termo = $(this).val().toLowerCase();
+        $('.lancamento-item').each(function() {
+            const texto = $(this).text().toLowerCase();
+            $(this).toggle(texto.includes(termo));
+        });
+    });
+
+    // Calcular totais ao carregar
+    calcularTotais();
+});
+</script>
+{% endblock %}

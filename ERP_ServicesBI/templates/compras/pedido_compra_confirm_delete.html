@@ -1,15 +1,15 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Excluir Pedido de Compra - ERP ServicesBI{% endblock %}
+{% block title %}Cancelar Pedido de Compra - ERP ServicesBI{% endblock %}
 
 {% block content %}
 <div class="erp-page-header erp-mb-6">
-    <h1 class="erp-page-title">CADASTRO</h1>
-    <p class="erp-page-subtitle">Excluir Pedido de Compra</p>
+    <h1 class="erp-page-title">CANCELAR PEDIDO</h1>
+    <p class="erp-page-subtitle">Confirmação de cancelamento de pedido de compra</p>
 </div>
 
-<div class="erp-card" style="max-width: 500px; margin: 0 auto;">
+<div class="erp-card" style="max-width: 600px; margin: 0 auto;">
     <div style="text-align: center; padding: 32px 24px;">
         <!-- Ícone de Alerta -->
         <div style="width: 80px; height: 80px; background: var(--danger-100); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
@@ -17,27 +17,96 @@
         </div>
         
         <h2 style="font-size: 20px; font-weight: 600; color: var(--gray-800); margin-bottom: 12px;">
-            Tem certeza que deseja excluir?
+            Tem certeza que deseja cancelar?
         </h2>
         
         <p style="color: var(--gray-600); font-size: 14px; margin-bottom: 8px;">
-            Você está prestes a excluir o pedido:
+            Você está prestes a cancelar o pedido:
         </p>
         
-        <div style="background: var(--gray-100); padding: 16px; border-radius: 8px; margin: 16px 0;">
-            <p style="font-size: 24px; font-weight: 700; color: var(--gray-800); margin: 0;">
+        <!-- Info do Pedido - ATUALIZADO FASE 1 -->
+        <div style="background: var(--gray-100); padding: 20px; border-radius: 12px; margin: 20px 0; text-align: left;">
+            <p style="font-size: 24px; font-weight: 700; color: var(--gray-800); margin: 0 0 8px 0;">
                 #{{ pedido.numero }}
             </p>
-            <p style="font-size: 14px; color: var(--gray-600); margin: 8px 0 0 0;">
+            <p style="font-size: 14px; color: var(--gray-600); margin: 0 0 12px 0;">
                 {{ pedido.fornecedor.nome_razao_social }}
             </p>
-            <p style="font-size: 16px; font-weight: 600; color: var(--primary-600); margin: 8px 0 0 0;">
+            
+            <!-- NOVO: Info de solicitação FASE 1 -->
+            <div style="border-top: 1px solid var(--gray-200); padding-top: 12px; margin-top: 12px;">
+                <p style="font-size: 13px; color: var(--gray-500); margin: 0 0 4px 0;">
+                    <strong>Solicitado por:</strong> {{ pedido.solicitante.get_full_name|default:pedido.solicitante.username }}
+                </p>
+                <p style="font-size: 13px; color: var(--gray-500); margin: 0 0 4px 0;">
+                    <strong>Data:</strong> {{ pedido.data_pedido|date:"d/m/Y" }}
+                </p>
+                {% if pedido.centro_custo %}
+                <p style="font-size: 13px; color: var(--gray-500); margin: 0 0 4px 0;">
+                    <strong>Centro de Custo:</strong> {{ pedido.centro_custo.nome }}
+                </p>
+                {% endif %}
+                <p style="font-size: 13px; color: var(--gray-500); margin: 0;">
+                    <strong>Prioridade:</strong> {{ pedido.get_prioridade_display }}
+                </p>
+            </div>
+            
+            <p style="font-size: 18px; font-weight: 600; color: var(--primary-600); margin: 16px 0 0 0; text-align: center;">
                 {{ pedido.valor_total|currency_br }}
             </p>
-            <p style="font-size: 13px; color: var(--gray-500); margin: 4px 0 0 0;">
-                {{ pedido.itens.count }} item(ns) | {{ pedido.get_status_display }}
+            <p style="font-size: 13px; color: var(--gray-500); margin: 8px 0 0 0; text-align: center;">
+                {{ pedido.itens.count }} item(ns) | Status: <strong>{{ pedido.get_status_display }}</strong>
             </p>
         </div>
+        
+        <!-- Alerta de status em_aprovacao - NOVO FASE 1 -->
+        {% if pedido.status == 'em_aprovacao' %}
+        <div style="background: var(--warning-50); border: 1px solid var(--warning-200); border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+            <p style="color: var(--warning-700); font-size: 14px; margin: 0 0 8px 0; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span>⏳</span>
+                <strong>Atenção:</strong> Este pedido está em processo de aprovação!
+            </p>
+            <p style="color: var(--warning-600); font-size: 13px; margin: 0;">
+                O cancelamento interromperá o fluxo de aprovação. Considere aguardar a decisão ou entre em contato com o aprovador.
+            </p>
+        </div>
+        {% endif %}
+        
+        <!-- Alerta de itens/pagamentos -->
+        {% if pedido.status == 'recebido' or pedido.status == 'parcial' %}
+        <div style="background: var(--danger-50); border: 1px solid var(--danger-200); border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+            <p style="color: var(--danger-700); font-size: 14px; margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span>🚫</span>
+                <strong>Não é possível cancelar!</strong>
+            </p>
+            <p style="color: var(--danger-600); font-size: 13px; margin: 8px 0 0 0;">
+                Este pedido já possui recebimentos vinculados. Cancele as entradas primeiro.
+            </p>
+        </div>
+        {% elif pedido.aprovacoes.exists %}
+        <!-- NOVO: Histórico de aprovações FASE 1 -->
+        <div style="background: var(--info-50); border: 1px solid var(--info-200); border-radius: 8px; padding: 16px; margin-bottom: 20px; text-align: left;">
+            <p style="color: var(--info-700); font-size: 13px; margin: 0 0 12px 0; font-weight: 600;">
+                📋 Histórico de Aprovações:
+            </p>
+            <ul style="margin: 0; padding-left: 20px; color: var(--info-600); font-size: 13px;">
+                {% for apr in pedido.aprovacoes.all %}
+                <li style="margin-bottom: 4px;">
+                    {{ apr.get_acao_display }} por <strong>{{ apr.usuario.get_full_name|default:apr.usuario }}</strong> 
+                    em {{ apr.data|date:"d/m/Y H:i" }}
+                    {% if apr.observacao %}<br><em>"{{ apr.observacao }}"</em>{% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% elif pedido.itens.count > 0 %}
+        <div style="background: var(--warning-50); border: 1px solid var(--warning-200); border-radius: 8px; padding: 12px 16px; margin-bottom: 20px;">
+            <p style="color: var(--warning-700); font-size: 13px; margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span>📋</span>
+                Este pedido possui {{ pedido.itens.count }} item(ns) que também serão removidos!
+            </p>
+        </div>
+        {% endif %}
         
         <div style="background: var(--danger-50); border: 1px solid var(--danger-200); border-radius: 8px; padding: 12px 16px; margin-bottom: 24px;">
             <p style="color: var(--danger-600); font-size: 13px; margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px;">
@@ -46,30 +115,17 @@
             </p>
         </div>
         
-        {% if pedido.status == 'recebido' or pedido.status == 'parcial' %}
-        <div style="background: var(--warning-50); border: 1px solid var(--warning-200); border-radius: 8px; padding: 12px 16px; margin-bottom: 24px;">
-            <p style="color: var(--warning-700); font-size: 13px; margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                <span>📦</span>
-                <strong>Atenção:</strong> Este pedido já possui recebimentos vinculados!
-            </p>
-        </div>
-        {% elif pedido.itens.count > 0 %}
-        <div style="background: var(--warning-50); border: 1px solid var(--warning-200); border-radius: 8px; padding: 12px 16px; margin-bottom: 24px;">
-            <p style="color: var(--warning-700); font-size: 13px; margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                <span>📋</span>
-                <strong>Atenção:</strong> Este pedido possui {{ pedido.itens.count }} item(ns) que também serão removidos!
-            </p>
-        </div>
-        {% endif %}
-        
         <form method="post" style="display: flex; gap: 12px; justify-content: center;">
             {% csrf_token %}
+            {% if pedido.status != 'recebido' and pedido.status != 'parcial' %}
             <button type="submit" class="erp-btn erp-btn--danger">
                 <span>🗑️</span>
-                <span>Sim, Excluir</span>
+                <span>Sim, Cancelar Pedido</span>
             </button>
-            <a href="{% url 'ERP_ServicesBI:pedidocompra_list' %}" class="erp-btn erp-btn--outline" style="color: var(--gray-600); border-color: var(--gray-300);">
-                <span>Cancelar</span>
+            {% endif %}
+            <!-- CORRIGIDO FASE 1: URL atualizada -->
+            <a href="{% url 'ERP_ServicesBI:pedido_compra_manager' %}" class="erp-btn erp-btn--outline" style="color: var(--gray-600); border-color: var(--gray-300);">
+                <span>← Voltar para Lista</span>
             </a>
         </form>
     </div>

@@ -1,0 +1,421 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+{% block title %}{% if orcamento %}Editar{% else %}Novo{% endif %} Orçamento - ERP ServicesBI{% endblock %}
+
+{% block extra_css %}
+<style>
+.dashboard-pbi {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+    min-height: calc(100vh - 60px);
+    background: var(--bg-secondary);
+}
+
+/* ===== HEADER ===== */
+.pbi-header {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.pbi-header__left { display: flex; flex-direction: column; gap: 2px; }
+
+.pbi-header__title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pbi-header__title-bar {
+    width: 4px;
+    height: 22px;
+    background: var(--primary-500);
+    border-radius: 2px;
+}
+
+.pbi-header__meta {
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+.pbi-header__right { display: flex; align-items: center; gap: 8px; }
+
+.pbi-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    transition: all 0.15s;
+    text-decoration: none;
+}
+
+.pbi-btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
+.pbi-btn--primary { background: var(--primary-500); color: white; border-color: var(--primary-500); }
+.pbi-btn--primary:hover { background: var(--primary-600); color: white; }
+.pbi-btn--secondary { background: var(--bg-secondary); color: var(--text-secondary); }
+
+/* ===== CANVAS ===== */
+.pbi-canvas {
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* ===== PANEL ===== */
+.pbi-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.pbi-panel__header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pbi-panel__title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pbi-panel__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary-500);
+}
+
+.pbi-panel__body { padding: 24px; }
+
+/* ===== FORM ===== */
+.pbi-form-section {
+    margin-bottom: 24px;
+}
+
+.pbi-form-section__title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 16px 0;
+    padding-left: 12px;
+    border-left: 3px solid var(--primary-500);
+}
+
+.pbi-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.pbi-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.pbi-form-group--full {
+    grid-column: 1 / -1;
+}
+
+.pbi-form-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pbi-form-group label .required {
+    color: var(--danger-500);
+}
+
+.pbi-form-group input,
+.pbi-form-group select,
+.pbi-form-group textarea {
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: all 0.15s;
+}
+
+.pbi-form-group input:focus,
+.pbi-form-group select:focus,
+.pbi-form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+}
+
+.pbi-form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Saldo Preview */
+.pbi-saldo-preview {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pbi-saldo-preview__label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.pbi-saldo-preview__value {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.pbi-saldo-preview__value--positivo { color: var(--success-500); }
+.pbi-saldo-preview__value--negativo { color: var(--danger-500); }
+
+/* Form actions */
+.pbi-form-actions {
+    display: flex;
+    gap: 12px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+    margin-top: 20px;
+}
+
+/* Alerts */
+.pbi-alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pbi-alert--error {
+    background: rgba(239,68,68,0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239,68,68,0.2);
+}
+
+.pbi-alert--success {
+    background: rgba(34,197,94,0.1);
+    color: #16a34a;
+    border: 1px solid rgba(34,197,94,0.2);
+}
+
+@media (max-width: 600px) {
+    .pbi-form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-pbi">
+
+    <!-- HEADER -->
+    <div class="pbi-header">
+        <div class="pbi-header__left">
+            <h1 class="pbi-header__title">
+                <div class="pbi-header__title-bar"></div>
+                {% if orcamento %}Editar{% else %}Novo{% endif %} Orçamento
+            </h1>
+            <div class="pbi-header__meta">
+                Preencha os dados do planejamento financeiro
+            </div>
+        </div>
+        <div class="pbi-header__right">
+            <a href="{% url 'ERP_ServicesBI:planejado_x_realizado_list' %}" class="pbi-btn">← Voltar</a>
+        </div>
+    </div>
+
+    <div class="pbi-canvas">
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="pbi-alert pbi-alert--{% if message.tags == 'error' %}error{% else %}success{% endif %}">
+                    {% if message.tags == 'error' %}⚠️{% else %}✅{% endif %}
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post" id="formOrcamento">
+            {% csrf_token %}
+
+            <!-- SEÇÃO: PERÍODO -->
+            <div class="pbi-panel">
+                <div class="pbi-panel__header">
+                    <h5 class="pbi-panel__title">
+                        <div class="pbi-panel__dot"></div>
+                        Período
+                    </h5>
+                </div>
+                <div class="pbi-panel__body">
+                    <div class="pbi-form-grid">
+                        <div class="pbi-form-group">
+                            <label>Ano <span class="required">*</span></label>
+                            <input type="number" name="ano" required min="2020" max="2030"
+                                   value="{{ orcamento.ano|default:ano_atual }}">
+                        </div>
+                        
+                        <div class="pbi-form-group">
+                            <label>Mês <span class="required">*</span></label>
+                            <select name="mes" required>
+                                <option value="">Selecione...</option>
+                                <option value="1" {% if orcamento.mes == 1 %}selected{% endif %}>Janeiro</option>
+                                <option value="2" {% if orcamento.mes == 2 %}selected{% endif %}>Fevereiro</option>
+                                <option value="3" {% if orcamento.mes == 3 %}selected{% endif %}>Março</option>
+                                <option value="4" {% if orcamento.mes == 4 %}selected{% endif %}>Abril</option>
+                                <option value="5" {% if orcamento.mes == 5 %}selected{% endif %}>Maio</option>
+                                <option value="6" {% if orcamento.mes == 6 %}selected{% endif %}>Junho</option>
+                                <option value="7" {% if orcamento.mes == 7 %}selected{% endif %}>Julho</option>
+                                <option value="8" {% if orcamento.mes == 8 %}selected{% endif %}>Agosto</option>
+                                <option value="9" {% if orcamento.mes == 9 %}selected{% endif %}>Setembro</option>
+                                <option value="10" {% if orcamento.mes == 10 %}selected{% endif %}>Outubro</option>
+                                <option value="11" {% if orcamento.mes == 11 %}selected{% endif %}>Novembro</option>
+                                <option value="12" {% if orcamento.mes == 12 %}selected{% endif %}>Dezembro</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEÇÃO: VALORES ORÇADOS -->
+            <div class="pbi-panel">
+                <div class="pbi-panel__header">
+                    <h5 class="pbi-panel__title">
+                        <div class="pbi-panel__dot" style="background:var(--success-500)"></div>
+                        Valores Orçados
+                    </h5>
+                </div>
+                <div class="pbi-panel__body">
+                    <div class="pbi-form-grid">
+                        <div class="pbi-form-group">
+                            <label>Receitas Orçadas <span class="required">*</span></label>
+                            <input type="text" name="receitas_orcadas" id="receitas" class="moeda" required
+                                   value="{{ orcamento.receitas_orcadas|default:orcamento.receitas|default:'0,00' }}"
+                                   placeholder="R$ 0,00">
+                        </div>
+                        
+                        <div class="pbi-form-group">
+                            <label>Despesas Orçadas <span class="required">*</span></label>
+                            <input type="text" name="despesas_orcadas" id="despesas" class="moeda" required
+                                   value="{{ orcamento.despesas_orcadas|default:orcamento.despesas|default:'0,00' }}"
+                                   placeholder="R$ 0,00">
+                        </div>
+                    </div>
+
+                    <!-- SALDO PREVIEW -->
+                    <div class="pbi-saldo-preview" style="margin-top: 20px;">
+                        <span class="pbi-saldo-preview__label">Saldo Previsto:</span>
+                        <span id="saldoPreview" class="pbi-saldo-preview__value">R$ 0,00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEÇÃO: OBSERVAÇÕES -->
+            <div class="pbi-panel">
+                <div class="pbi-panel__header">
+                    <h5 class="pbi-panel__title">
+                        <div class="pbi-panel__dot" style="background:var(--warning-500)"></div>
+                        Observações
+                    </h5>
+                </div>
+                <div class="pbi-panel__body">
+                    <div class="pbi-form-group pbi-form-group--full">
+                        <textarea name="observacoes" rows="3" placeholder="Informações adicionais sobre o orçamento...">{{ orcamento.observacoes|default:'' }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AÇÕES -->
+            <div class="pbi-form-actions">
+                <button type="submit" class="pbi-btn pbi-btn--primary">💾 Salvar</button>
+                <a href="{% url 'ERP_ServicesBI:planejado_x_realizado_list' %}" class="pbi-btn pbi-btn--secondary">❌ Cancelar</a>
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Máscara de moeda
+document.querySelectorAll('.moeda').forEach(input => {
+    input.addEventListener('input', function(e) {
+        var valor = e.target.value.replace(/\D/g, '');
+        valor = (valor / 100).toFixed(2);
+        valor = valor.replace('.', ',');
+        valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+        e.target.value = valor;
+        calcularSaldo();
+    });
+});
+
+function calcularSaldo() {
+    var receitasStr = document.getElementById('receitas').value.replace(/\./g, '').replace(',', '.') || '0';
+    var despesasStr = document.getElementById('despesas').value.replace(/\./g, '').replace(',', '.') || '0';
+    
+    var receitas = parseFloat(receitasStr) || 0;
+    var despesas = parseFloat(despesasStr) || 0;
+    var saldo = receitas - despesas;
+    
+    var saldoEl = document.getElementById('saldoPreview');
+    saldoEl.textContent = 'R$ ' + saldo.toFixed(2).replace('.', ',').replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+    
+    if (saldo >= 0) {
+        saldoEl.className = 'pbi-saldo-preview__value pbi-saldo-preview__value--positivo';
+    } else {
+        saldoEl.className = 'pbi-saldo-preview__value pbi-saldo-preview__value--negativo';
+    }
+}
+
+// Calcular saldo inicial
+calcularSaldo();
+</script>
+{% endblock %}
