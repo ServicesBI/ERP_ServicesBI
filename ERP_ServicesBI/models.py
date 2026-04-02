@@ -1392,7 +1392,7 @@ class NotaFiscalEntrada(models.Model):
         related_name='notas_fiscais'
     )
     data_entrada = models.DateField(auto_now_add=True)
-    data_emissao = models.DateField()
+    data_emissao = models.DateField(default=timezone.now)  # ✅ CORRIGIDO: adicionado default
     observacoes = models.TextField(blank=True)
     valor_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
@@ -2684,13 +2684,20 @@ class EntradaNFE(models.Model):
     
     numero_nfe = models.CharField(max_length=20, verbose_name='Número NF-e')
     serie = models.CharField(max_length=3, default='1', verbose_name='Série')
-    chave_acesso = models.CharField(max_length=44, blank=True, verbose_name='Chave de Acesso')
+    chave_acesso = models.CharField(
+        max_length=44, 
+        blank=True, 
+        default='', 
+        verbose_name='Chave de Acesso'
+    )  # ✅ CORRIGIDO: default=''
+    
     fornecedor = models.ForeignKey(
         Fornecedor,
         on_delete=models.PROTECT,
         related_name='entradas_nfe',
         verbose_name='Fornecedor'
     )
+    
     pedido_compra = models.ForeignKey(
         PedidoCompra,
         on_delete=models.SET_NULL,
@@ -2699,22 +2706,42 @@ class EntradaNFE(models.Model):
         related_name='entradas_nfe',
         verbose_name='Pedido de Compra'
     )
+    
     deposito = models.ForeignKey(
         Deposito,
         on_delete=models.PROTECT,
+        null=True,  # ✅ CORRIGIDO: adicionado null=True
+        blank=True,
         related_name='entradas_nfe',
         verbose_name='Depósito de Destino'
     )
-    data_emissao = models.DateField(verbose_name='Data de Emissão')
-    data_entrada = models.DateTimeField(auto_now_add=True, verbose_name='Data de Entrada')
-    valor_total = models.DecimalField(max_digits=15, decimal_places=2, default=0, verbose_name='Valor Total')
+    
+    data_emissao = models.DateField(
+        default=timezone.now,  # ✅ CORRIGIDO: adicionado default
+        verbose_name='Data de Emissão'
+    )
+    
+    data_entrada = models.DateTimeField(
+        auto_now_add=True, 
+        verbose_name='Data de Entrada'
+    )
+    
+    valor_total = models.DecimalField(
+        max_digits=15, 
+        decimal_places=2, 
+        default=0, 
+        verbose_name='Valor Total'
+    )
+    
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
         default='pendente',
         verbose_name='Status'
     )
+    
     observacoes = models.TextField(blank=True, verbose_name='Observações')
+    
     usuario = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
@@ -2729,7 +2756,6 @@ class EntradaNFE(models.Model):
     
     def __str__(self):
         return f"NF-e {self.numero_nfe} - {self.fornecedor.nome_razao_social}"
-
 
 class ItemEntradaNFE(models.Model):
     """
