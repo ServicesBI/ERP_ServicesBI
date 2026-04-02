@@ -1434,12 +1434,37 @@ class NotaFiscalEntrada(models.Model):
 # MÓDULO: COMPRAS - ITENS DA NOTA FISCAL DE ENTRADA
 
 class ItemNotaFiscalEntrada(models.Model):
-    nota_fiscal = models.ForeignKey(NotaFiscalEntrada, on_delete=models.CASCADE, related_name='itens')
-    produto = models.ForeignKey(Produto, on_delete=models.PROTECT)
-    quantidade = models.DecimalField(max_digits=10, decimal_places=3, default=1)
-    preco_unitario = models.DecimalField(max_digits=10, decimal_places=4, default=0)
-    preco_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    nota_fiscal = models.ForeignKey(
+        NotaFiscalEntrada, 
+        on_delete=models.CASCADE, 
+        related_name='itens'
+    )
+    produto = models.ForeignKey(
+        Produto, 
+        on_delete=models.PROTECT,
+        null=True,  # ✅ CORRIGIDO
+        blank=True
+    )
+    quantidade = models.DecimalField(
+        max_digits=10, 
+        decimal_places=3, 
+        default=1
+    )
+    preco_unitario = models.DecimalField(
+        max_digits=10, 
+        decimal_places=4, 
+        default=0
+    )
+    preco_total = models.DecimalField(
+        max_digits=12, 
+        decimal_places=2, 
+        default=0
+    )
+    subtotal = models.DecimalField(
+        max_digits=12, 
+        decimal_places=2, 
+        default=0
+    )
     
     class Meta:
         verbose_name = 'Item da NF Entrada'
@@ -1449,7 +1474,6 @@ class ItemNotaFiscalEntrada(models.Model):
         self.preco_total = self.quantidade * self.preco_unitario
         self.subtotal = self.preco_total
         super().save(*args, **kwargs)
-
 # =============================================================================
 # MÓDULO: VENDAS - ORÇAMENTO
 
@@ -2773,6 +2797,8 @@ class ItemEntradaNFE(models.Model):
     produto = models.ForeignKey(
         Produto,
         on_delete=models.PROTECT,
+        null=True,  # ✅ CORRIGIDO
+        blank=True,
         related_name='itens_entrada_nfe',
         verbose_name='Produto'
     )
@@ -2802,7 +2828,7 @@ class ItemEntradaNFE(models.Model):
         ordering = ['id']
     
     def __str__(self):
-        return f"{self.produto.descricao} - {self.quantidade} UN"
+        return f"{self.produto.descricao if self.produto else 'Sem produto'} - {self.quantidade} UN"
     
     def save(self, *args, **kwargs):
         self.valor_total = self.quantidade * self.valor_unitario
