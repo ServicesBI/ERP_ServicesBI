@@ -1,4 +1,3 @@
-
 from django.db import models, transaction
 from django.db.models import Sum, Count, Q, F
 from django.contrib.auth.models import User, Group
@@ -607,6 +606,7 @@ class ItemSolicitado(models.Model):
     descricao_manual = models.CharField(
         max_length=255,
         blank=True,
+        default='',  # ✅ CORRIGIDO
         verbose_name='Descrição (se não cadastrado)'
     )
     quantidade = models.DecimalField(
@@ -667,9 +667,9 @@ class CotacaoFornecedor(models.Model):
         on_delete=models.PROTECT,
         verbose_name='Fornecedor'
     )
-    contato_nome = models.CharField(max_length=100, blank=True, verbose_name='Nome do Contato')
+    contato_nome = models.CharField(max_length=100, blank=True, default='', verbose_name='Nome do Contato')  # ✅ CORRIGIDO
     contato_email = models.EmailField(blank=True, verbose_name='Email do Contato')
-    contato_telefone = models.CharField(max_length=20, blank=True, verbose_name='Telefone')
+    contato_telefone = models.CharField(max_length=20, blank=True, default='', verbose_name='Telefone')  # ✅ CORRIGIDO
     
     valor_total_bruto = models.DecimalField(
         max_digits=15,
@@ -696,12 +696,13 @@ class CotacaoFornecedor(models.Model):
         verbose_name='Valor Total Líquido'
     )
     
-    condicao_pagamento = models.CharField(max_length=100, blank=True, verbose_name='Condição de Pagamento')
+    condicao_pagamento = models.CharField(max_length=100, blank=True, default='', verbose_name='Condição de Pagamento')  # ✅ CORRIGIDO
     
     # NOVO CAMPO: Forma de Pagamento
     forma_pagamento = models.CharField(
         max_length=100, 
         blank=True, 
+        default='',  # ✅ CORRIGIDO
         verbose_name='Forma de Pagamento'
     )
     
@@ -786,9 +787,9 @@ class ItemCotacaoFornecedor(models.Model):
     )
     
     descricao_fornecedor = models.CharField(max_length=255, verbose_name='Descrição no Arquivo')
-    codigo_fornecedor = models.CharField(max_length=50, blank=True, verbose_name='Código do Fornecedor')
+    codigo_fornecedor = models.CharField(max_length=50, blank=True, default='', verbose_name='Código do Fornecedor')  # ✅ CORRIGIDO
     quantidade = models.DecimalField(max_digits=15, decimal_places=3, verbose_name='Quantidade')
-    unidade_medida = models.CharField(max_length=20, blank=True, verbose_name='Unidade')
+    unidade_medida = models.CharField(max_length=20, blank=True, default='', verbose_name='Unidade')  # ✅ CORRIGIDO
     preco_unitario = models.DecimalField(max_digits=15, decimal_places=4, verbose_name='Preço Unitário')
     preco_total = models.DecimalField(max_digits=15, decimal_places=2, verbose_name='Preço Total')
     
@@ -993,8 +994,8 @@ class PedidoCompra(SequencialMixin, models.Model):
     valor_liquido = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     
     # CONDIÇÕES COMERCIAIS
-    condicao_pagamento = models.CharField(max_length=100, blank=True, verbose_name='Condição de Pagamento')
-    forma_pagamento = models.CharField(max_length=100, blank=True, verbose_name='Forma de Pagamento')
+    condicao_pagamento = models.CharField(max_length=100, blank=True, default='', verbose_name='Condição de Pagamento')  # ✅ CORRIGIDO
+    forma_pagamento = models.CharField(max_length=100, blank=True, default='', verbose_name='Forma de Pagamento')  # ✅ CORRIGIDO
     prazo_entrega_dias = models.IntegerField(default=0, verbose_name='Prazo de Entrega (dias)')
     
     # OBSERVAÇÕES DE WORKFLOW
@@ -1239,7 +1240,7 @@ class ItemPedidoCompra(models.Model):
         verbose_name='Item da Cotação Origem'
     )
     
-    descricao = models.CharField(max_length=255, blank=True, verbose_name='Descrição')
+    descricao = models.CharField(max_length=255, blank=True, default='', verbose_name='Descrição')  # ✅ CORRIGIDO
     quantidade = models.DecimalField(max_digits=10, decimal_places=3, default=1)
     preco_unitario = models.DecimalField(max_digits=10, decimal_places=4, default=0)
     preco_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
@@ -1283,6 +1284,7 @@ class ItemPedidoCompra(models.Model):
     tipo_divergencia = models.CharField(
         max_length=50,
         blank=True,
+        default='',  # ✅ CORRIGIDO
         choices=TIPO_DIVERGENCIA_CHOICES,
         verbose_name='Tipo de Divergência'
     )
@@ -1392,7 +1394,7 @@ class NotaFiscalEntrada(models.Model):
         related_name='notas_fiscais'
     )
     data_entrada = models.DateField(auto_now_add=True)
-    data_emissao = models.DateField(default=timezone.now)  # ✅ CORRIGIDO: adicionado default
+    data_emissao = models.DateField(default=timezone.now)  # ✅ CORRIGIDO
     observacoes = models.TextField(blank=True)
     valor_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
@@ -2232,6 +2234,7 @@ class LinhaDRE(models.Model):
     grupos_dre = models.CharField(
         max_length=255,
         blank=True,
+        default='',  # ✅ CORRIGIDO
         verbose_name='Grupos DRE',
         help_text='Lista separada por vírgula dos grupo_dre a somar. Ex: receita_bruta,outras_receitas'
     )
@@ -2240,6 +2243,7 @@ class LinhaDRE(models.Model):
     formula = models.CharField(
         max_length=255,
         blank=True,
+        default='',  # ✅ CORRIGIDO
         verbose_name='Fórmula',
         help_text='Códigos das linhas para cálculo. Ex: 1.0-2.0 ou 3.0+4.0-5.0'
     )
@@ -2463,17 +2467,61 @@ class MovimentacaoEstoque(models.Model):
         ('transferencia', 'Transferência'),
     ]
     
-    produto = models.ForeignKey(Produto, on_delete=models.PROTECT, related_name='movimentacoes')
-    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
-    quantidade = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    produto = models.ForeignKey(
+        Produto, 
+        on_delete=models.PROTECT, 
+        related_name='movimentacoes',
+        null=True,  # ✅ CORRIGIDO
+        blank=True
+    )
+    tipo = models.CharField(
+        max_length=20, 
+        choices=TIPO_CHOICES,
+        default='entrada'  # ✅ CORRIGIDO
+    )
+    quantidade = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        default=0
+    )
     data = models.DateTimeField(auto_now_add=True)
-    nota_fiscal_entrada = models.ForeignKey(NotaFiscalEntrada, on_delete=models.SET_NULL, null=True, blank=True, related_name='movimentacoes')
-    nota_fiscal_saida = models.ForeignKey(NotaFiscalSaida, on_delete=models.SET_NULL, null=True, blank=True, related_name='movimentacoes')
-    deposito_origem = models.CharField(max_length=100, blank=True)
-    deposito_destino = models.CharField(max_length=100, blank=True)
-    motivo = models.CharField(max_length=255, blank=True)
+    nota_fiscal_entrada = models.ForeignKey(
+        NotaFiscalEntrada, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='movimentacoes'
+    )
+    nota_fiscal_saida = models.ForeignKey(
+        NotaFiscalSaida, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='movimentacoes'
+    )
+    deposito_origem = models.CharField(
+        max_length=100, 
+        blank=True, 
+        default=''  # ✅ CORRIGIDO
+    )
+    deposito_destino = models.CharField(
+        max_length=100, 
+        blank=True, 
+        default=''  # ✅ CORRIGIDO
+    )
+    motivo = models.CharField(
+        max_length=255, 
+        blank=True, 
+        default=''  # ✅ CORRIGIDO
+    )
     observacoes = models.TextField(blank=True)
-    usuario = models.ForeignKey(User, on_delete=models.PROTECT, related_name='movimentacoes_estoque')
+    usuario = models.ForeignKey(
+        User, 
+        on_delete=models.PROTECT, 
+        null=True,  # ✅ CORRIGIDO
+        blank=True,
+        related_name='movimentacoes_estoque'
+    )
     
     class Meta:
         verbose_name = 'Movimentação de Estoque'
@@ -2481,21 +2529,24 @@ class MovimentacaoEstoque(models.Model):
         ordering = ['-data']
     
     def __str__(self):
-        return f"{self.tipo} - {self.produto.descricao} - {self.quantidade}"
+        produto_str = self.produto.descricao if self.produto else 'Sem produto'
+        return f"{self.tipo} - {produto_str} - {self.quantidade}"
     
     def atualizar_estoque(self):
-        if self.tipo == 'entrada':
-            self.produto.estoque_atual += self.quantidade
-        elif self.tipo == 'saida':
-            self.produto.estoque_atual -= self.quantidade
-        self.produto.save(update_fields=['estoque_atual'])
+        if self.produto:
+            if self.tipo == 'entrada':
+                self.produto.estoque_atual += self.quantidade
+            elif self.tipo == 'saida':
+                self.produto.estoque_atual -= self.quantidade
+            self.produto.save(update_fields=['estoque_atual'])
     
     def reverter_estoque(self):
-        if self.tipo == 'entrada':
-            self.produto.estoque_atual -= self.quantidade
-        elif self.tipo == 'saida':
-            self.produto.estoque_atual += self.quantidade
-        self.produto.save(update_fields=['estoque_atual'])
+        if self.produto:
+            if self.tipo == 'entrada':
+                self.produto.estoque_atual -= self.quantidade
+            elif self.tipo == 'saida':
+                self.produto.estoque_atual += self.quantidade
+            self.produto.save(update_fields=['estoque_atual'])
 
 # =============================================================================
 # MÓDULO: ESTOQUE - INVENTÁRIO
@@ -2511,9 +2562,19 @@ class Inventario(SequencialMixin, models.Model):
     numero = models.CharField(max_length=20, unique=True, blank=True)
     data = models.DateField(auto_now_add=True)
     data_criacao = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='aberto')
+    status = models.CharField(
+        max_length=20, 
+        choices=STATUS_CHOICES, 
+        default='aberto'
+    )
     observacoes = models.TextField(blank=True)
-    usuario = models.ForeignKey(User, on_delete=models.PROTECT, related_name='inventarios')
+    usuario = models.ForeignKey(
+        User, 
+        on_delete=models.PROTECT, 
+        null=True,  # ✅ CORRIGIDO
+        blank=True,
+        related_name='inventarios'
+    )
     
     CAMPO_NUMERO = 'numero'
     PREFIXO_NUMERO = 'INV-'
@@ -2529,7 +2590,7 @@ class Inventario(SequencialMixin, models.Model):
     
     def aplicar_ajustes(self):
         for item in self.itens.all():
-            if item.diferenca != 0:
+            if item.diferenca != 0 and item.produto:
                 MovimentacaoEstoque.objects.create(
                     produto=item.produto,
                     tipo='ajuste',
@@ -2575,15 +2636,33 @@ class TransferenciaEstoque(SequencialMixin, models.Model):
     ]
     
     numero = models.CharField(max_length=20, unique=True, blank=True)
-    origem = models.CharField(max_length=100)
-    destino = models.CharField(max_length=100)
-    deposito_origem = models.CharField(max_length=100, blank=True)
-    deposito_destino = models.CharField(max_length=100, blank=True)
+    origem = models.CharField(max_length=100, default='')  # ✅ CORRIGIDO
+    destino = models.CharField(max_length=100, default='')  # ✅ CORRIGIDO
+    deposito_origem = models.CharField(
+        max_length=100, 
+        blank=True, 
+        default=''
+    )
+    deposito_destino = models.CharField(
+        max_length=100, 
+        blank=True, 
+        default=''
+    )
     data = models.DateField(auto_now_add=True)
     data_efetivacao = models.DateTimeField(null=True, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pendente')
+    status = models.CharField(
+        max_length=20, 
+        choices=STATUS_CHOICES, 
+        default='pendente'
+    )
     observacoes = models.TextField(blank=True)
-    usuario = models.ForeignKey(User, on_delete=models.PROTECT, related_name='transferencias')
+    usuario = models.ForeignKey(
+        User, 
+        on_delete=models.PROTECT, 
+        null=True,  # ✅ CORRIGIDO
+        blank=True,
+        related_name='transferencias'
+    )
     
     CAMPO_NUMERO = 'numero'
     PREFIXO_NUMERO = 'TRF-'
