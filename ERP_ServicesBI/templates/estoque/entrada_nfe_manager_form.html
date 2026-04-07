@@ -1,0 +1,337 @@
+<!-- Modal de Entrada NF-e -->
+<div class="modal fade show" id="entradaNfeModal" tabindex="-1" style="display: block;" aria-modal="true" role="dialog">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-file-invoice-dollar"></i> 
+                    {% if nota_fiscal %}Editar NF-e #{{ nota_fiscal.numero }}
+                    {% else %}Nova Entrada de NF-e{% endif %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"
+                        onclick="document.getElementById('entradaNfeModal').remove(); document.querySelector('.modal-backdrop')?.remove();"></button>
+            </div>
+            
+            <form hx-post="{% if nota_fiscal %}{% url 'entrada_nfe_edit' nota_fiscal.id %}{% else %}{% url 'entrada_nfe_add' %}{% endif %}"
+                  hx-target="#entradaNfeModal"
+                  hx-swap="outerHTML"
+                  hx-on::after-request="if(event.detail.successful){ document.body.dispatchEvent(new Event('nfeUpdated')); }">
+                
+                <div class="modal-body">
+                    {% csrf_token %}
+                    
+                    <!-- Dados da NF-e -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="fas fa-info-circle"></i> Dados da Nota Fiscal</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">Número <span class="text-danger">*</span></label>
+                                    <input type="text" name="numero" class="form-control {% if form_errors.numero %}is-invalid{% endif %}" 
+                                           value="{{ nota_fiscal.numero|default:'' }}" required>
+                                    {% if form_errors.numero %}
+                                    <div class="invalid-feedback">{{ form_errors.numero }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">Série <span class="text-danger">*</span></label>
+                                    <input type="text" name="serie" class="form-control {% if form_errors.serie %}is-invalid{% endif %}" 
+                                           value="{{ nota_fiscal.serie|default:'1' }}" required>
+                                    {% if form_errors.serie %}
+                                    <div class="invalid-feedback">{{ form_errors.serie }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Chave de Acesso</label>
+                                    <input type="text" name="chave_acesso" maxlength="44" 
+                                           class="form-control {% if form_errors.chave_acesso %}is-invalid{% endif %}" 
+                                           value="{{ nota_fiscal.chave_acesso|default:'' }}" placeholder="44 dígitos">
+                                    {% if form_errors.chave_acesso %}
+                                    <div class="invalid-feedback">{{ form_errors.chave_acesso }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Natureza da Operação</label>
+                                    <input type="text" name="natureza_operacao" class="form-control" 
+                                           value="{{ nota_fiscal.natureza_operacao|default:'VENDA' }}">
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Fornecedor <span class="text-danger">*</span></label>
+                                    <select name="fornecedor" class="form-select {% if form_errors.fornecedor %}is-invalid{% endif %}" required>
+                                        <option value="">Selecione...</option>
+                                        {% for fornecedor in fornecedores %}
+                                        <option value="{{ fornecedor.id }}" {% if nota_fiscal.fornecedor.id == fornecedor.id %}selected{% endif %}>
+                                            {{ fornecedor.razao_social|default:fornecedor.nome }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    {% if form_errors.fornecedor %}
+                                    <div class="invalid-feedback">{{ form_errors.fornecedor }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Data Emissão <span class="text-danger">*</span></label>
+                                    <input type="date" name="data_emissao" class="form-control {% if form_errors.data_emissao %}is-invalid{% endif %}" 
+                                           value="{{ nota_fiscal.data_emissao|date:'Y-m-d'|default:today }}" required>
+                                    {% if form_errors.data_emissao %}
+                                    <div class="invalid-feedback">{{ form_errors.data_emissao }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Data Entrada</label>
+                                    <input type="date" name="data_entrada" class="form-control" 
+                                           value="{{ nota_fiscal.data_entrada|date:'Y-m-d'|default:today }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Itens da NF-e -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0"><i class="fas fa-boxes"></i> Itens da NF-e</h6>
+                            <button type="button" class="btn btn-sm btn-success" onclick="adicionarItemNfe()">
+                                <i class="fas fa-plus"></i> Adicionar Item
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered" id="itens-nfe-tabela">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Produto</th>
+                                            <th>CFOP</th>
+                                            <th>Qtd</th>
+                                            <th>Unitário</th>
+                                            <th>Total</th>
+                                            <th>Depósito</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in nota_fiscal.itens.all %}
+                                        <tr data-item-id="{{ item.id }}">
+                                            <td>
+                                                {{ item.produto.nome }}
+                                                <br><small class="text-muted">{{ item.produto.codigo }}</small>
+                                            </td>
+                                            <td>{{ item.cfop }}</td>
+                                            <td>{{ item.quantidade }}</td>
+                                            <td>R$ {{ item.valor_unitario }}</td>
+                                            <td>R$ {{ item.valor_total }}</td>
+                                            <td>{{ item.deposito.nome|default:"-" }}</td>
+                                            <td>
+                                                <button type="button" class="btn btn-sm btn-danger" onclick="removerItemNfe(this)">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    <tfoot class="table-light">
+                                        <tr>
+                                            <td colspan="4" class="text-end"><strong>Total da NF-e:</strong></td>
+                                            <td colspan="3"><strong id="total-nfe">R$ {{ nota_fiscal.valor_total|default:'0,00' }}</strong></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                            <input type="hidden" name="itens_json" id="itens-nfe-json" value="{{ itens_json|default:'[]' }}">
+                            {% if form_errors.itens %}
+                            <div class="invalid-feedback d-block">{{ form_errors.itens }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Totais -->
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Valor Produtos</label>
+                            <input type="number" name="valor_produtos" step="0.01" class="form-control" 
+                                   value="{{ nota_fiscal.valor_produtos|default:'0.00' }}" readonly>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Valor Frete</label>
+                            <input type="number" name="valor_frete" step="0.01" class="form-control" 
+                                   value="{{ nota_fiscal.valor_frete|default:'0.00' }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Valor Desconto</label>
+                            <input type="number" name="valor_desconto" step="0.01" class="form-control" 
+                                   value="{{ nota_fiscal.valor_desconto|default:'0.00' }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Valor Total NF-e</label>
+                            <input type="number" name="valor_total" step="0.01" class="form-control fw-bold" 
+                                   value="{{ nota_fiscal.valor_total|default:'0.00' }}" readonly>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Observações</label>
+                        <textarea name="observacoes" class="form-control" rows="2">{{ nota_fiscal.observacoes|default:'' }}</textarea>
+                    </div>
+
+                    <!-- 3-Way Matching -->
+                    {% if nota_fiscal.pedido %}
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-check-double"></i> Conferência 3-Way Matching</h6>
+                        <div class="row mt-2">
+                            <div class="col-md-4">
+                                <small><strong>Pedido:</strong> #{{ nota_fiscal.pedido.numero }}</small>
+                            </div>
+                            <div class="col-md-4">
+                                <small><strong>Qtd. Pedido:</strong> {{ nota_fiscal.pedido.quantidade_total }}</small>
+                            </div>
+                            <div class="col-md-4">
+                                <small><strong>Qtd. Recebida:</strong> {{ nota_fiscal.quantidade_recebida }}</small>
+                            </div>
+                        </div>
+                        {% if nota_fiscal.divergencias %}
+                        <div class="mt-2 text-warning">
+                            <i class="fas fa-exclamation-triangle"></i> Divergências: {{ nota_fiscal.divergencias }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                            onclick="document.getElementById('entradaNfeModal').remove(); document.querySelector('.modal-backdrop')?.remove();">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Salvar NF-e
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div class="modal-backdrop fade show"></div>
+
+<script>
+let itensNfe = {{ itens_json|safe|default:'[]' }};
+
+function adicionarItemNfe() {
+    // Abrir modal secundário para adicionar item
+    // Ou adicionar linha na tabela para edição inline
+    const tbody = document.querySelector('#itens-nfe-tabela tbody');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td>
+            <select class="form-select form-select-sm produto-select" required>
+                <option value="">Selecione...</option>
+                {% for produto in produtos %}
+                <option value="{{ produto.id }}" data-codigo="{{ produto.codigo }}">{{ produto.nome }}</option>
+                {% endfor %}
+            </select>
+        </td>
+        <td><input type="text" class="form-control form-control-sm cfop-input" value="5102" size="6"></td>
+        <td><input type="number" class="form-control form-control-sm qtd-input" step="0.001" value="1" size="8"></td>
+        <td><input type="number" class="form-control form-control-sm unitario-input" step="0.01" value="0.00" size="10"></td>
+        <td class="total-item">R$ 0,00</td>
+        <td>
+            <select class="form-select form-select-sm deposito-select">
+                {% for deposito in depositos %}
+                <option value="{{ deposito.id }}">{{ deposito.nome }}</option>
+                {% endfor %}
+            </select>
+        </td>
+        <td>
+            <button type="button" class="btn btn-sm btn-success" onclick="confirmarItemNfe(this)">
+                <i class="fas fa-check"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-danger" onclick="removerItemNfe(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+    `;
+    tbody.appendChild(tr);
+    
+    // Adicionar listeners para calcular total
+    tr.querySelector('.qtd-input').addEventListener('input', calcularTotalItem);
+    tr.querySelector('.unitario-input').addEventListener('input', calcularTotalItem);
+}
+
+function calcularTotalItem(e) {
+    const tr = e.target.closest('tr');
+    const qtd = parseFloat(tr.querySelector('.qtd-input').value) || 0;
+    const unitario = parseFloat(tr.querySelector('.unitario-input').value) || 0;
+    const total = qtd * unitario;
+    tr.querySelector('.total-item').textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
+}
+
+function confirmarItemNfe(btn) {
+    const tr = btn.closest('tr');
+    const produto = tr.querySelector('.produto-select').value;
+    const cfop = tr.querySelector('.cfop-input').value;
+    const qtd = tr.querySelector('.qtd-input').value;
+    const unitario = tr.querySelector('.unitario-input').value;
+    const deposito = tr.querySelector('.deposito-select').value;
+    
+    if (!produto || !qtd || !unitario) {
+        alert('Preencha todos os campos obrigatórios');
+        return;
+    }
+    
+    const item = {
+        produto: produto,
+        cfop: cfop,
+        quantidade: qtd,
+        valor_unitario: unitario,
+        valor_total: (parseFloat(qtd) * parseFloat(unitario)).toFixed(2),
+        deposito: deposito
+    };
+    
+    itensNfe.push(item);
+    atualizarJsonNfe();
+    
+    // Transformar inputs em texto
+    const produtoText = tr.querySelector('.produto-select option:checked').text;
+    tr.innerHTML = `
+        <td>${produtoText}</td>
+        <td>${cfop}</td>
+        <td>${qtd}</td>
+        <td>R$ ${unitario}</td>
+        <td>R$ ${item.valor_total}</td>
+        <td>${tr.querySelector('.deposito-select option:checked').text}</td>
+        <td>
+            <button type="button" class="btn btn-sm btn-danger" onclick="removerItemNfe(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+    `;
+    
+    calcularTotalNfe();
+}
+
+function removerItemNfe(btn) {
+    const tr = btn.closest('tr');
+    const index = Array.from(tr.parentElement.children).indexOf(tr);
+    itensNfe.splice(index, 1);
+    tr.remove();
+    atualizarJsonNfe();
+    calcularTotalNfe();
+}
+
+function atualizarJsonNfe() {
+    document.getElementById('itens-nfe-json').value = JSON.stringify(itensNfe);
+}
+
+function calcularTotalNfe() {
+    let total = itensNfe.reduce((sum, item) => sum + parseFloat(item.valor_total), 0);
+    document.getElementById('total-nfe').textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
+    document.querySelector('input[name="valor_produtos"]').value = total.toFixed(2);
+    document.querySelector('input[name="valor_total"]').value = total.toFixed(2);
+}
+
+// Inicializar
+atualizarJsonNfe();
+</script>

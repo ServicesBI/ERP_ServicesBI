@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Transferência entre Depósitos{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-truck-moving"></i> Transferência entre Depósitos</h2>
+                <button class="btn btn-primary" 
+                        hx-get="{% url 'transferencia_add' %}" 
+                        hx-target="#modal-container" 
+                        hx-swap="innerHTML">
+                    <i class="fas fa-plus"></i> Nova Transferência
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form hx-get="{% url 'transferencia_list' %}" 
+                  hx-target="#transferencia-table-container" 
+                  hx-trigger="submit, change delay:300ms">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label>Status</label>
+                        <select name="status" class="form-select">
+                            <option value="">Todos</option>
+                            <option value="pendente">Pendente</option>
+                            <option value="em_transito">Em Trânsito</option>
+                            <option value="concluida">Concluída</option>
+                            <option value="cancelada">Cancelada</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label>Origem</label>
+                        <select name="deposito_origem" class="form-select">
+                            <option value="">Todos</option>
+                            {% for deposito in depositos %}
+                            <option value="{{ deposito.id }}">{{ deposito.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label>Destino</label>
+                        <select name="deposito_destino" class="form-select">
+                            <option value="">Todos</option>
+                            {% for deposito in depositos %}
+                            <option value="{{ deposito.id }}">{{ deposito.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-search"></i> Filtrar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabela de Transferências -->
+    <div id="transferencia-table-container" class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Número</th>
+                            <th>Data</th>
+                            <th>Origem → Destino</th>
+                            <th>Itens</th>
+                            <th>Status</th>
+                            <th>Responsável</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transf in transferencias %}
+                        <tr id="transferencia-row-{{ transf.id }}">
+                            <td>
+                                <strong>#{{ transf.numero }}</strong>
+                            </td>
+                            <td>{{ transf.data_transferencia|date:"d/m/Y" }}</td>
+                            <td>
+                                <span class="badge bg-secondary">{{ transf.deposito_origem.nome }}</span>
+                                <i class="fas fa-arrow-right mx-2 text-muted"></i>
+                                <span class="badge bg-primary">{{ transf.deposito_destino.nome }}</span>
+                            </td>
+                            <td>{{ transf.itens.count }} item(s)</td>
+                            <td>
+                                <span class="badge bg-{% if transf.status == 'pendente' %}warning{% elif transf.status == 'em_transito' %}info{% elif transf.status == 'concluida' %}success{% else %}danger{% endif %}">
+                                    {{ transf.get_status_display }}
+                                </span>
+                            </td>
+                            <td>{{ transf.usuario.username }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-primary" 
+                                            hx-get="{% url 'transferencia_detail' transf.id %}" 
+                                            hx-target="#modal-container" 
+                                            hx-swap="innerHTML">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    {% if transf.status == 'pendente' %}
+                                    <button class="btn btn-sm btn-outline-success" 
+                                            hx-post="{% url 'transferencia_enviar' transf.id %}" 
+                                            hx-confirm="Confirmar envio da transferência?"
+                                            hx-target="#transferencia-row-{{ transf.id }}"
+                                            hx-swap="outerHTML">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" 
+                                            hx-get="{% url 'transferencia_cancelar' transf.id %}" 
+                                            hx-target="#modal-container" 
+                                            hx-swap="innerHTML">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                    {% elif transf.status == 'em_transito' %}
+                                    <button class="btn btn-sm btn-outline-success" 
+                                            hx-post="{% url 'transferencia_receber' transf.id %}" 
+                                            hx-confirm="Confirmar recebimento da transferência?"
+                                            hx-target="#transferencia-row-{{ transf.id }}"
+                                            hx-swap="outerHTML">
+                                        <i class="fas fa-check"></i> Receber
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                <i class="fas fa-truck fa-3x mb-3"></i>
+                                <p>Nenhuma transferência encontrada.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Paginação -->
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Paginação">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" hx-get="{% url 'transferencia_list' %}?page={{ page_obj.previous_page_number }}" 
+                           hx-target="#transferencia-table-container">Anterior</a>
+                    </li>
+                    {% endif %}
+                    {% for num in page_obj.paginator.page_range %}
+                    <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                        <a class="page-link" hx-get="{% url 'transferencia_list' %}?page={{ num }}" 
+                           hx-target="#transferencia-table-container">{{ num }}</a>
+                    </li>
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" hx-get="{% url 'transferencia_list' %}?page={{ page_obj.next_page_number }}" 
+                           hx-target="#transferencia-table-container">Próxima</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div id="modal-container"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.body.addEventListener('transferenciaUpdated', function() {
+        htmx.trigger('#transferencia-table-container', 'refresh');
+    });
+</script>
+{% endblock %}

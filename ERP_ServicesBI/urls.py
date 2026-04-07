@@ -231,12 +231,21 @@ urlpatterns = [
     # Alias usado pelo template dre_manager.html
     path('dre/configuracao/', views.dre_edit, name='dre_configuracao'),
 
+    # NOVAS URLS:
+    path('dre/salvar/', views.dre_salvar, name='dre_salvar'),
+    path('dre/relatorio/<int:pk>/', views.dre_relatorio, name='dre_relatorio'),
+    path('dre/comparativo/', views.dre_comparativo, name='dre_comparativo'),
+
     # =============================================================================
     # FINANCEIRO - PLANEJADO X REALIZADO
     # =============================================================================
     path('planejado-realizado/', views.planejado_x_realizado_list, name='planejado_x_realizado_list'),
     path('planejado-realizado/adicionar/', views.planejado_x_realizado_add, name='planejado_x_realizado_add'),
     path('planejado-realizado/<int:pk>/editar/', views.planejado_x_realizado_edit, name='planejado_x_realizado_edit'),
+    path('planejado-realizado/excel/', views.planejado_x_realizado_excel, name='planejado_x_realizado_excel'),
+    path('api/projetos/criar/', views.api_criar_projeto, name='api_criar_projeto'),
+    path('api/projeto/criar/', views.projeto_create_ajax, name='projeto_create_ajax'),
+    path('api/projeto/<int:pk>/excluir/', views.projeto_delete_ajax, name='projeto_delete_ajax'),
 
     # =============================================================================
     # FINANCEIRO - CATEGORIAS (mantidas para APIs AJAX dos forms)
@@ -273,7 +282,31 @@ urlpatterns = [
     # =============================================================================
     path('estoque/movimentacoes/', views.movimentacao_estoque_list, name='movimentacao_estoque_list'),
     path('estoque/movimentacoes/nova/', views.movimentacao_estoque_add, name='movimentacao_estoque_add'),
+    path('estoque/movimentacoes/<int:pk>/editar/', views.movimentacao_estoque_edit, name='movimentacao_estoque_edit'),
     path('estoque/movimentacoes/<int:pk>/', views.movimentacao_estoque_detail, name='movimentacao_estoque_detail'),
+    path('estoque/movimentacoes/<int:pk>/excluir/', views.movimentacao_estoque_delete, name='movimentacao_estoque_delete'),
+
+    # =============================================================================
+    # ESTOQUE - DEPÓSITOS
+    # =============================================================================
+    path('estoque/depositos/', views.deposito_list, name='deposito_list'),
+    path('estoque/depositos/novo/', views.deposito_add, name='deposito_add'),
+    path('estoque/depositos/<int:pk>/editar/', views.deposito_edit, name='deposito_edit'),
+    path('estoque/depositos/<int:pk>/excluir/', views.deposito_delete, name='deposito_delete'),
+
+    # =============================================================================
+    # ESTOQUE - DEPÓSITOS (AJAX) - CORRIGIDO
+    # =============================================================================
+    path('estoque/depositos/add/ajax/', views.deposito_create_ajax, name='deposito_create_ajax'),
+    path('estoque/depositos/<int:pk>/delete/ajax/', views.deposito_delete_ajax, name='deposito_delete_ajax'),
+
+    # =============================================================================
+    # ESTOQUE - APIs - CORRIGIDO (removida api_produto_saldo duplicada)
+    # =============================================================================
+    path('api/estoque/saldo/', views.api_estoque_saldo, name='api_estoque_saldo'),
+    path('api/produto/<int:pk>/saldo/', views.api_produto_saldo_disponivel, name='api_produto_saldo_disponivel'),
+    # REMOVIDO: path('api/produto/<int:produto_id>/saldo/', views.api_produto_saldo, name='api_produto_saldo'),
+    path('api/produtos/busca/', views.api_produtos_busca, name='api_produtos_busca'),
 
     # =============================================================================
     # ESTOQUE - INVENTÁRIO
@@ -282,6 +315,8 @@ urlpatterns = [
     path('estoque/inventarios/novo/', views.inventario_add, name='inventario_add'),
     path('estoque/inventarios/<int:pk>/contagem/', views.inventario_contagem, name='inventario_contagem'),
     path('estoque/inventarios/<int:pk>/finalizar/', views.inventario_finalizar, name='inventario_finalizar'),
+    path('estoque/inventarios/<int:pk>/editar/', views.inventario_edit, name='inventario_edit'),
+    path('estoque/inventarios/<int:pk>/excluir/', views.inventario_delete, name='inventario_delete'),
 
     # =============================================================================
     # ESTOQUE - ENTRADA NF-E
@@ -290,6 +325,9 @@ urlpatterns = [
     path('estoque/entradas-nfe/nova/', views.entrada_nfe_add, name='entrada_nfe_add'),
     path('estoque/entradas-nfe/<int:pk>/itens/', views.entrada_nfe_itens, name='entrada_nfe_itens'),
     path('estoque/entradas-nfe/<int:pk>/finalizar/', views.entrada_nfe_finalizar, name='entrada_nfe_finalizar'),
+    path('estoque/entradas-nfe/<int:pk>/', views.entrada_nfe_detail, name='entrada_nfe_detail'),
+    path('estoque/entradas-nfe/<int:pk>/editar/', views.entrada_nfe_edit, name='entrada_nfe_edit'),
+    path('estoque/entradas-nfe/importar-xml/', views.entrada_nfe_importar_xml, name='entrada_nfe_importar_xml'),
 
     # =============================================================================
     # ESTOQUE - RELATÓRIOS
@@ -301,7 +339,7 @@ urlpatterns = [
     # =============================================================================
     # ESTOQUE - APIs
     # =============================================================================
-    path('api/produto/<int:produto_id>/saldo/', views.api_produto_saldo, name='api_produto_saldo'),
+    path('api/produto/<int:produto_id>/saldo/', views.api_produto_saldo_disponivel, name='api_produto_saldo'),
     path('api/produtos/busca/', views.api_produtos_busca, name='api_produtos_busca'),
 
     # =============================================================================
@@ -312,4 +350,6 @@ urlpatterns = [
     path('estoque/transferencias/<int:pk>/', views.transferencia_detail, name='transferencia_detail'),
     path('estoque/transferencias/<int:pk>/editar/', views.transferencia_edit, name='transferencia_edit'),
     path('estoque/transferencias/<int:pk>/excluir/', views.transferencia_delete, name='transferencia_delete'),
+    path('estoque/transferencias/<int:pk>/enviar/', views.transferencia_enviar, name='transferencia_enviar'),
+    path('estoque/transferencias/<int:pk>/receber/', views.transferencia_receber, name='transferencia_receber'),
 ]

@@ -26,8 +26,11 @@ from .models import (
     # Financeiro
     ContaPagar, ContaReceber, MovimentoCaixa,
     CategoriaFinanceira, CentroCusto, OrcamentoFinanceiro,
-    ExtratoBancario, LancamentoExtrato,
+    ExtratoBancario, LancamentoExtrato,ContaBancaria,
     ConfiguracaoDRE, LinhaDRE, RelatorioDRE,
+
+    # Planejamento x Realizado 
+    OrcamentoProjeto,
 
     # Estoque
     MovimentacaoEstoque,
@@ -684,30 +687,20 @@ class MovimentoCaixaForm(BaseForm):
 # MÓDULO: FINANCEIRO - DRE
 # =============================================================================
 
-class ConfiguracaoDREForm(forms.ModelForm):
-    class Meta:
-        model = ConfiguracaoDRE
-        fields = [
-            'empresa', 'regime_tributario', 'atividade_principal',
-            'aliquota_simples', 'percentual_presuncao_comercio',
-            'percentual_presuncao_servico', 'aliquota_irpj',
-            'aliquota_irpj_adicional', 'aliquota_csll', 'ativo',
-        ]
-        widgets = {
-            'empresa': forms.Select(attrs={'class': 'form-control'}),
-            'regime_tributario': forms.Select(attrs={'class': 'form-control'}),
-            'atividade_principal': forms.Select(attrs={'class': 'form-control'}),
-            'aliquota_simples': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'percentual_presuncao_comercio': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'percentual_presuncao_servico': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'aliquota_irpj': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'aliquota_irpj_adicional': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'aliquota_csll': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'ativo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        }
+# =============================================================================
+# MÓDULO: FINANCEIRO - DRE - FORMS
+# =============================================================================
+# NOTA: ConfiguracaoDREForm foi removido daqui e movido para views.py
+# como form dinâmico para evitar import circular com cadastros.Empresa
+# =============================================================================
+
+from django import forms
+from .models import LinhaDRE  # Apenas modelos do próprio app
 
 
 class LinhaDREForm(forms.ModelForm):
+    """Form para cadastro de linhas DRE - NÃO depende de Empresa"""
+    
     class Meta:
         model = LinhaDRE
         fields = [
@@ -732,8 +725,10 @@ class LinhaDREForm(forms.ModelForm):
 
 
 class FiltroDREForm(forms.Form):
+    """Form para filtrar/visualizar DRE - Usa lazy queryset"""
+    
     empresa = forms.ModelChoiceField(
-        queryset=None,
+        queryset=None,  # Será setado no __init__
         required=True,
         widget=forms.Select(attrs={'class': 'form-control'}),
         label='Empresa'
@@ -762,6 +757,8 @@ class FiltroDREForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Lazy import e queryset - só executa quando o form é instanciado
+        from cadastros.models import Empresa
         self.fields['empresa'].queryset = Empresa.objects.filter(ativo=True)
 
 # =============================================================================
@@ -785,55 +782,118 @@ class DepositoForm(forms.ModelForm):
 # =============================================================================
 
 class MovimentacaoEstoqueForm(forms.ModelForm):
-    produto = forms.ModelChoiceField(
-        queryset=Produto.objects.filter(ativo=True).order_by('descricao'),
-        empty_label="Selecione um produto...",
-        required=True,
-        widget=forms.Select(attrs={'class': 'erp-select'})
-    )
-    tipo = forms.ChoiceField(
-        choices=[('', 'Selecione o tipo...')] + list(MovimentacaoEstoque.TIPO_CHOICES),
-        required=True,
-        widget=forms.Select(attrs={'class': 'erp-select'})
-    )
-    quantidade = forms.DecimalField(
-        required=True,
-        widget=forms.NumberInput(attrs={'class': 'erp-input', 'step': '0.001'})
-    )
-    observacoes = forms.CharField(
-        required=False,
-        widget=forms.Textarea(attrs={'class': 'erp-textarea', 'rows': 3})
-    )
-
+    """Formulário para movimentação de estoque"""
+    
     class Meta:
         model = MovimentacaoEstoque
-        exclude = ['data', 'usuario', 'nota_fiscal_entrada', 'nota_fiscal_saida']
-
+        fields = [
+            'tipo', 'produto', 'data', 'nota_fiscal_entrada', 'nota_fiscal_saida',
+            'deposito_origem', 'deposito_destino', 'quantidade', 
+            'preco_unitario', 'valor_total', 'motivo', 'observacoes'
+        ]
+        widgets = {
+            'data': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'quantidade': forms.NumberInput(attrs={'step': '0.001', 'min': '0.001'}),
+            'preco_unitario': forms.TextInput(attrs={'placeholder': '0,00'}),
+            'valor_total': forms.TextInput(attrs={'readonly': 'readonly'}),
+            'motivo': forms.TextInput(attrs={'placeholder': 'Ex: Entrada via NF, Ajuste de inventário...'}),
+            'observacoes': forms.Textarea(attrs={'rows': 3}),
+        }
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['produto'].queryset = Produto.objects.filter(ativo=True).order_by('descricao')
+        
+        # Tornar campos condicionais não obrigatórios no form
+        self.fields['deposito_origem'].required = False
+        self.fields['deposito_destino'].required = False
+        self.fields['nota_fiscal_entrada'].required = False
+        self.fields['nota_fiscal_saida'].required = False
+        self.fields['preco_unitario'].required = False
+        self.fields['valor_total'].required = False
+        self.fields['motivo'].required = False
+        self.fields['observacoes'].required = False
+        
+        # Querysets
+        self.fields['produto'].queryset = Produto.objects.filter(ativo=True)
+        self.fields['deposito_origem'].queryset = Deposito.objects.filter(ativo=True)
+        self.fields['deposito_destino'].queryset = Deposito.objects.filter(ativo=True)
+        self.fields['nota_fiscal_entrada'].queryset = NotaFiscalEntrada.objects.filter(status='confirmada')
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        tipo = cleaned_data.get('tipo')
+        deposito_origem = cleaned_data.get('deposito_origem')
+        deposito_destino = cleaned_data.get('deposito_destino')
+        quantidade = cleaned_data.get('quantidade')
+        produto = cleaned_data.get('produto')
+        
+        # Validações baseadas no tipo
+        if tipo == 'entrada':
+            if not deposito_destino:
+                self.add_error('deposito_destino', 'Depósito de destino é obrigatório para entradas.')
+        
+        elif tipo == 'saida':
+            if not deposito_origem:
+                self.add_error('deposito_origem', 'Depósito de origem é obrigatório para saídas.')
+            # Verificar se há estoque suficiente
+            if produto and quantidade:
+                if produto.estoque_atual < quantidade:
+                    self.add_error('quantidade', f'Estoque insuficiente. Disponível: {produto.estoque_atual}')
+        
+        elif tipo == 'transferencia':
+            if not deposito_origem:
+                self.add_error('deposito_origem', 'Depósito de origem é obrigatório para transferências.')
+            if not deposito_destino:
+                self.add_error('deposito_destino', 'Depósito de destino é obrigatório para transferências.')
+            if deposito_origem and deposito_destino and deposito_origem == deposito_destino:
+                self.add_error('deposito_destino', 'Depósito de destino deve ser diferente do de origem.')
+        
+        elif tipo == 'ajuste':
+            if not deposito_origem:
+                self.add_error('deposito_origem', 'Depósito é obrigatório para ajustes.')
+        
+        return cleaned_data
+    
+    def clean_preco_unitario(self):
+        valor = self.cleaned_data.get('preco_unitario')
+        if valor:
+            if isinstance(valor, str):
+                valor = valor.replace('.', '').replace(',', '.')
+            return Decimal(valor) if valor else None
+        return None
+    
+    def clean_valor_total(self):
+        valor = self.cleaned_data.get('valor_total')
+        if valor:
+            if isinstance(valor, str):
+                valor = valor.replace('.', '').replace(',', '.')
+            return Decimal(valor) if valor else None
+        return None
 
 # =============================================================================
-# MÓDULO: ESTOQUE - INVENTÁRIO
+# MÓDULO: ESTOQUE - INVENTÁRIO (CORRIGIDO)
 # =============================================================================
 
-class InventarioForm(BaseForm):
+class InventarioForm(forms.ModelForm):
     class Meta:
         model = Inventario
-        fields = '__all__'
-        widgets = {'data': forms.DateInput(attrs={'type': 'date'})}
+        fields = ['data', 'deposito', 'observacoes']  # ✅ Campos específicos
+        widgets = {
+            'data': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'deposito': forms.Select(attrs={'class': 'form-select'}),
+            'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
 
 
 class ItemInventarioForm(forms.ModelForm):
     class Meta:
         model = ItemInventario
-        fields = ['produto', 'quantidade_contada', 'observacoes']
+        fields = ['quantidade_contada', 'observacoes']  # ✅ Removido 'produto' (é automático)
         widgets = {
-            'produto': forms.Select(attrs={'class': 'form-control'}),
             'quantidade_contada': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'observacoes': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }
-
+        
 # =============================================================================
 # MÓDULO: ESTOQUE - TRANSFERÊNCIA
 # =============================================================================
@@ -995,3 +1055,54 @@ ItemCotacaoFornecedorFormSet = forms.inlineformset_factory(
     extra=0,
     can_delete=True,
 )
+
+# =============================================================================
+# MÓDULO: PLANEJADO X REALIZADO - FORMULÁRIO
+# =============================================================================
+
+class OrcamentoProjetoForm(BaseForm):
+    receitas_orcadas = MoneyField()
+    despesas_orcadas = MoneyField()
+    realizado_receitas = MoneyField(required=False)
+    realizado_despesas = MoneyField(required=False)
+    
+    class Meta:
+        model = OrcamentoProjeto
+        fields = ['projeto', 'ano', 'mes', 'receitas_orcadas', 'despesas_orcadas', 
+                  'realizado_receitas', 'realizado_despesas', 'observacoes']
+        widgets = {
+            'projeto': forms.Select(attrs={'class': 'erp-select'}),
+            'ano': forms.NumberInput(attrs={'class': 'erp-input', 'min': '2000', 'max': '2100'}),
+            'mes': forms.Select(attrs={'class': 'erp-select'}),
+            'observacoes': forms.Textarea(attrs={'rows': 3, 'class': 'erp-textarea'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['projeto'].queryset = Projeto.objects.filter(status='ativo').order_by('nome')
+        self.fields['projeto'].empty_label = "Selecione um projeto..."
+        self.fields['realizado_receitas'].initial = 0
+        self.fields['realizado_despesas'].initial = 0
+        
+        # Se for edição, carregar valores realizados
+        if self.instance and self.instance.pk:
+            self.fields['realizado_receitas'].initial = self.instance.realizado_receitas
+            self.fields['realizado_despesas'].initial = self.instance.realizado_despesas
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        projeto = cleaned_data.get('projeto')
+        ano = cleaned_data.get('ano')
+        mes = cleaned_data.get('mes')
+        
+        # Verificar duplicidade (exceto na edição do próprio registro)
+        if projeto and ano and mes:
+            qs = OrcamentoProjeto.objects.filter(projeto=projeto, ano=ano, mes=mes)
+            if self.instance and self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise forms.ValidationError(
+                    f'Já existe um orçamento para {projeto} em {mes}/{ano}.'
+                )
+        
+        return cleaned_data

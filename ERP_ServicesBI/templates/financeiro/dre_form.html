@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load custom_filters %}
 
-{% block title %}Configuração DRE - ERP ServicesBI{% endblock %}
+{% block title %}DRE Gerencial - ERP ServicesBI{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -48,6 +48,9 @@
 .pbi-header__meta {
     font-size: 11px;
     color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: 14px;
 }
 
 .pbi-header__right { display: flex; align-items: center; gap: 8px; }
@@ -71,17 +74,173 @@
 .pbi-btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
 .pbi-btn--primary { background: var(--primary-500); color: white; border-color: var(--primary-500); }
 .pbi-btn--primary:hover { background: var(--primary-600); color: white; }
+.pbi-btn--success { background: var(--success-500); color: white; border-color: var(--success-500); }
+.pbi-btn--info { background: var(--info-500); color: white; border-color: var(--info-500); }
 .pbi-btn--secondary { background: var(--bg-secondary); color: var(--text-secondary); }
+
+/* ===== CARDS RESUMO COM GAUGE ===== */
+.resumo-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 1200px) { .resumo-cards { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .resumo-cards { grid-template-columns: 1fr; } }
+
+.resumo-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--card-border);
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+
+.resumo-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+.resumo-card--primary { border-left: 4px solid var(--primary-500); }
+.resumo-card--success { border-left: 4px solid var(--success-500); }
+.resumo-card--info { border-left: 4px solid var(--info-500); }
+.resumo-card--danger { border-left: 4px solid var(--danger-500); }
+.resumo-card--warning { border-left: 4px solid var(--warning-500); }
+
+.resumo-card__label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    font-weight: 700;
+}
+
+.resumo-card__value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.resumo-card__meta {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.resumo-card__gauge {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 60px;
+    height: 60px;
+}
+
+/* ===== GRÁFICOS ===== */
+.graficos-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 900px) { .graficos-grid { grid-template-columns: 1fr; } }
+
+.grafico-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.grafico-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.grafico-card__title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.grafico-card__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary-500);
+}
+
+.grafico-card__canvas {
+    height: 250px;
+    position: relative;
+}
+
+.grafico-card--full {
+    grid-column: 1 / -1;
+}
+
+.grafico-card--full .grafico-card__canvas {
+    height: 300px;
+}
+
+/* ===== SLICER BAR ===== */
+.pbi-slicer-bar {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.pbi-slicer-bar__label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-tertiary);
+}
+
+.pbi-slicer-group { display: flex; align-items: center; gap: 6px; }
+.pbi-slicer-group label { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+
+.pbi-select, .pbi-input {
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 13px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-width: 140px;
+}
+
+.pbi-select:focus, .pbi-input:focus { 
+    outline: none; 
+    border-color: var(--primary-500); 
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.15); 
+}
+
+.pbi-slicer-bar__spacer { flex: 1; }
 
 /* ===== CANVAS ===== */
 .pbi-canvas {
     padding: 20px 24px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    max-width: 900px;
-    margin: 0 auto;
-    width: 100%;
+    gap: 16px;
 }
 
 /* ===== PANEL ===== */
@@ -90,6 +249,7 @@
     border: 1px solid var(--card-border);
     border-radius: 10px;
     overflow: hidden;
+    margin-bottom: 16px;
 }
 
 .pbi-panel__header {
@@ -97,7 +257,8 @@
     border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: space-between;
+    gap: 12px;
 }
 
 .pbi-panel__title {
@@ -117,93 +278,106 @@
     background: var(--primary-500);
 }
 
-.pbi-panel__body { padding: 24px; }
+.pbi-panel__body { padding: 0; }
 
-/* ===== FORM ===== */
-.pbi-form-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+/* ===== TABELA DRE ===== */
+.pbi-table-wrap { overflow-x: auto; }
+
+.pbi-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
 }
 
-.pbi-form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
+.pbi-table thead { background: var(--bg-tertiary); }
 
-.pbi-form-group--full {
-    grid-column: 1 / -1;
-}
-
-.pbi-form-group label {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-secondary);
+.pbi-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    color: var(--text-tertiary);
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
 }
 
-.pbi-form-group label .required {
-    color: var(--danger-500);
+.pbi-table td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
 }
 
-.pbi-form-group input,
-.pbi-form-group select,
-.pbi-form-group textarea {
-    padding: 10px 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
+.pbi-table tbody tr:hover { background: var(--bg-secondary); }
+.pbi-table tbody tr:last-child td { border-bottom: none; }
+
+.pbi-table__codigo { 
+    font-family: monospace; 
+    font-size: 12px; 
+    color: var(--text-tertiary);
+    width: 60px;
+}
+
+.pbi-table__descricao { color: var(--text-primary); }
+.pbi-table__valor { 
+    text-align: right; 
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+}
+
+.pbi-table__percentual {
+    text-align: right;
+    color: var(--text-tertiary);
+    font-size: 12px;
+    width: 80px;
+}
+
+.pbi-table__variacao {
+    text-align: right;
+    font-size: 12px;
+    font-weight: 600;
+    width: 100px;
+}
+
+.pbi-table__variacao--positivo { color: var(--success-500); }
+.pbi-table__variacao--negativo { color: var(--danger-500); }
+
+/* Sparkline */
+.pbi-table__sparkline {
+    width: 80px;
+    height: 30px;
+}
+
+/* Níveis de hierarquia */
+.pbi-table tr.nivel-1 td { background: var(--bg-tertiary); }
+.pbi-table tr.nivel-1 .pbi-table__descricao { font-weight: 700; color: var(--text-primary); }
+
+.pbi-table tr.nivel-2 .pbi-table__descricao { padding-left: 24px; }
+.pbi-table tr.nivel-3 .pbi-table__descricao { padding-left: 48px; }
+.pbi-table tr.nivel-4 .pbi-table__descricao { padding-left: 72px; }
+
+.pbi-table tr.resultado { background: rgba(59,130,246,0.05); }
+.pbi-table tr.resultado .pbi-table__descricao { font-weight: 600; color: var(--primary-500); }
+
+.pbi-table tr.total { background: var(--bg-tertiary); }
+.pbi-table tr.total .pbi-table__descricao { font-weight: 700; }
+
+.pbi-table__positivo { color: var(--success-500); }
+.pbi-table__negativo { color: var(--danger-500); }
+
+/* ===== ANÁLISE DE VARIAÇÃO ===== */
+.analise-variacao {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+.analise-variacao__title {
     font-size: 14px;
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    transition: all 0.15s;
-}
-
-.pbi-form-group input:focus,
-.pbi-form-group select:focus,
-.pbi-form-group textarea:focus {
-    outline: none;
-    border-color: var(--primary-500);
-    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
-}
-
-.pbi-form-group input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    accent-color: var(--primary-500);
-}
-
-.pbi-toggle {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    background: var(--bg-secondary);
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-.pbi-toggle__label {
-    font-size: 14px;
-    color: var(--text-primary);
-}
-
-/* Seções de regime */
-.pbi-regime-section {
-    display: none;
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid var(--border-color);
-}
-
-.pbi-regime-section.active {
-    display: block;
-}
-
-.pbi-regime-section__title {
-    font-size: 14px;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 16px;
     display: flex;
@@ -211,62 +385,262 @@
     gap: 8px;
 }
 
-/* Info box */
-.pbi-info-box {
+.analise-variacao__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.variacao-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
     background: var(--bg-secondary);
     border-radius: 8px;
-    padding: 16px;
+}
+
+.variacao-item__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.variacao-item__icon--up { background: rgba(34,197,94,0.1); }
+.variacao-item__icon--down { background: rgba(239,68,68,0.1); }
+
+.variacao-item__info { flex: 1; }
+
+.variacao-item__label {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-bottom: 2px;
+}
+
+.variacao-item__value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* ===== STATUS BAR ===== */
+.pbi-statusbar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 12px 24px;
+    background: var(--card-bg);
+    border-top: 1px solid var(--border-color);
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+
+.pbi-statusbar__item { display: flex; align-items: center; gap: 5px; }
+.pbi-statusbar__dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
+.pbi-statusbar__spacer { flex: 1; }
+
+/* ===== EMPTY ===== */
+.pbi-empty { padding: 48px 24px; text-align: center; color: var(--text-tertiary); }
+.pbi-empty__icon { font-size: 48px; margin-bottom: 16px; }
+.pbi-empty__title { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+
+/* ===== MODAIS ===== */
+.pbi-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.pbi-modal-overlay.active { display: flex; }
+
+.pbi-modal {
+    background: var(--card-bg);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 900px;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: modalIn 0.2s ease;
+}
+
+.pbi-modal--sm { max-width: 500px; }
+
+@keyframes modalIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.pbi-modal__header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.pbi-modal__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.pbi-modal__close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+}
+
+.pbi-modal__body {
+    padding: 20px;
+    overflow-y: auto;
+    max-height: calc(90vh - 140px);
+}
+
+.pbi-modal__footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+/* Comparativo no modal */
+.comparativo-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
     margin-bottom: 20px;
 }
 
-.pbi-info-box__title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0 0 12px 0;
-}
-
-.pbi-info-box__text {
-    font-size: 13px;
-    color: var(--text-secondary);
-    line-height: 1.6;
-}
-
-/* Form actions */
-.pbi-form-actions {
-    display: flex;
-    gap: 12px;
-    padding-top: 20px;
-    border-top: 1px solid var(--border-color);
-    margin-top: 20px;
-}
-
-/* Alerts */
-.pbi-alert {
-    padding: 12px 16px;
+.comparativo-card {
+    background: var(--bg-secondary);
     border-radius: 8px;
+    padding: 16px;
+}
+
+.comparativo-card--p1 { border-left: 4px solid var(--primary-500); }
+.comparativo-card--p2 { border-left: 4px solid var(--success-500); }
+
+.comparativo-card__title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+
+.comparativo-card__row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
     font-size: 13px;
+}
+
+.comparativo-card__label { color: var(--text-secondary); }
+.comparativo-card__value { font-weight: 600; }
+
+/* Histórico lista */
+.historico-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.historico-item {
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.15s;
 }
 
-.pbi-alert--error {
-    background: rgba(239,68,68,0.1);
-    color: #dc2626;
-    border: 1px solid rgba(239,68,68,0.2);
+.historico-item:hover { background: var(--bg-secondary); }
+.historico-item:last-child { border-bottom: none; }
+
+.historico-item__info { display: flex; flex-direction: column; gap: 4px; }
+.historico-item__title { font-weight: 600; color: var(--text-primary); font-size: 14px; }
+.historico-item__meta { font-size: 12px; color: var(--text-tertiary); }
+
+.historico-item__actions { display: flex; gap: 8px; }
+
+/* Abas */
+.pbi-tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 20px;
 }
 
-.pbi-alert--success {
-    background: rgba(34,197,94,0.1);
-    color: #16a34a;
-    border: 1px solid rgba(34,197,94,0.2);
+.pbi-tab {
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
 }
 
-@media (max-width: 600px) {
-    .pbi-form-grid {
-        grid-template-columns: 1fr;
-    }
+.pbi-tab:hover { color: var(--text-primary); }
+.pbi-tab.active { 
+    color: var(--primary-500); 
+    border-bottom-color: var(--primary-500);
+}
+
+/* Badge de status */
+.pbi-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.pbi-badge--success { background: rgba(34,197,94,0.1); color: var(--success-500); }
+.pbi-badge--info { background: rgba(59,130,246,0.1); color: var(--primary-500); }
+.pbi-badge--warning { background: rgba(245,158,11,0.1); color: var(--warning-500); }
+
+/* Toggle de visualização */
+.view-toggle {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-secondary);
+    padding: 4px;
+    border-radius: 6px;
+}
+
+.view-toggle__btn {
+    padding: 6px 12px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.15s;
+}
+
+.view-toggle__btn.active {
+    background: var(--card-bg);
+    color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 </style>
 {% endblock %}
@@ -279,220 +653,968 @@
         <div class="pbi-header__left">
             <h1 class="pbi-header__title">
                 <div class="pbi-header__title-bar"></div>
-                Configuração DRE
+                DRE Gerencial
             </h1>
             <div class="pbi-header__meta">
-                Configure o regime tributário e parâmetros de cálculo
+                <span>📊 Demonstração do Resultado do Exercício</span>
+                <span>🕐 Atualizado: <strong id="updateTime">--:--</strong></span>
+                {% if relatorio_salvo %}
+                <span class="pbi-badge pbi-badge--info">📄 Relatório Salvo #{{ relatorio_salvo.id }}</span>
+                {% endif %}
+                {% if modo_comparativo %}
+                <span class="pbi-badge pbi-badge--warning">⚖️ Modo Comparativo</span>
+                {% endif %}
             </div>
         </div>
         <div class="pbi-header__right">
-            <a href="{% url 'ERP_ServicesBI:dre_gerencial' %}" class="pbi-btn">← Voltar</a>
+            <button class="pbi-btn" onclick="abrirModalComparativo()">⚖️ Comparativo</button>
+            <button class="pbi-btn" onclick="abrirModalHistorico()">📚 Histórico</button>
+            <button class="pbi-btn pbi-btn--primary" onclick="abrirModalConfig()">⚙️ Configurar</button>
+            {% if dre_dados and not relatorio_salvo %}
+            <button class="pbi-btn pbi-btn--success" onclick="salvarRelatorio()">💾 Salvar</button>
+            {% endif %}
         </div>
     </div>
 
     <div class="pbi-canvas">
 
-        {% if messages %}
-            {% for message in messages %}
-                <div class="pbi-alert pbi-alert--{% if message.tags == 'error' %}error{% else %}success{% endif %}">
-                    {% if message.tags == 'error' %}⚠️{% else %}✅{% endif %}
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-
-        <!-- INFO BOX -->
-        <div class="pbi-info-box">
-            <h4 class="pbi-info-box__title">ℹ️ Sobre os Regimes Tributários</h4>
-            <p class="pbi-info-box__text">
-                <strong>Simples Nacional:</strong> Regime simplificado com DAS único. Ideal para ME e EPP com faturamento até R$ 4,8 milhões/ano.<br>
-                <strong>Lucro Presumido:</strong> Base de cálculo presumida sobre o faturamento (8% comércio, 32% serviços). Limite de R$ 78 milhões/ano.<br>
-                <strong>Lucro Real:</strong> Impostos calculados sobre o lucro contábil real. Obrigatório para grandes empresas.
-            </p>
+        <!-- SLICER BAR -->
+        <div class="pbi-slicer-bar">
+            <span class="pbi-slicer-bar__label">Filtros</span>
+            
+            <div class="pbi-slicer-group">
+                <label>Empresa</label>
+                <select class="pbi-select" id="empresaFilter" required>
+                    <option value="">Selecione...</option>
+                    {% for emp in empresas %}
+                    <option value="{{ emp.id }}" {% if empresa_selecionada and empresa_selecionada.id == emp.id %}selected{% endif %}>
+                        {{ emp.nome_fantasia }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="pbi-slicer-group">
+                <label>Início</label>
+                <input type="date" class="pbi-input" id="dataInicio" value="{{ data_inicio|date:'Y-m-d' }}">
+            </div>
+            
+            <div class="pbi-slicer-group">
+                <label>Fim</label>
+                <input type="date" class="pbi-input" id="dataFim" value="{{ data_fim|date:'Y-m-d' }}">
+            </div>
+            
+            <div class="pbi-slicer-group">
+                <label>Regime</label>
+                <select class="pbi-select" id="regimeFilter">
+                    {% for codigo, nome in regimes %}
+                    <option value="{{ codigo }}" {% if regime_selecionado == codigo %}selected{% endif %}>
+                        {{ nome }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="pbi-slicer-bar__spacer"></div>
+            
+            <button class="pbi-btn pbi-btn--primary" onclick="calcularDRE()">🔍 Calcular</button>
+            <button class="pbi-btn" onclick="window.print()">🖨️ Imprimir</button>
         </div>
 
-        <form method="post" id="formConfig">
-            {% csrf_token %}
+        {% if dre_dados %}
+        
+        <!-- CARDS RESUMO COM GAUGES -->
+        <div class="resumo-cards">
+            <div class="resumo-card resumo-card--primary">
+                <div class="resumo-card__label">Receita Líquida</div>
+                <div class="resumo-card__value">R$ {{ dre_dados.totais.receita_liquida|floatformat:2 }}</div>
+                <div class="resumo-card__meta">Faturamento bruto</div>
+                <canvas class="resumo-card__gauge" id="gaugeReceita"></canvas>
+            </div>
 
-            <!-- SEÇÃO: EMPRESA E REGIME -->
-            <div class="pbi-panel">
-                <div class="pbi-panel__header">
-                    <h5 class="pbi-panel__title">
-                        <div class="pbi-panel__dot"></div>
-                        Empresa e Regime
-                    </h5>
+            <div class="resumo-card resumo-card--success">
+                <div class="resumo-card__label">Lucro Bruto</div>
+                <div class="resumo-card__value">R$ {{ dre_dados.totais.lucro_bruto|floatformat:2 }}</div>
+                <div class="resumo-card__meta">Margem: {{ dre_dados.indicadores.margem_bruta|floatformat:1 }}%</div>
+                <canvas class="resumo-card__gauge" id="gaugeMargemBruta"></canvas>
+            </div>
+
+            <div class="resumo-card resumo-card--info">
+                <div class="resumo-card__label">EBIT</div>
+                <div class="resumo-card__value">R$ {{ dre_dados.totais.resultado_operacional|floatformat:2 }}</div>
+                <div class="resumo-card__meta">Margem: {{ dre_dados.indicadores.margem_operacional|floatformat:1 }}%</div>
+                <canvas class="resumo-card__gauge" id="gaugeMargemOperacional"></canvas>
+            </div>
+
+            <div class="resumo-card {% if dre_dados.totais.lucro_liquido >= 0 %}resumo-card--success{% else %}resumo-card--danger{% endif %}">
+                <div class="resumo-card__label">Lucro Líquido</div>
+                <div class="resumo-card__value">R$ {{ dre_dados.totais.lucro_liquido|floatformat:2 }}</div>
+                <div class="resumo-card__meta">Margem: {{ dre_dados.indicadores.margem_liquida|floatformat:1 }}%</div>
+                <canvas class="resumo-card__gauge" id="gaugeMargemLiquida"></canvas>
+            </div>
+        </div>
+
+        {% if modo_comparativo and dre_comparativo %}
+        <!-- ANÁLISE DE VARIAÇÃO -->
+        <div class="analise-variacao">
+            <div class="analise-variacao__title">
+                <div class="pbi-panel__dot" style="background: var(--warning-500);"></div>
+                Análise de Variação: Período Atual vs Comparativo
+            </div>
+            <div class="analise-variacao__grid">
+                <div class="variacao-item">
+                    <div class="variacao-item__icon variacao-item__icon--{% if variacao_receita > 0 %}up{% else %}down{% endif %}">
+                        {% if variacao_receita > 0 %}📈{% else %}📉{% endif %}
+                    </div>
+                    <div class="variacao-item__info">
+                        <div class="variacao-item__label">Variação Receita</div>
+                        <div class="variacao-item__value" style="color: {% if variacao_receita > 0 %}var(--success-500){% else %}var(--danger-500){% endif %};">
+                            {{ variacao_receita|floatformat:1 }}%
+                        </div>
+                    </div>
                 </div>
-                <div class="pbi-panel__body">
-                    <div class="pbi-form-grid">
-                        <div class="pbi-form-group">
-                            <label>Empresa <span class="required">*</span></label>
-                            {% if empresa %}
-                            <input type="text" value="{{ empresa.nome_fantasia }}" disabled>
-                            <input type="hidden" name="empresa" value="{{ empresa.id }}">
-                            {% else %}
-                            <select name="empresa" required>
-                                <option value="">Selecione...</option>
-                                {% for emp in empresas %}
-                                <option value="{{ emp.id }}" {% if form.empresa.value == emp.id %}selected{% endif %}>
-                                    {{ emp.nome_fantasia }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                            {% endif %}
+                <div class="variacao-item">
+                    <div class="variacao-item__icon variacao-item__icon--{% if variacao_lucro > 0 %}up{% else %}down{% endif %}">
+                        {% if variacao_lucro > 0 %}📈{% else %}📉{% endif %}
+                    </div>
+                    <div class="variacao-item__info">
+                        <div class="variacao-item__label">Variação Lucro</div>
+                        <div class="variacao-item__value" style="color: {% if variacao_lucro > 0 %}var(--success-500){% else %}var(--danger-500){% endif %};">
+                            {{ variacao_lucro|floatformat:1 }}%
                         </div>
-                        
-                        <div class="pbi-form-group">
-                            <label>Regime Tributário <span class="required">*</span></label>
-                            <select name="regime_tributario" id="regimeSelect" required onchange="toggleRegime()">
-                                {% for codigo, nome in regimes %}
-                                <option value="{{ codigo }}" {% if form.regime_tributario.value == codigo %}selected{% endif %}>
-                                    {{ nome }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        
-                        <div class="pbi-form-group">
-                            <label>Atividade Principal</label>
-                            <input type="text" name="atividade_principal" 
-                                   value="{{ form.atividade_principal.value|default:'' }}"
-                                   placeholder="Ex: Comércio, Serviços, Indústria">
-                        </div>
-                        
-                        <div class="pbi-form-group">
-                            <label class="pbi-toggle" style="margin-top: 24px;">
-                                <input type="checkbox" name="ativo" {% if form.ativo.value|default:True %}checked{% endif %}>
-                                <span class="pbi-toggle__label">Configuração Ativa</span>
-                            </label>
+                    </div>
+                </div>
+                <div class="variacao-item">
+                    <div class="variacao-item__icon variacao-item__icon--{% if variacao_margem > 0 %}up{% else %}down{% endif %}">
+                        {% if variacao_margem > 0 %}📈{% else %}📉{% endif %}
+                    </div>
+                    <div class="variacao-item__info">
+                        <div class="variacao-item__label">Variação Margem</div>
+                        <div class="variacao-item__value" style="color: {% if variacao_margem > 0 %}var(--success-500){% else %}var(--danger-500){% endif %};">
+                            {{ variacao_margem|floatformat:1 }} p.p.
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+        {% endif %}
 
-            <!-- SEÇÃO: SIMPLES NACIONAL -->
-            <div class="pbi-panel pbi-regime-section" id="sectionSimples">
-                <div class="pbi-panel__header">
-                    <h5 class="pbi-panel__title">
-                        <div class="pbi-panel__dot" style="background:var(--success-500)"></div>
-                        Simples Nacional
-                    </h5>
-                </div>
-                <div class="pbi-panel__body">
-                    <div class="pbi-form-grid">
-                        <div class="pbi-form-group">
-                            <label>Alíquota Efetiva (%)</label>
-                            <input type="number" name="aliquota_simples" step="0.01" min="0" max="100"
-                                   value="{{ form.aliquota_simples.value|default:'' }}"
-                                   placeholder="6.00">
-                            <small style="color: var(--text-tertiary); font-size: 11px;">
-                                Alíquota conforme faixa de faturamento do Anexo do Simples
-                            </small>
-                        </div>
+        <!-- GRÁFICOS -->
+        <div class="graficos-grid">
+            <!-- GRÁFICO 1: COMPOSIÇÃO DO RESULTADO (WATERFALL) -->
+            <div class="grafico-card grafico-card--full">
+                <div class="grafico-card__header">
+                    <div class="grafico-card__title">
+                        <div class="grafico-card__dot"></div>
+                        Composição do Resultado (Waterfall)
+                    </div>
+                    <div class="view-toggle">
+                        <button class="view-toggle__btn active" onclick="toggleChartType('waterfall')">Cascata</button>
+                        <button class="view-toggle__btn" onclick="toggleChartType('bar')">Barras</button>
                     </div>
                 </div>
+                <div class="grafico-card__canvas">
+                    <canvas id="chartWaterfall"></canvas>
+                </div>
             </div>
 
-            <!-- SEÇÃO: LUCRO PRESUMIDO -->
-            <div class="pbi-panel pbi-regime-section" id="sectionPresumido">
-                <div class="pbi-panel__header">
-                    <h5 class="pbi-panel__title">
-                        <div class="pbi-panel__dot" style="background:var(--warning-500)"></div>
-                        Lucro Presumido
-                    </h5>
-                </div>
-                <div class="pbi-panel__body">
-                    <div class="pbi-form-grid">
-                        <div class="pbi-form-group">
-                            <label>% Presunção Comércio</label>
-                            <input type="number" name="percentual_presuncao_comercio" step="0.01" min="0" max="100"
-                                   value="{{ form.percentual_presuncao_comercio.value|default:'8.00' }}"
-                                   placeholder="8.00">
-                            <small style="color: var(--text-tertiary); font-size: 11px;">Padrão: 8%</small>
-                        </div>
-                        
-                        <div class="pbi-form-group">
-                            <label>% Presunção Serviços</label>
-                            <input type="number" name="percentual_presuncao_servico" step="0.01" min="0" max="100"
-                                   value="{{ form.percentual_presuncao_servico.value|default:'32.00' }}"
-                                   placeholder="32.00">
-                            <small style="color: var(--text-tertiary); font-size: 11px;">Padrão: 32%</small>
-                        </div>
+            <!-- GRÁFICO 2: EVOLUÇÃO TEMPORAL -->
+            <div class="grafico-card">
+                <div class="grafico-card__header">
+                    <div class="grafico-card__title">
+                        <div class="grafico-card__dot" style="background: var(--success-500);"></div>
+                        Evolução 12 Meses
                     </div>
                 </div>
+                <div class="grafico-card__canvas">
+                    <canvas id="chartEvolucao"></canvas>
+                </div>
             </div>
 
-            <!-- SEÇÃO: IRPJ E CSLL -->
-            <div class="pbi-panel pbi-regime-section" id="sectionIRCSSL">
-                <div class="pbi-panel__header">
-                    <h5 class="pbi-panel__title">
-                        <div class="pbi-panel__dot" style="background:var(--danger-500)"></div>
-                        IRPJ e CSLL
-                    </h5>
-                </div>
-                <div class="pbi-panel__body">
-                    <div class="pbi-form-grid">
-                        <div class="pbi-form-group">
-                            <label>IRPJ (%)</label>
-                            <input type="number" name="aliquota_irpj" step="0.01" min="0" max="100"
-                                   value="{{ form.aliquota_irpj.value|default:'15.00' }}"
-                                   placeholder="15.00">
-                            <small style="color: var(--text-tertiary); font-size: 11px;">Padrão: 15%</small>
-                        </div>
-                        
-                        <div class="pbi-form-group">
-                            <label>IRPJ Adicional (%)</label>
-                            <input type="number" name="aliquota_irpj_adicional" step="0.01" min="0" max="100"
-                                   value="{{ form.aliquota_irpj_adicional.value|default:'10.00' }}"
-                                   placeholder="10.00">
-                            <small style="color: var(--text-tertiary); font-size: 11px;">Sobre lucro acima de R$ 60k/trimestre. Padrão: 10%</small>
-                        </div>
-                        
-                        <div class="pbi-form-group">
-                            <label>CSLL (%)</label>
-                            <input type="number" name="aliquota_csll" step="0.01" min="0" max="100"
-                                   value="{{ form.aliquota_csll.value|default:'9.00' }}"
-                                   placeholder="9.00">
-                            <small style="color: var(--text-tertiary); font-size: 11px;">Padrão: 9%</small>
-                        </div>
+            <!-- GRÁFICO 3: COMPARATIVO PERÍODOS -->
+            <div class="grafico-card">
+                <div class="grafico-card__header">
+                    <div class="grafico-card__title">
+                        <div class="grafico-card__dot" style="background: var(--info-500);"></div>
+                        Comparativo Períodos
                     </div>
                 </div>
+                <div class="grafico-card__canvas">
+                    <canvas id="chartComparativo"></canvas>
+                </div>
             </div>
 
-            <!-- AÇÕES -->
-            <div class="pbi-form-actions">
-                <button type="submit" class="pbi-btn pbi-btn--primary">💾 Salvar Configuração</button>
-                <a href="{% url 'ERP_ServicesBI:dre_gerencial' %}" class="pbi-btn pbi-btn--secondary">❌ Cancelar</a>
+            <!-- GRÁFICO 4: DISTRIBUIÇÃO DE CUSTOS -->
+            <div class="grafico-card">
+                <div class="grafico-card__header">
+                    <div class="grafico-card__title">
+                        <div class="grafico-card__dot" style="background: var(--warning-500);"></div>
+                        Distribuição de Custos
+                    </div>
+                </div>
+                <div class="grafico-card__canvas">
+                    <canvas id="chartCustos"></canvas>
+                </div>
             </div>
 
-        </form>
+            <!-- GRÁFICO 5: INDICADORES DE EFICIÊNCIA -->
+            <div class="grafico-card">
+                <div class="grafico-card__header">
+                    <div class="grafico-card__title">
+                        <div class="grafico-card__dot" style="background: var(--danger-500);"></div>
+                        Margens (%)
+                    </div>
+                </div>
+                <div class="grafico-card__canvas">
+                    <canvas id="chartMargens"></canvas>
+                </div>
+            </div>
+
+            <!-- GRÁFICO 6: PROJEÇÃO/FORECAST -->
+            <div class="grafico-card">
+                <div class="grafico-card__header">
+                    <div class="grafico-card__title">
+                        <div class="grafico-card__dot" style="background: var(--primary-500);"></div>
+                        Projeção vs Realizado
+                    </div>
+                </div>
+                <div class="grafico-card__canvas">
+                    <canvas id="chartProjecao"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABELA DRE COM SPARKLINES -->
+        <div class="pbi-panel">
+            <div class="pbi-panel__header">
+                <h5 class="pbi-panel__title">
+                    <div class="pbi-panel__dot"></div>
+                    Demonstração do Resultado - {{ empresa_selecionada.nome_fantasia }}
+                </h5>
+                <div style="display: flex; gap: 8px;">
+                    <button class="pbi-btn" onclick="expandirTabela()">🔍 Expandir</button>
+                    <button class="pbi-btn" onclick="exportarExcel()">📊 Excel</button>
+                </div>
+            </div>
+            <div class="pbi-panel__body">
+                <div class="pbi-table-wrap">
+                    <table class="pbi-table" id="tabelaDRE">
+                        <thead>
+                            <tr>
+                                <th class="pbi-table__codigo">Cód.</th>
+                                <th>Descrição</th>
+                                <th class="pbi-table__valor">Valor (R$)</th>
+                                <th class="pbi-table__percentual">AV %</th>
+                                {% if dre_anterior %}
+                                <th class="pbi-table__variacao">Var. %</th>
+                                {% endif %}
+                                <th class="pbi-table__sparkline">Tendência</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for linha in dre_dados.linhas %}
+                            <tr class="nivel-{{ linha.nivel }} {% if linha.natureza == 'resultado' %}resultado{% endif %} {% if linha.negrito %}total{% endif %}" 
+                                data-codigo="{{ linha.codigo }}"
+                                onclick="drillDown('{{ linha.codigo }}')">
+                                <td class="pbi-table__codigo">{{ linha.codigo }}</td>
+                                <td class="pbi-table__descricao">{{ linha.descricao }}</td>
+                                <td class="pbi-table__valor {% if linha.valor < 0 %}pbi-table__negativo{% endif %}">
+                                    {% if linha.natureza == 'despesa' and linha.valor > 0 %}
+                                    <span class="pbi-table__negativo">({{ linha.valor|floatformat:2 }})</span>
+                                    {% else %}
+                                    {{ linha.valor|floatformat:2 }}
+                                    {% endif %}
+                                </td>
+                                <td class="pbi-table__percentual">{{ linha.percentual|floatformat:1 }}%</td>
+                                {% if dre_anterior %}
+                                <td class="pbi-table__variacao {% if linha.variacao > 0 %}pbi-table__variacao--positivo{% else %}pbi-table__variacao--negativo{% endif %}">
+                                    {{ linha.variacao|floatformat:1 }}%
+                                </td>
+                                {% endif %}
+                                <td class="pbi-table__sparkline">
+                                    <canvas class="sparkline" data-codigo="{{ linha.codigo }}" width="80" height="30"></canvas>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- EMPTY STATE -->
+        <div class="pbi-panel">
+            <div class="pbi-empty">
+                <div class="pbi-empty__icon">📊</div>
+                <div class="pbi-empty__title">Selecione uma empresa e período</div>
+                <p style="color: var(--text-tertiary); margin-bottom: 16px;">
+                    Escolha a empresa, período e clique em <strong>Calcular</strong> para gerar a DRE com gráficos e análises.
+                </p>
+            </div>
+        </div>
+        {% endif %}
 
     </div>
 
+    <!-- STATUS BAR -->
+    <div class="pbi-statusbar">
+        <div class="pbi-statusbar__item">
+            <div class="pbi-statusbar__dot"></div>
+            Conectado
+        </div>
+        <div class="pbi-statusbar__item">📅 <span id="statusDate"></span></div>
+        <div class="pbi-statusbar__spacer"></div>
+        <div class="pbi-statusbar__item">ERP ServicesBI v2.0 · DRE Gerencial com Analytics</div>
+    </div>
+
+</div>
+
+<!-- MODAL: CONFIGURAÇÃO -->
+<div class="pbi-modal-overlay" id="modalConfig">
+    <div class="pbi-modal pbi-modal--sm">
+        <div class="pbi-modal__header">
+            <h3 class="pbi-modal__title">⚙️ Configurar DRE</h3>
+            <button class="pbi-modal__close" onclick="fecharModal('modalConfig')">&times;</button>
+        </div>
+        <form id="formConfig" method="post" action="{% url 'ERP_ServicesBI:dre_configuracao' %}">
+            {% csrf_token %}
+            <div class="pbi-modal__body">
+                <div class="pbi-form-group" style="margin-bottom: 16px;">
+                    <label>Empresa</label>
+                    <select name="empresa" class="pbi-select" style="width: 100%;">
+                        {% for emp in empresas %}
+                        <option value="{{ emp.id }}" {% if empresa_selecionada and empresa_selecionada.id == emp.id %}selected{% endif %}>
+                            {{ emp.nome_fantasia }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="pbi-form-group" style="margin-bottom: 16px;">
+                    <label>Regime Tributário</label>
+                    <select name="regime_tributario" class="pbi-select" style="width: 100%;">
+                        {% for codigo, nome in regimes %}
+                        <option value="{{ codigo }}" {% if regime_selecionado == codigo %}selected{% endif %}>
+                            {{ nome }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="pbi-form-group" style="margin-bottom: 16px;">
+                    <label>Alíquota Simples (%)</label>
+                    <input type="number" name="aliquota_simples" step="0.01" class="pbi-input" style="width: 100%;" placeholder="6.00">
+                </div>
+            </div>
+            <div class="pbi-modal__footer">
+                <button type="button" class="pbi-btn" onclick="fecharModal('modalConfig')">Cancelar</button>
+                <button type="submit" class="pbi-btn pbi-btn--primary">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: COMPARATIVO -->
+<div class="pbi-modal-overlay" id="modalComparativo">
+    <div class="pbi-modal">
+        <div class="pbi-modal__header">
+            <h3 class="pbi-modal__title">⚖️ DRE Comparativo</h3>
+            <button class="pbi-modal__close" onclick="fecharModal('modalComparativo')">&times;</button>
+        </div>
+        <div class="pbi-modal__body">
+            <div class="comparativo-grid">
+                <div class="comparativo-card comparativo-card--p1">
+                    <div class="comparativo-card__title">Período 1 (Base)</div>
+                    <div class="pbi-form-group" style="margin-bottom: 12px;">
+                        <label>Início</label>
+                        <input type="date" id="p1Inicio" class="pbi-input" style="width: 100%;" value="{{ data_inicio|date:'Y-m-d' }}">
+                    </div>
+                    <div class="pbi-form-group">
+                        <label>Fim</label>
+                        <input type="date" id="p1Fim" class="pbi-input" style="width: 100%;" value="{{ data_fim|date:'Y-m-d' }}">
+                    </div>
+                </div>
+                <div class="comparativo-card comparativo-card--p2">
+                    <div class="comparativo-card__title">Período 2 (Comparar)</div>
+                    <div class="pbi-form-group" style="margin-bottom: 12px;">
+                        <label>Início</label>
+                        <input type="date" id="p2Inicio" class="pbi-input" style="width: 100%;">
+                    </div>
+                    <div class="pbi-form-group">
+                        <label>Fim</label>
+                        <input type="date" id="p2Fim" class="pbi-input" style="width: 100%;">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="pbi-modal__footer">
+            <button type="button" class="pbi-btn" onclick="fecharModal('modalComparativo')">Cancelar</button>
+            <button type="button" class="pbi-btn pbi-btn--primary" onclick="gerarComparativo()">Comparar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: HISTÓRICO -->
+<div class="pbi-modal-overlay" id="modalHistorico">
+    <div class="pbi-modal pbi-modal--sm">
+        <div class="pbi-modal__header">
+            <h3 class="pbi-modal__title">📚 Histórico de DREs</h3>
+            <button class="pbi-modal__close" onclick="fecharModal('modalHistorico')">&times;</button>
+        </div>
+        <div class="pbi-modal__body" style="padding: 0;">
+            <div class="historico-list">
+                {% for rel in historico %}
+                <div class="historico-item">
+                    <div class="historico-item__info">
+                        <div class="historico-item__title">{{ rel.empresa.nome_fantasia }}</div>
+                        <div class="historico-item__meta">
+                            {{ rel.data_inicio|date:'d/m/Y' }} - {{ rel.data_fim|date:'d/m/Y' }} | 
+                            {{ rel.get_regime_tributario_display }} | 
+                            LL: R$ {{ rel.lucro_liquido|floatformat:0 }}
+                        </div>
+                    </div>
+                    <div class="historico-item__actions">
+                        <button class="pbi-btn" onclick="visualizarRelatorio({{ rel.id }})" title="Visualizar">👁️</button>
+                        <button class="pbi-btn" onclick="carregarRelatorio({{ rel.id }})" title="Carregar filtros">📂</button>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="pbi-empty" style="padding: 24px;">
+                    <div class="pbi-empty__icon">📭</div>
+                    <div class="pbi-empty__title">Nenhum relatório salvo</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="pbi-modal__footer">
+            <span style="color: var(--text-tertiary); font-size: 12px; margin-right: auto;">
+                {% if historico|length > 0 %}Mostrando {{ historico|length }} relatório(s){% endif %}
+            </span>
+            <button type="button" class="pbi-btn" onclick="fecharModal('modalHistorico')">Fechar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: DRILL DOWN -->
+<div class="pbi-modal-overlay" id="modalDrillDown">
+    <div class="pbi-modal">
+        <div class="pbi-modal__header">
+            <h3 class="pbi-modal__title" id="drillDownTitle">📊 Detalhamento</h3>
+            <button class="pbi-modal__close" onclick="fecharModal('modalDrillDown')">&times;</button>
+        </div>
+        <div class="pbi-modal__body">
+            <div class="grafico-card__canvas" style="height: 300px;">
+                <canvas id="chartDrillDown"></canvas>
+            </div>
+            <div id="drillDownTabela" style="margin-top: 20px;"></div>
+        </div>
+        <div class="pbi-modal__footer">
+            <button type="button" class="pbi-btn" onclick="fecharModal('modalDrillDown')">Fechar</button>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-function toggleRegime() {
-    const regime = document.getElementById('regimeSelect').value;
+// Dados do Django para JavaScript
+const dreDados = {{ dre_dados|safe|default:'null' }};
+const dreComparativo = {{ dre_comparativo|safe|default:'null' }};
+const historicoDados = {{ historico_dados|safe|default:'[]' }};
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', function() {
+    const now = new Date();
+    document.getElementById('updateTime').textContent = now.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' });
+    document.getElementById('statusDate').textContent = now.toLocaleDateString('pt-BR', { weekday:'short', day:'2-digit', month:'short', year:'numeric' });
     
-    // Esconder todas as seções
-    document.getElementById('sectionSimples').classList.remove('active');
-    document.getElementById('sectionPresumido').classList.remove('active');
-    document.getElementById('sectionIRCSSL').classList.remove('active');
-    
-    // Mostrar seções relevantes
-    if (regime === 'simples') {
-        document.getElementById('sectionSimples').classList.add('active');
-    } else if (regime === 'presumido') {
-        document.getElementById('sectionPresumido').classList.add('active');
-        document.getElementById('sectionIRCSSL').classList.add('active');
-    } else if (regime === 'real') {
-        document.getElementById('sectionIRCSSL').classList.add('active');
+    if (dreDados) {
+        initGraficos();
+        initGauges();
+        initSparklines();
     }
+});
+
+// ========== GRÁFICOS ==========
+
+function initGraficos() {
+    // 1. WATERFALL CHART (Composição do Resultado)
+    const ctxWaterfall = document.getElementById('chartWaterfall').getContext('2d');
+    new Chart(ctxWaterfall, {
+        type: 'bar',
+        data: {
+            labels: ['Receita Líq.', 'Custos', 'Desp. Oper.', 'Desp. Fin.', 'Impostos', 'Lucro Líq.'],
+            datasets: [{
+                label: 'Valores (R$)',
+                data: [
+                    dreDados.totais.receita_liquida,
+                    -dreDados.totais.custo_total,
+                    -dreDados.totais.despesas_operacionais,
+                    -dreDados.totais.resultado_financeiro,
+                    -dreDados.totais.impostos_lucro,
+                    dreDados.totais.lucro_liquido
+                ],
+                backgroundColor: [
+                    'rgba(59, 130, 246, 0.8)',   // Azul - Receita
+                    'rgba(239, 68, 68, 0.8)',    // Vermelho - Custos
+                    'rgba(239, 68, 68, 0.8)',    // Vermelho - Despesas
+                    'rgba(239, 68, 68, 0.8)',    // Vermelho - Financeiro
+                    'rgba(239, 68, 68, 0.8)',    // Vermelho - Impostos
+                    dreDados.totais.lucro_liquido >= 0 ? 'rgba(34, 197, 94, 0.8)' : 'rgba(239, 68, 68, 0.8)' // Verde/Vermelho - Lucro
+                ],
+                borderColor: [
+                    'rgb(59, 130, 246)',
+                    'rgb(239, 68, 68)',
+                    'rgb(239, 68, 68)',
+                    'rgb(239, 68, 68)',
+                    'rgb(239, 68, 68)',
+                    dreDados.totais.lucro_liquido >= 0 ? 'rgb(34, 197, 94)' : 'rgb(239, 68, 68)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'R$ ' + Math.abs(context.raw).toLocaleString('pt-BR', {minimumFractionDigits: 2});
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'R$ ' + (value / 1000).toFixed(0) + 'k';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // 2. EVOLUÇÃO TEMPORAL (Linha)
+    const ctxEvolucao = document.getElementById('chartEvolucao').getContext('2d');
+    new Chart(ctxEvolucao, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+            datasets: [{
+                label: 'Receita Líquida',
+                data: gerarDadosEvolucao('receita'),
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                fill: true,
+                tension: 0.4
+            }, {
+                label: 'Lucro Líquido',
+                data: gerarDadosEvolucao('lucro'),
+                borderColor: 'rgb(34, 197, 94)',
+                backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            },
+            scales: {
+                y: {
+                    ticks: {
+                        callback: function(value) {
+                            return 'R$ ' + (value / 1000).toFixed(0) + 'k';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // 3. COMPARATIVO PERÍODOS (Barras agrupadas)
+    const ctxComparativo = document.getElementById('chartComparativo').getContext('2d');
+    const labelsComp = ['Rec. Líq.', 'Luc. Bruto', 'EBIT', 'Luc. Líq.'];
+    const dadosAtual = [
+        dreDados.totais.receita_liquida,
+        dreDados.totais.lucro_bruto,
+        dreDados.totais.resultado_operacional,
+        dreDados.totais.lucro_liquido
+    ];
+    const dadosAnterior = dreComparativo ? [
+        dreComparativo.totais.receita_liquida,
+        dreComparativo.totais.lucro_bruto,
+        dreComparativo.totais.resultado_operacional,
+        dreComparativo.totais.lucro_liquido
+    ] : dadosAtual.map(v => v * 0.9); // Simulação se não houver comparativo
+    
+    new Chart(ctxComparativo, {
+        type: 'bar',
+        data: {
+            labels: labelsComp,
+            datasets: [{
+                label: 'Período Atual',
+                data: dadosAtual,
+                backgroundColor: 'rgba(59, 130, 246, 0.8)'
+            }, {
+                label: 'Período Anterior',
+                data: dadosAnterior,
+                backgroundColor: 'rgba(148, 163, 184, 0.8)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            },
+            scales: {
+                y: {
+                    ticks: {
+                        callback: function(value) {
+                            return 'R$ ' + (value / 1000).toFixed(0) + 'k';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // 4. DISTRIBUIÇÃO DE CUSTOS (Pizza/Doughnut)
+    const ctxCustos = document.getElementById('chartCustos').getContext('2d');
+    new Chart(ctxCustos, {
+        type: 'doughnut',
+        data: {
+            labels: ['CMV', 'Desp. Oper.', 'Desp. Fin.', 'Impostos'],
+            datasets: [{
+                data: [
+                    dreDados.totais.custo_total,
+                    dreDados.totais.despesas_operacionais,
+                    Math.abs(dreDados.totais.resultado_financeiro),
+                    dreDados.totais.impostos_lucro
+                ],
+                backgroundColor: [
+                    'rgba(239, 68, 68, 0.8)',
+                    'rgba(245, 158, 11, 0.8)',
+                    'rgba(59, 130, 246, 0.8)',
+                    'rgba(139, 92, 246, 0.8)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+
+    // 5. MARGENS (Radar ou Barras horizontais)
+    const ctxMargens = document.getElementById('chartMargens').getContext('2d');
+    new Chart(ctxMargens, {
+        type: 'bar',
+        data: {
+            labels: ['Margem Bruta', 'Margem Oper.', 'Margem Líq.'],
+            datasets: [{
+                label: '% Margem',
+                data: [
+                    dreDados.indicadores.margem_bruta,
+                    dreDados.indicadores.margem_operacional,
+                    dreDados.indicadores.margem_liquida
+                ],
+                backgroundColor: [
+                    'rgba(59, 130, 246, 0.8)',
+                    'rgba(245, 158, 11, 0.8)',
+                    'rgba(34, 197, 94, 0.8)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // 6. PROJEÇÃO VS REALIZADO (Linha com área)
+    const ctxProjecao = document.getElementById('chartProjecao').getContext('2d');
+    new Chart(ctxProjecao, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+            datasets: [{
+                label: 'Realizado',
+                data: gerarDadosEvolucao('receita').slice(0, 6),
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                fill: true
+            }, {
+                label: 'Projeção',
+                data: gerarDadosProjecao(),
+                borderColor: 'rgb(148, 163, 184)',
+                borderDash: [5, 5],
+                backgroundColor: 'rgba(148, 163, 184, 0.05)',
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
 }
 
-// Inicializar
-document.addEventListener('DOMContentLoaded', toggleRegime);
+// ========== GAUGES (MEDIDORES) ==========
+
+function initGauges() {
+    // Margem Bruta
+    createGauge('gaugeMargemBruta', dreDados.indicadores.margem_bruta, 50, 'rgb(34, 197, 94)');
+    // Margem Operacional
+    createGauge('gaugeMargemOperacional', dreDados.indicadores.margem_operacional, 30, 'rgb(59, 130, 246)');
+    // Margem Líquida
+    createGauge('gaugeMargemLiquida', dreDados.indicadores.margem_liquida, 20, 'rgb(139, 92, 246)');
+}
+
+function createGauge(canvasId, valor, maximo, cor) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Valor', 'Restante'],
+            datasets: [{
+                data: [Math.max(0, valor), Math.max(0, maximo - valor)],
+                backgroundColor: [cor, 'rgba(200, 200, 200, 0.2)'],
+                borderWidth: 0,
+                circumference: 180,
+                rotation: 270
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            cutout: '70%',
+            plugins: {
+                legend: { display: false },
+                tooltip: { enabled: false }
+            }
+        },
+        plugins: [{
+            id: 'text',
+            beforeDraw: function(chart) {
+                const width = chart.width,
+                      height = chart.height,
+                      ctx = chart.ctx;
+                ctx.restore();
+                const fontSize = (height / 114).toFixed(2);
+                ctx.font = fontSize + "em sans-serif";
+                ctx.textBaseline = "middle";
+                ctx.fillStyle = cor;
+                const text = valor.toFixed(1) + "%",
+                      textX = Math.round((width - ctx.measureText(text).width) / 2),
+                      textY = height / 2 + height / 4;
+                ctx.fillText(text, textX, textY);
+                ctx.save();
+            }
+        }]
+    });
+}
+
+// ========== SPARKLINES ==========
+
+function initSparklines() {
+    document.querySelectorAll('.sparkline').forEach(canvas => {
+        const codigo = canvas.dataset.codigo;
+        const ctx = canvas.getContext('2d');
+        
+        // Gerar dados de tendência simulados baseados no código
+        const dados = gerarDadosSparkline(codigo);
+        const cor = dados[dados.length - 1] >= dados[0] ? 'rgb(34, 197, 94)' : 'rgb(239, 68, 68)';
+        
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array(12).fill(''),
+                datasets: [{
+                    data: dados,
+                    borderColor: cor,
+                    borderWidth: 2,
+                    fill: false,
+                    pointRadius: 0,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: false,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { display: false },
+                    y: { display: false, min: Math.min(...dados) * 0.9, max: Math.max(...dados) * 1.1 }
+                }
+            }
+        });
+    });
+}
+
+// ========== FUNÇÕES AUXILIARES ==========
+
+function gerarDadosEvolucao(tipo) {
+    // Simulação de dados históricos - substituir por dados reais da API
+    const base = tipo === 'receita' ? dreDados.totais.receita_liquida : dreDados.totais.lucro_liquido;
+    return Array.from({length: 12}, (_, i) => base * (0.7 + Math.random() * 0.6));
+}
+
+function gerarDadosProjecao() {
+    const base = dreDados.totais.receita_liquida;
+    const tendencia = Array.from({length: 6}, (_, i) => base * (0.8 + i * 0.05));
+    return tendencia;
+}
+
+function gerarDadosSparkline(codigo) {
+    // Gerar tendência baseada no hash do código
+    const seed = codigo.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+    const base = 1000 + (seed % 5000);
+    return Array.from({length: 12}, (_, i) => base * (0.8 + Math.random() * 0.4));
+}
+
+// ========== INTERAÇÕES ==========
+
+function toggleChartType(type) {
+    // Alternar entre waterfall e bar chart
+    document.querySelectorAll('.view-toggle__btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    // Recarregar gráfico com novo tipo (implementar se necessário)
+}
+
+function drillDown(codigo) {
+    // Abrir modal com detalhamento
+    document.getElementById('drillDownTitle').textContent = '📊 Detalhamento: ' + codigo;
+    document.getElementById('modalDrillDown').classList.add('active');
+    
+    // Criar gráfico de drill down
+    const ctx = document.getElementById('chartDrillDown').getContext('2d');
+    // Destruir gráfico anterior se existir
+    if (window.chartDrillDownInstance) {
+        window.chartDrillDownInstance.destroy();
+    }
+    
+    window.chartDrillDownInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Item 1', 'Item 2', 'Item 3', 'Item 4', 'Item 5'],
+            datasets: [{
+                label: 'Valor Detalhado',
+                data: Array.from({length: 5}, () => Math.random() * 10000),
+                backgroundColor: 'rgba(59, 130, 246, 0.8)'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+}
+
+function expandirTabela() {
+    // Toggle fullscreen na tabela
+    const tabela = document.getElementById('tabelaDRE');
+    tabela.closest('.pbi-panel').classList.toggle('fullscreen');
+}
+
+function exportarExcel() {
+    // Exportar dados para Excel
+    alert('Exportação para Excel em desenvolvimento...');
+}
+
+// ========== MODAIS ==========
+
+function abrirModalConfig() {
+    document.getElementById('modalConfig').classList.add('active');
+}
+
+function abrirModalComparativo() {
+    document.getElementById('modalComparativo').classList.add('active');
+}
+
+function abrirModalHistorico() {
+    document.getElementById('modalHistorico').classList.add('active');
+}
+
+function fecharModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+}
+
+// ========== AÇÕES ==========
+
+function calcularDRE() {
+    const params = new URLSearchParams();
+    params.append('empresa', document.getElementById('empresaFilter').value);
+    params.append('data_inicio', document.getElementById('dataInicio').value);
+    params.append('data_fim', document.getElementById('dataFim').value);
+    params.append('regime', document.getElementById('regimeFilter').value);
+    
+    window.location.href = '?' + params.toString();
+}
+
+function gerarComparativo() {
+    const params = new URLSearchParams();
+    params.append('empresa', document.getElementById('empresaFilter').value);
+    params.append('p1_inicio', document.getElementById('p1Inicio').value);
+    params.append('p1_fim', document.getElementById('p1Fim').value);
+    params.append('p2_inicio', document.getElementById('p2Inicio').value);
+    params.append('p2_fim', document.getElementById('p2Fim').value);
+    
+    window.location.href = '{% url "ERP_ServicesBI:dre_comparativo" %}' + '?' + params.toString();
+}
+
+function salvarRelatorio() {
+    const params = new URLSearchParams(window.location.search);
+    window.location.href = '{% url "ERP_ServicesBI:dre_salvar" %}' + '?' + params.toString();
+}
+
+function visualizarRelatorio(id) {
+    window.open('{% url "ERP_ServicesBI:dre_relatorio" 0 %}'.replace('0', id), '_blank');
+}
+
+function carregarRelatorio(id) {
+    window.location.href = '{% url "ERP_ServicesBI:dre_relatorio" 0 %}'.replace('0', id);
+}
+
+// Fechar modal ao clicar fora
+document.querySelectorAll('.pbi-modal-overlay').forEach(modal => {
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.remove('active');
+        }
+    });
+});
 </script>
 {% endblock %}

@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Entrada de NF-e{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-file-invoice-dollar"></i> Entrada de NF-e</h2>
+                <div>
+                    <button class="btn btn-outline-info me-2" 
+                            hx-get="{% url 'entrada_nfe_importar_xml' %}" 
+                            hx-target="#modal-container" 
+                            hx-swap="innerHTML">
+                        <i class="fas fa-file-upload"></i> Importar XML
+                    </button>
+                    <button class="btn btn-primary" 
+                            hx-get="{% url 'entrada_nfe_add' %}" 
+                            hx-target="#modal-container" 
+                            hx-swap="innerHTML">
+                        <i class="fas fa-plus"></i> Nova NF-e
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form hx-get="{% url 'entrada_nfe_list' %}" 
+                  hx-target="#entrada-nfe-table-container" 
+                  hx-trigger="submit, change delay:300ms">
+                <div class="row">
+                    <div class="col-md-2">
+                        <label>Número</label>
+                        <input type="text" name="numero" class="form-control" placeholder="Nº NF-e">
+                    </div>
+                    <div class="col-md-2">
+                        <label>Série</label>
+                        <input type="text" name="serie" class="form-control" placeholder="Série">
+                    </div>
+                    <div class="col-md-3">
+                        <label>Fornecedor</label>
+                        <input type="text" name="fornecedor" class="form-control" placeholder="Nome/CNPJ">
+                    </div>
+                    <div class="col-md-3">
+                        <label>Período de Emissão</label>
+                        <div class="input-group">
+                            <input type="date" name="data_inicio" class="form-control">
+                            <span class="input-group-text">até</span>
+                            <input type="date" name="data_fim" class="form-control">
+                        </div>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-search"></i> Filtrar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabela de NF-e -->
+    <div id="entrada-nfe-table-container" class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>NF-e</th>
+                            <th>Fornecedor</th>
+                            <th>Emissão</th>
+                            <th>Entrada</th>
+                            <th>Valor Total</th>
+                            <th>Status</th>
+                            <th>Pedido</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for nfe in notas_fiscais %}
+                        <tr id="nfe-row-{{ nfe.id }}">
+                            <td>
+                                <strong>{{ nfe.numero }}</strong>
+                                <br><small class="text-muted">Série {{ nfe.serie }}</small>
+                                <br><small class="text-muted">{{ nfe.chave_acesso|slice:":23" }}...</small>
+                            </td>
+                            <td>
+                                {{ nfe.fornecedor.razao_social|default:nfe.fornecedor.nome|default:"-" }}
+                                <br><small class="text-muted">{{ nfe.fornecedor.cnpj|default:"-" }}</small>
+                            </td>
+                            <td>{{ nfe.data_emissao|date:"d/m/Y" }}</td>
+                            <td>{{ nfe.data_entrada|date:"d/m/Y"|default:"-" }}</td>
+                            <td class="text-end fw-bold">R$ {{ nfe.valor_total|floatformat:2 }}</td>
+                            <td>
+                                <span class="badge bg-{% if nfe.status == 'pendente' %}warning{% elif nfe.status == 'confirmada' %}success{% elif nfe.status == 'cancelada' %}danger{% else %}info{% endif %}">
+                                    {{ nfe.get_status_display }}
+                                </span>
+                                {% if nfe.status_conferencia %}
+                                <br><small class="badge bg-{% if nfe.status_conferencia == 'conferido' %}success{% elif nfe.status_conferencia == 'divergente' %}warning{% else %}secondary{% endif %}">
+                                    {{ nfe.get_status_conferencia_display }}
+                                </small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if nfe.pedido %}
+                                <a href="#" hx-get="{% url 'pedido_compra_detail' nfe.pedido.id %}" hx-target="#modal-container">
+                                    #{{ nfe.pedido.numero }}
+                                </a>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-primary" 
+                                            hx-get="{% url 'entrada_nfe_detail' nfe.id %}" 
+                                            hx-target="#modal-container" 
+                                            hx-swap="innerHTML">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    {% if nfe.status == 'pendente' %}
+                                    <button class="btn btn-sm btn-outline-success" 
+                                            hx-get="{% url 'entrada_nfe_confirmar' nfe.id %}" 
+                                            hx-target="#modal-container" 
+                                            hx-swap="innerHTML">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-warning" 
+                                            hx-get="{% url 'entrada_nfe_edit' nfe.id %}" 
+                                            hx-target="#modal-container" 
+                                            hx-swap="innerHTML">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    {% endif %}
+                                    <button class="btn btn-sm btn-outline-info" 
+                                            hx-get="{% url 'entrada_nfe_danfe' nfe.id %}" 
+                                            target="_blank">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">
+                                <i class="fas fa-file-invoice fa-3x mb-3"></i>
+                                <p>Nenhuma NF-e encontrada.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Paginação -->
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Paginação">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" hx-get="{% url 'entrada_nfe_list' %}?page={{ page_obj.previous_page_number }}" 
+                           hx-target="#entrada-nfe-table-container">Anterior</a>
+                    </li>
+                    {% endif %}
+                    {% for num in page_obj.paginator.page_range %}
+                    <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                        <a class="page-link" hx-get="{% url 'entrada_nfe_list' %}?page={{ num }}" 
+                           hx-target="#entrada-nfe-table-container">{{ num }}</a>
+                    </li>
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" hx-get="{% url 'entrada_nfe_list' %}?page={{ page_obj.next_page_number }}" 
+                           hx-target="#entrada-nfe-table-container">Próxima</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div id="modal-container"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.body.addEventListener('nfeUpdated', function() {
+        htmx.trigger('#entrada-nfe-table-container', 'refresh');
+    });
+</script>
+{% endblock %}

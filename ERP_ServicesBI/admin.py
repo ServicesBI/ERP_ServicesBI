@@ -1,17 +1,32 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
 from .models import (
-    Empresa, Cliente, Fornecedor, Produto, CategoriaProduto,  # ← CORRIGIDO: Categoria → CategoriaProduto
-    PedidoCompra, ItemPedidoCompra,
+    # Cadastros
+    Empresa, Cliente, Fornecedor, Produto, CategoriaProduto,
+    Vendedor, CondicaoPagamento, FormaPagamento, Deposito,
+
+    # Compras
+    PedidoCompra, ItemPedidoCompra, PedidoAprovacao, RegraAprovacao,
     NotaFiscalEntrada, ItemNotaFiscalEntrada,
+    CotacaoMae, ItemSolicitado, CotacaoFornecedor, ItemCotacaoFornecedor,
+
+    # Vendas
     Orcamento, ItemOrcamento, PedidoVenda, ItemPedidoVenda,
     NotaFiscalSaida, ItemNotaFiscalSaida,
+
+    # Financeiro
     ContaPagar, ContaReceber, MovimentoCaixa,
     CategoriaFinanceira, CentroCusto, OrcamentoFinanceiro,
-    ExtratoBancario, LancamentoExtrato,
+    ExtratoBancario, LancamentoExtrato, ContaBancaria,
+    ConfiguracaoDRE, LinhaDRE, RelatorioDRE, ItemRelatorioDRE,
+
+    # Estoque
     MovimentacaoEstoque, Inventario, ItemInventario,
-    TransferenciaEstoque, ItemTransferencia,
-    CotacaoMae, ItemSolicitado, CotacaoFornecedor, ItemCotacaoFornecedor,
+    TransferenciaEstoque, ItemTransferencia, SaldoEstoque,
+    EntradaNFE, ItemEntradaNFE,
+
+    # Planejado x Realizado
+    Projeto, OrcamentoProjeto,
 )
 
 
@@ -40,8 +55,15 @@ class FornecedorAdmin(admin.ModelAdmin):
     list_filter = ['ativo', 'tipo_pessoa']
 
 
-@admin.register(CategoriaProduto)  # ← CORRIGIDO: Categoria → CategoriaProduto
-class CategoriaProdutoAdmin(admin.ModelAdmin):  # ← CORRIGIDO: CategoriaAdmin → CategoriaProdutoAdmin
+@admin.register(Vendedor)
+class VendedorAdmin(admin.ModelAdmin):
+    list_display = ['nome', 'apelido', 'email', 'comissao_padrao', 'ativo']
+    search_fields = ['nome', 'apelido', 'email', 'cpf']
+    list_filter = ['ativo']
+
+
+@admin.register(CategoriaProduto)
+class CategoriaProdutoAdmin(admin.ModelAdmin):
     list_display = ['nome', 'ativo']
     search_fields = ['nome']
 
@@ -51,7 +73,27 @@ class ProdutoAdmin(admin.ModelAdmin):
     list_display = ['codigo', 'descricao', 'categoria', 'preco_venda', 'estoque_atual', 'estoque_minimo', 'ativo']
     search_fields = ['codigo', 'descricao']
     list_filter = ['ativo', 'categoria', 'unidade']
-    fields = ['codigo', 'descricao', 'categoria', 'unidade', 'preco_custo', 'preco_venda', 'estoque_atual', 'estoque_minimo', 'ativo']
+
+
+@admin.register(CondicaoPagamento)
+class CondicaoPagamentoAdmin(admin.ModelAdmin):
+    list_display = ['descricao', 'parcelas', 'periodicidade', 'ativo']
+    search_fields = ['descricao']
+    list_filter = ['periodicidade', 'ativo']
+
+
+@admin.register(FormaPagamento)
+class FormaPagamentoAdmin(admin.ModelAdmin):
+    list_display = ['descricao', 'tipo', 'ativo']
+    search_fields = ['descricao']
+    list_filter = ['tipo', 'ativo']
+
+
+@admin.register(Deposito)
+class DepositoAdmin(admin.ModelAdmin):
+    list_display = ['codigo', 'nome', 'responsavel', 'ativo']
+    search_fields = ['codigo', 'nome', 'responsavel']
+    list_filter = ['ativo']
 
 
 # =============================================================================
@@ -65,10 +107,24 @@ class ItemPedidoCompraInline(admin.TabularInline):
 
 @admin.register(PedidoCompra)
 class PedidoCompraAdmin(admin.ModelAdmin):
-    list_display = ['numero', 'fornecedor', 'data_pedido', 'status', 'valor_total']
+    list_display = ['numero', 'fornecedor', 'data_pedido', 'status', 'valor_total', 'nivel_aprovacao_atual']
     search_fields = ['numero', 'fornecedor__nome_razao_social']
     list_filter = ['status', 'data_pedido']
     inlines = [ItemPedidoCompraInline]
+
+
+@admin.register(PedidoAprovacao)
+class PedidoAprovacaoAdmin(admin.ModelAdmin):
+    list_display = ['pedido', 'usuario', 'acao', 'nivel', 'data']
+    list_filter = ['acao', 'nivel', 'data']
+    search_fields = ['pedido__numero', 'usuario__username']
+
+
+@admin.register(RegraAprovacao)
+class RegraAprovacaoAdmin(admin.ModelAdmin):
+    list_display = ['nome', 'valor_minimo', 'valor_maximo', 'nivel', 'ativo']
+    list_filter = ['nivel', 'ativo']
+    search_fields = ['nome']
 
 
 class ItemNotaFiscalEntradaInline(admin.TabularInline):
@@ -78,9 +134,9 @@ class ItemNotaFiscalEntradaInline(admin.TabularInline):
 
 @admin.register(NotaFiscalEntrada)
 class NotaFiscalEntradaAdmin(admin.ModelAdmin):
-    list_display = ['numero_nf', 'fornecedor', 'data_entrada', 'valor_total']
+    list_display = ['numero_nf', 'fornecedor', 'data_recebimento', 'valor_total', 'status']  # ✅ CORRIGIDO: data_entrada → data_recebimento
     search_fields = ['numero_nf', 'fornecedor__nome_razao_social']
-    list_filter = ['data_entrada']
+    list_filter = ['status', 'data_recebimento']  # ✅ CORRIGIDO: data_entrada → data_recebimento
     inlines = [ItemNotaFiscalEntradaInline]
 
 
@@ -121,9 +177,9 @@ class ItemNotaFiscalSaidaInline(admin.TabularInline):
 
 @admin.register(NotaFiscalSaida)
 class NotaFiscalSaidaAdmin(admin.ModelAdmin):
-    list_display = ['numero_nf', 'cliente', 'data_emissao', 'valor_total']
+    list_display = ['numero_nf', 'cliente', 'data_emissao', 'valor_total', 'status']  # ✅ Adicionado status
     search_fields = ['numero_nf', 'cliente__nome_razao_social']
-    list_filter = ['data_emissao']
+    list_filter = ['status', 'data_emissao']  # ✅ Adicionado status
     inlines = [ItemNotaFiscalSaidaInline]
 
 
@@ -150,6 +206,13 @@ class OrcamentoFinanceiroAdmin(admin.ModelAdmin):
     list_display = ['categoria', 'centro_custo', 'ano', 'mes', 'valor_orcado', 'valor_realizado']
     search_fields = ['categoria__nome', 'centro_custo__nome']
     list_filter = ['ano', 'mes', 'categoria__tipo']
+
+
+@admin.register(ContaBancaria)
+class ContaBancariaAdmin(admin.ModelAdmin):
+    list_display = ['nome', 'banco', 'tipo', 'saldo_atual', 'ativa']
+    search_fields = ['nome', 'banco', 'agencia', 'conta']
+    list_filter = ['tipo', 'ativa']
 
 
 class LancamentoExtratoInline(admin.TabularInline):
@@ -187,12 +250,41 @@ class MovimentoCaixaAdmin(admin.ModelAdmin):
 
 
 # =============================================================================
+# DRE
+# =============================================================================
+
+@admin.register(ConfiguracaoDRE)
+class ConfiguracaoDREAdmin(admin.ModelAdmin):
+    list_display = ['empresa', 'regime_tributario', 'atividade_principal', 'ativo']
+    list_filter = ['regime_tributario', 'ativo']
+
+
+@admin.register(LinhaDRE)
+class LinhaDREAdmin(admin.ModelAdmin):
+    list_display = ['codigo', 'descricao', 'tipo', 'natureza', 'ordem', 'visivel']
+    list_filter = ['tipo', 'natureza', 'visivel']
+    search_fields = ['codigo', 'descricao']
+
+
+@admin.register(RelatorioDRE)
+class RelatorioDREAdmin(admin.ModelAdmin):
+    list_display = ['empresa', 'data_inicio', 'data_fim', 'regime_tributario', 'status', 'gerado_em']
+    list_filter = ['status', 'regime_tributario', 'gerado_em']
+
+
+@admin.register(ItemRelatorioDRE)
+class ItemRelatorioDREAdmin(admin.ModelAdmin):
+    list_display = ['relatorio', 'linha_dre', 'valor', 'percentual_vertical']
+    list_filter = ['linha_dre__natureza']
+
+
+# =============================================================================
 # ESTOQUE
 # =============================================================================
 
 @admin.register(MovimentacaoEstoque)
 class MovimentacaoEstoqueAdmin(admin.ModelAdmin):
-    list_display = ['produto', 'tipo', 'quantidade', 'data', 'usuario']
+    list_display = ['produto', 'tipo', 'quantidade', 'data', 'usuario', 'valor_total']
     search_fields = ['produto__descricao', 'motivo']
     list_filter = ['tipo', 'data']
 
@@ -204,9 +296,9 @@ class ItemInventarioInline(admin.TabularInline):
 
 @admin.register(Inventario)
 class InventarioAdmin(admin.ModelAdmin):
-    list_display = ['numero', 'data', 'status', 'usuario']
+    list_display = ['numero', 'data', 'status', 'deposito', 'usuario']  # ✅ Adicionado deposito
     search_fields = ['numero']
-    list_filter = ['status', 'data']
+    list_filter = ['status', 'data', 'deposito']  # ✅ Adicionado deposito
     inlines = [ItemInventarioInline]
 
 
@@ -221,6 +313,32 @@ class TransferenciaEstoqueAdmin(admin.ModelAdmin):
     search_fields = ['numero', 'origem', 'destino']
     list_filter = ['status', 'data']
     inlines = [ItemTransferenciaInline]
+
+
+@admin.register(SaldoEstoque)
+class SaldoEstoqueAdmin(admin.ModelAdmin):
+    list_display = ['produto', 'deposito', 'quantidade', 'quantidade_reservada', 'quantidade_disponivel']
+    search_fields = ['produto__descricao', 'deposito__nome']
+    list_filter = ['deposito']
+
+
+class ItemEntradaNFEInline(admin.TabularInline):
+    model = ItemEntradaNFE
+    extra = 1
+
+
+@admin.register(EntradaNFE)
+class EntradaNFEAdmin(admin.ModelAdmin):
+    list_display = ['numero_nfe', 'fornecedor', 'deposito', 'data_entrada', 'valor_total', 'status']
+    search_fields = ['numero_nfe', 'fornecedor__nome_razao_social']
+    list_filter = ['status', 'data_entrada', 'deposito']
+    inlines = [ItemEntradaNFEInline]
+
+
+@admin.register(ItemEntradaNFE)
+class ItemEntradaNFEAdmin(admin.ModelAdmin):
+    list_display = ['entrada', 'produto', 'quantidade', 'valor_unitario', 'valor_total']
+    search_fields = ['produto__descricao', 'entrada__numero_nfe']
 
 
 # =============================================================================
@@ -267,3 +385,21 @@ class ItemSolicitadoAdmin(admin.ModelAdmin):
 class ItemCotacaoFornecedorAdmin(admin.ModelAdmin):
     list_display = ['cotacao_fornecedor', 'descricao_fornecedor', 'preco_unitario', 'preco_total', 'disponivel']
     list_filter = ['disponivel', 'match_automatico']
+
+
+# =============================================================================
+# PLANEJADO X REALIZADO
+# =============================================================================
+
+@admin.register(Projeto)
+class ProjetoAdmin(admin.ModelAdmin):
+    list_display = ['codigo', 'nome', 'cliente', 'status', 'data_inicio']
+    search_fields = ['codigo', 'nome', 'cliente__nome_razao_social']
+    list_filter = ['status']
+
+
+@admin.register(OrcamentoProjeto)
+class OrcamentoProjetoAdmin(admin.ModelAdmin):
+    list_display = ['projeto', 'ano', 'mes', 'valor_planejado', 'valor_realizado', 'variacao']
+    list_filter = ['ano', 'mes']
+    search_fields = ['projeto__nome']

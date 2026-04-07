@@ -72,6 +72,7 @@
 .pbi-btn--primary { background: var(--primary-500); color: white; border-color: var(--primary-500); }
 .pbi-btn--primary:hover { background: var(--primary-600); color: white; }
 .pbi-btn--secondary { background: var(--bg-secondary); color: var(--text-secondary); }
+.pbi-btn--success { background: var(--success-500); color: white; border-color: var(--success-500); }
 
 /* ===== CANVAS ===== */
 .pbi-canvas {
@@ -120,21 +121,6 @@
 .pbi-panel__body { padding: 24px; }
 
 /* ===== FORM ===== */
-.pbi-form-section {
-    margin-bottom: 24px;
-}
-
-.pbi-form-section__title {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--text-primary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin: 0 0 16px 0;
-    padding-left: 12px;
-    border-left: 3px solid var(--primary-500);
-}
-
 .pbi-form-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -173,6 +159,7 @@
     background: var(--bg-primary);
     color: var(--text-primary);
     transition: all 0.15s;
+    font-family: inherit;
 }
 
 .pbi-form-group input:focus,
@@ -186,6 +173,65 @@
 .pbi-form-group textarea {
     resize: vertical;
     min-height: 80px;
+}
+
+/* Input de ano - SEM formatação de milhar */
+.input-ano {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+}
+
+/* Select com ações */
+.select-with-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.select-with-actions select {
+    flex: 1;
+}
+
+/* Botões de ação do select */
+.btn-select-action {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-primary);
+    color: var(--text-tertiary);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.btn-select-action:hover {
+    background: var(--bg-secondary);
+    border-color: var(--primary-400);
+    color: var(--primary-600);
+    transform: scale(1.05);
+}
+
+.btn-select-action.btn-add:hover {
+    background: rgba(34,197,94,0.1);
+    border-color: var(--success-500);
+    color: var(--success-600);
+}
+
+.btn-select-action.btn-delete:hover {
+    background: rgba(239,68,68,0.1);
+    border-color: var(--danger-500);
+    color: var(--danger-600);
+}
+
+.btn-select-action:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
 }
 
 /* Saldo Preview */
@@ -243,9 +289,103 @@
     border: 1px solid rgba(34,197,94,0.2);
 }
 
+/* ===== MODAL ===== */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-form {
+    background: var(--card-bg);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    overflow: hidden;
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.modal-form__header {
+    background: var(--primary-600);
+    color: #fff;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.modal-form__title {
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-form__close {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.modal-form__close:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.modal-form__body {
+    padding: 24px;
+}
+
+.modal-form__footer {
+    display: flex;
+    gap: 12px;
+    padding: 20px 24px;
+    border-top: 1px solid var(--border-color);
+    justify-content: flex-end;
+}
+
 @media (max-width: 600px) {
     .pbi-form-grid {
         grid-template-columns: 1fr;
+    }
+    
+    .select-with-actions {
+        flex-wrap: wrap;
+    }
+    
+    .select-with-actions select {
+        width: 100%;
     }
 }
 </style>
@@ -284,25 +424,60 @@
         <form method="post" id="formOrcamento">
             {% csrf_token %}
 
-            <!-- SEÇÃO: PERÍODO -->
+            <!-- SEÇÃO: PROJETO E PERÍODO -->
             <div class="pbi-panel">
                 <div class="pbi-panel__header">
                     <h5 class="pbi-panel__title">
                         <div class="pbi-panel__dot"></div>
-                        Período
+                        Projeto e Período
                     </h5>
                 </div>
                 <div class="pbi-panel__body">
                     <div class="pbi-form-grid">
+                        <!-- PROJETO COM BOTÕES + E 🗑️ -->
+                        <div class="pbi-form-group pbi-form-group--full">
+                            <label>Projeto <span class="required">*</span></label>
+                            <div class="select-with-actions">
+                                <select name="projeto" id="selectProjeto" required>
+                                    <option value="">Selecione um projeto...</option>
+                                    {% for projeto in projetos %}
+                                        <option value="{{ projeto.id }}" 
+                                                {% if orcamento.projeto_id == projeto.id or request.GET.projeto == projeto.id|stringformat:"s" %}selected{% endif %}>
+                                            {{ projeto.nome }}
+                                            {% if projeto.codigo %}({{ projeto.codigo }}){% endif %}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" class="btn-select-action btn-add" onclick="abrirModalProjeto()" title="Adicionar Projeto">
+                                    ➕
+                                </button>
+                                <button type="button" class="btn-select-action btn-delete" onclick="excluirProjeto()" title="Excluir Projeto Selecionado" id="btn-del-projeto" disabled>
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- ANO - CORRIGIDO: SEM FORMATAÇÃO DE MILHAR -->
                         <div class="pbi-form-group">
                             <label>Ano <span class="required">*</span></label>
-                            <input type="number" name="ano" required min="2020" max="2030"
-                                   value="{{ orcamento.ano|default:ano_atual }}">
+                            <input type="text" 
+                                   name="ano" 
+                                   id="ano" 
+                                   class="input-ano"
+                                   required 
+                                   maxlength="4" 
+                                   placeholder="2026"
+                                   pattern="[0-9]{4}"
+                                   inputmode="numeric"
+                                   autocomplete="off"
+                                   value="{% if orcamento %}{{ orcamento.ano|default:'' }}{% else %}{{ ano_atual|default:'2026' }}{% endif %}"
+                                   onkeypress="return event.charCode >= 48 && event.charCode <= 57"
+                                   oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 4)">
                         </div>
                         
                         <div class="pbi-form-group">
                             <label>Mês <span class="required">*</span></label>
-                            <select name="mes" required>
+                            <select name="mes" id="mes" required>
                                 <option value="">Selecione...</option>
                                 <option value="1" {% if orcamento.mes == 1 %}selected{% endif %}>Janeiro</option>
                                 <option value="2" {% if orcamento.mes == 2 %}selected{% endif %}>Fevereiro</option>
@@ -317,6 +492,20 @@
                                 <option value="11" {% if orcamento.mes == 11 %}selected{% endif %}>Novembro</option>
                                 <option value="12" {% if orcamento.mes == 12 %}selected{% endif %}>Dezembro</option>
                             </select>
+                        </div>
+
+                        <!-- DATA DE INÍCIO -->
+                        <div class="pbi-form-group">
+                            <label>Data de Início</label>
+                            <input type="date" name="data_inicio" id="data_inicio"
+                                   value="{{ orcamento.data_inicio|date:'Y-m-d'|default:'' }}">
+                        </div>
+
+                        <!-- DATA DE FIM -->
+                        <div class="pbi-form-group">
+                            <label>Data de Fim</label>
+                            <input type="date" name="data_fim" id="data_fim"
+                                   value="{{ orcamento.data_fim|date:'Y-m-d'|default:'' }}">
                         </div>
                     </div>
                 </div>
@@ -335,14 +524,14 @@
                         <div class="pbi-form-group">
                             <label>Receitas Orçadas <span class="required">*</span></label>
                             <input type="text" name="receitas_orcadas" id="receitas" class="moeda" required
-                                   value="{{ orcamento.receitas_orcadas|default:orcamento.receitas|default:'0,00' }}"
+                                   value="{{ orcamento.receitas_orcadas|default:'0,00' }}"
                                    placeholder="R$ 0,00">
                         </div>
                         
                         <div class="pbi-form-group">
                             <label>Despesas Orçadas <span class="required">*</span></label>
                             <input type="text" name="despesas_orcadas" id="despesas" class="moeda" required
-                                   value="{{ orcamento.despesas_orcadas|default:orcamento.despesas|default:'0,00' }}"
+                                   value="{{ orcamento.despesas_orcadas|default:'0,00' }}"
                                    placeholder="R$ 0,00">
                         </div>
                     </div>
@@ -381,21 +570,71 @@
     </div>
 
 </div>
+
+<!-- MODAL: NOVO PROJETO -->
+<div class="modal-overlay" id="modalProjeto">
+    <div class="modal-form">
+        <div class="modal-form__header">
+            <div class="modal-form__title">
+                ➕ Novo Projeto
+            </div>
+            <button type="button" class="modal-form__close" onclick="fecharModalProjeto()">×</button>
+        </div>
+        <div class="modal-form__body">
+            <div class="pbi-form-group" style="margin-bottom: 16px;">
+                <label class="form-label" for="projetoNome">
+                    Nome do Projeto <span class="required">*</span>
+                </label>
+                <input type="text" id="projetoNome" class="form-input" 
+                       placeholder="Digite o nome do projeto" maxlength="200">
+            </div>
+            <div class="pbi-form-group" style="margin-bottom: 0;">
+                <label class="form-label" for="projetoCodigo">Código (opcional)</label>
+                <input type="text" id="projetoCodigo" class="form-input" 
+                       placeholder="Ex: PRJ001" maxlength="50">
+            </div>
+        </div>
+        <div class="modal-form__footer">
+            <button type="button" class="pbi-btn" onclick="fecharModalProjeto()">Cancelar</button>
+            <button type="button" class="pbi-btn pbi-btn--success" onclick="salvarProjeto()">💾 Salvar Projeto</button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-// Máscara de moeda
+// ============================================================================
+// MÁSCARA DE MOEDA
+// ============================================================================
 document.querySelectorAll('.moeda').forEach(input => {
     input.addEventListener('input', function(e) {
-        var valor = e.target.value.replace(/\D/g, '');
-        valor = (valor / 100).toFixed(2);
-        valor = valor.replace('.', ',');
-        valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
-        e.target.value = valor;
+        mascaraMoeda(this);
         calcularSaldo();
     });
+    
+    // Aplicar máscara inicial se houver valor
+    if (input.value) {
+        mascaraMoeda(input);
+    }
 });
+
+function mascaraMoeda(input) {
+    let valor = input.value.replace(/\D/g, '');
+    
+    if (valor === '' || valor === '0') {
+        input.value = '';
+        return;
+    }
+    
+    valor = (parseInt(valor) / 100).toFixed(2);
+    let partes = valor.split('.');
+    let inteiro = partes[0];
+    let centavos = partes[1];
+    
+    inteiro = inteiro.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    input.value = inteiro + ',' + centavos;
+}
 
 function calcularSaldo() {
     var receitasStr = document.getElementById('receitas').value.replace(/\./g, '').replace(',', '.') || '0';
@@ -417,5 +656,179 @@ function calcularSaldo() {
 
 // Calcular saldo inicial
 calcularSaldo();
+
+// ============================================================================
+// CORREÇÃO DO ANO - LIMPAR FORMATAÇÃO NO CARREGAMENTO
+// ============================================================================
+document.addEventListener('DOMContentLoaded', function() {
+    const anoInput = document.getElementById('ano');
+    if (anoInput && anoInput.value) {
+        // Remover qualquer formatação de milhar (ponto) que possa ter vindo do servidor
+        let valorLimpo = anoInput.value.replace(/\./g, '').replace(/,/g, '');
+        // Garantir que são apenas números
+        valorLimpo = valorLimpo.replace(/[^0-9]/g, '');
+        // Limitar a 4 dígitos
+        valorLimpo = valorLimpo.slice(0, 4);
+        anoInput.value = valorLimpo;
+    }
+});
+
+// ============================================================================
+// MODAL PROJETO
+// ============================================================================
+
+function abrirModalProjeto() {
+    document.getElementById('modalProjeto').classList.add('active');
+    document.getElementById('projetoNome').focus();
+    document.body.style.overflow = 'hidden';
+}
+
+function fecharModalProjeto() {
+    document.getElementById('modalProjeto').classList.remove('active');
+    document.body.style.overflow = '';
+    // Limpar campos
+    document.getElementById('projetoNome').value = '';
+    document.getElementById('projetoCodigo').value = '';
+}
+
+function salvarProjeto() {
+    const nome = document.getElementById('projetoNome').value.trim();
+    const codigo = document.getElementById('projetoCodigo').value.trim();
+    
+    // Validações
+    if (!nome) {
+        mostrarToast('Preencha o nome do projeto', 'warning');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('nome', nome);
+    formData.append('codigo', codigo);
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+    
+    fetch('/api/projeto/criar/', {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            const select = document.getElementById('selectProjeto');
+            const option = new Option(data.nome + (data.codigo ? ' (' + data.codigo + ')' : ''), data.id);
+            select.add(option);
+            select.value = data.id;
+            document.getElementById('btn-del-projeto').disabled = false;
+            
+            fecharModalProjeto();
+            mostrarToast('Projeto criado com sucesso!', 'success');
+        } else {
+            throw new Error(data.message || 'Erro ao criar projeto');
+        }
+    })
+    .catch(err => {
+        mostrarToast('Erro: ' + err.message, 'danger');
+    });
+}
+
+function excluirProjeto() {
+    const select = document.getElementById('selectProjeto');
+    const id = select.value;
+    if (!id) return;
+    
+    const nome = select.options[select.selectedIndex].text;
+    
+    if (!confirm(`Deseja realmente excluir o projeto "${nome}"?\n\n⚠️ Atenção: Orçamentos vinculados a este projeto ficarão sem projeto.`)) {
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+    
+    fetch(`/api/projeto/${id}/excluir/`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            select.remove(select.selectedIndex);
+            select.value = '';
+            document.getElementById('btn-del-projeto').disabled = true;
+            mostrarToast('Projeto excluído!', 'success');
+        } else {
+            throw new Error(data.message || 'Erro ao excluir projeto');
+        }
+    })
+    .catch(err => {
+        mostrarToast('Erro ao excluir: ' + err.message, 'danger');
+    });
+}
+
+// Habilitar/desabilitar botão de excluir conforme seleção
+document.getElementById('selectProjeto').addEventListener('change', function() {
+    document.getElementById('btn-del-projeto').disabled = !this.value;
+});
+
+// Fechar modal ao clicar fora
+document.getElementById('modalProjeto').addEventListener('click', function(e) {
+    if (e.target === this) {
+        fecharModalProjeto();
+    }
+});
+
+// Fechar com ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        fecharModalProjeto();
+    }
+});
+
+// ============================================================================
+// FUNÇÕES UTILITÁRIAS
+// ============================================================================
+
+function mostrarToast(mensagem, tipo) {
+    const toast = document.createElement('div');
+    toast.className = `pbi-alert pbi-alert--${tipo}`;
+    toast.style.cssText = `
+        position: fixed;
+        top: 90px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        animation: slideIn 0.3s ease;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    `;
+    toast.innerHTML = mensagem;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
+function getCookie(name) {
+    let v = null;
+    if (document.cookie) {
+        const c = document.cookie.split(';');
+        for (let i = 0; i < c.length; i++) {
+            const x = c[i].trim();
+            if (x.substring(0, name.length + 1) === (name + '=')) {
+                v = decodeURIComponent(x.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return v;
+}
+
+// CSS para animações do toast
+const s = document.createElement('style');
+s.textContent = `
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+`;
+document.head.appendChild(s);
 </script>
 {% endblock %}
