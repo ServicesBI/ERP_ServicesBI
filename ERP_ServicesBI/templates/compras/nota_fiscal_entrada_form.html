@@ -1,0 +1,555 @@
+{% extends 'base.html' %}
+{% load static custom_filters %}
+
+{% block title %}Nota Fiscal de Entrada - ERP ServicesBI{% endblock %}
+
+{% block content %}
+
+<div class="form-inline-header">
+    <div class="form-inline-header__title">
+        <h2 id="form-titulo">Nova Nota Fiscal</h2>
+        <p>Preencha os dados da nota fiscal de entrada</p>
+    </div>
+    <a href="{% url 'ERP_ServicesBI:nota_fiscal_entrada_manager' %}" class="erp-btn erp-btn--secondary">
+        ← Voltar para Lista
+    </a>
+</div>
+
+<!-- Banner de pedido vinculado -->
+<div class="pedido-vinculado-banner" id="banner-pedido">
+    <div class="pedido-vinculado-banner__icon">📦</div>
+    <div class="pedido-vinculado-banner__info">
+        <div class="pedido-vinculado-banner__title" id="banner-pedido-titulo">
+            NF gerada a partir do Pedido
+        </div>
+        <div class="pedido-vinculado-banner__detail" id="banner-pedido-detalhe">
+            Itens e valores foram puxados automaticamente do pedido de compra.
+        </div>
+    </div>
+</div>
+
+<!-- DADOS DA NF -->
+<div class="form-card">
+    <h3 class="form-section__title">Dados da Nota Fiscal</h3>
+    
+    <div class="form-row">
+        <div class="form-group">
+            <label class="form-label" for="nf-numero">
+                Número <span class="required">*</span>
+            </label>
+            <input type="text" id="nf-numero" class="form-input" placeholder="000.000.000">
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="nf-serie">Série</label>
+            <input type="text" id="nf-serie" class="form-input" placeholder="001" maxlength="3">
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="nf-chave">Chave de Acesso</label>
+            <input type="text" id="nf-chave" class="form-input" placeholder="44 dígitos" maxlength="44">
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="nf-modelo">Modelo</label>
+            <select id="nf-modelo" class="form-select">
+                <option value="55">NF-e (55)</option>
+                <option value="65">NFC-e (65)</option>
+                <option value="01">NF Modelo 1/1A</option>
+                <option value="04">NF de Produtor</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group three-quarters">
+            <label class="form-label" for="nf-fornecedor">
+                Fornecedor <span class="required">*</span>
+            </label>
+            <select id="nf-fornecedor" class="form-select">
+                <option value="">Selecione o fornecedor...</option>
+                {% for fornecedor in fornecedores %}
+                    <option value="{{ fornecedor.id }}">
+                        {{ fornecedor.nome_razao_social }} ({{ fornecedor.cpf_cnpj|format_cpf_cnpj }})
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="nf-pedido">Pedido de Origem</label>
+            <select id="nf-pedido" class="form-select">
+                <option value="">Nenhum (avulsa)</option>
+                {% for pedido in pedidos_abertos %}
+                    <option value="{{ pedido.id }}">{{ pedido.numero }} - {{ pedido.fornecedor.nome_razao_social|truncatechars:25 }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label class="form-label" for="nf-data-emissao">
+                Data de Emissão <span class="required">*</span>
+            </label>
+            <input type="date" id="nf-data-emissao" class="form-input">
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="nf-data-entrada">
+                Data de Entrada <span class="required">*</span>
+            </label>
+            <input type="date" id="nf-data-entrada" class="form-input">
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="nf-condicao">Condição de Pagamento</label>
+            <select id="nf-condicao" class="form-select">
+                <option value="">Selecione...</option>
+                {% for condicao in condicoes_pagamento %}
+                    <option value="{{ condicao.id }}">
+                        {{ condicao.descricao }} {% if condicao.resumo %}({{ condicao.resumo }}){% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="nf-forma">Forma de Pagamento</label>
+            <select id="nf-forma" class="form-select">
+                <option value="">Selecione...</option>
+                {% for forma in formas_pagamento %}
+                    <option value="{{ forma.id }}">{{ forma.descricao }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- ITENS DA NF -->
+<div class="itens-section">
+    <h3 class="form-section__title">Produtos/Serviços</h3>
+    
+    <table class="itens-table" id="tabela-itens">
+        <thead>
+            <tr>
+                <th class="col-produto">Produto <span class="required">*</span></th>
+                <th class="col-qtd">Qtd <span class="required">*</span></th>
+                <th class="col-un">Un <span class="required">*</span></th>
+                <th class="col-valor">Valor Unit. <span class="required">*</span></th>
+                <th class="col-valor">Valor Total</th>
+                <th class="col-acao"></th>
+            </tr>
+        </thead>
+        <tbody id="itens-tbody">
+            <tr class="item-row">
+                <td class="col-produto">
+                    <input type="text" class="item-produto" placeholder="Nome do produto">
+                </td>
+                <td class="col-qtd">
+                    <input type="number" class="item-quantidade" placeholder="0" min="0.01" step="0.01" onchange="calcularTotalItem(this)">
+                </td>
+                <td class="col-un">
+                    <input type="text" class="item-unidade" value="UN" placeholder="UN">
+                </td>
+                <td class="col-valor">
+                    <input type="text" class="item-valor" placeholder="0,00" onchange="calcularTotalItem(this)">
+                </td>
+                <td class="col-valor">
+                    <input type="text" class="item-total" placeholder="0,00" readonly style="font-weight:600;">
+                </td>
+                <td class="col-acao">
+                    <button type="button" class="btn-acao btn-acao--excluir" onclick="removerItem(this)">🗑️</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <button type="button" class="btn-add-item" onclick="adicionarItem()">
+        <span>➕</span> Adicionar Item
+    </button>
+
+    <div class="totais-nf">
+        <div class="totais-grid">
+            <div class="total-item">
+                <div class="total-item__label">Valor dos Produtos</div>
+                <div class="total-item__valor" id="total-produtos">R$ 0,00</div>
+            </div>
+            <div class="total-item">
+                <div class="total-item__label">Frete</div>
+                <div class="total-item__valor" id="total-frete">R$ 0,00</div>
+            </div>
+            <div class="total-item">
+                <div class="total-item__label">Impostos</div>
+                <div class="total-item__valor" id="total-impostos">R$ 0,00</div>
+            </div>
+            <div class="total-item">
+                <div class="total-item__label">Total da NF</div>
+                <div class="total-item__valor total-item__valor--destaque" id="total-nf">R$ 0,00</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AÇÕES -->
+<div class="form-actions">
+    <a href="{% url 'ERP_ServicesBI:nota_fiscal_entrada_manager' %}" class="erp-btn erp-btn--secondary">
+        Cancelar
+    </a>
+    <div class="form-actions__right">
+        <button type="button" class="erp-btn erp-btn--primary" onclick="salvarNota('pendente')">
+            💾 Salvar como Pendente
+        </button>
+        <button type="button" class="erp-btn erp-btn--success" onclick="confirmarEntrada()">
+            ✅ Confirmar Entrada
+        </button>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let notaId = null;
+let pedidoVinculadoId = null;
+
+(function() {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    const modo = params.get('modo');
+    
+    if (id) {
+        notaId = parseInt(id);
+        carregarNota();
+        if (modo === 'visualizar') {
+            desabilitarCampos();
+        }
+    }
+})();
+
+function carregarNota() {
+    fetch(`/api/nota-fiscal/${notaId}/dados/`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('nf-numero').value = data.numero;
+                document.getElementById('nf-serie').value = data.serie || '';
+                document.getElementById('nf-chave').value = data.chave_acesso || '';
+                document.getElementById('nf-modelo').value = data.modelo || '55';
+                document.getElementById('nf-fornecedor').value = data.fornecedor_id;
+                document.getElementById('nf-pedido').value = data.pedido_id || '';
+                document.getElementById('nf-data-emissao').value = data.data_emissao;
+                document.getElementById('nf-data-entrada').value = data.data_entrada;
+                document.getElementById('nf-condicao').value = data.condicao_pagamento_id || '';
+                document.getElementById('nf-forma').value = data.forma_pagamento_id || '';
+                
+                if (data.pedido_id) {
+                    document.getElementById('banner-pedido-titulo').textContent = 'NF vinculada ao Pedido';
+                    document.getElementById('banner-pedido-detalhe').textContent = `${data.itens.length} itens`;
+                    document.getElementById('banner-pedido').classList.add('active');
+                }
+                
+                if (data.itens && data.itens.length > 0) {
+                    const tbody = document.getElementById('itens-tbody');
+                    tbody.innerHTML = '';
+                    data.itens.forEach(item => {
+                        tbody.innerHTML += criarLinhaItemHTML(item.produto, item.quantidade, item.unidade, item.valor_unitario, item.valor_total);
+                    });
+                }
+                
+                atualizarTotaisNF();
+                document.getElementById('form-titulo').textContent = `Editar NF-e ${data.numero}`;
+            }
+        });
+}
+
+function criarLinhaItemHTML(produto, qtd, unidade, valorUnit, valorTotal) {
+    return `<tr class="item-row">
+        <td class="col-produto"><input type="text" class="item-produto" value="${produto}" placeholder="Nome do produto"></td>
+        <td class="col-qtd"><input type="number" class="item-quantidade" value="${qtd || ''}" placeholder="0" min="0.01" step="0.01" onchange="calcularTotalItem(this)"></td>
+        <td class="col-un"><input type="text" class="item-unidade" value="${unidade || 'UN'}" placeholder="UN"></td>
+        <td class="col-valor"><input type="text" class="item-valor" value="${valorUnit ? formatarMoeda(valorUnit) : ''}" placeholder="0,00" onchange="calcularTotalItem(this)"></td>
+        <td class="col-valor"><input type="text" class="item-total" value="${valorTotal ? formatarMoeda(valorTotal) : ''}" readonly style="font-weight:600;"></td>
+        <td class="col-acao"><button type="button" class="btn-acao btn-acao--excluir" onclick="removerItem(this)">🗑️</button></td>
+    </tr>`;
+}
+
+document.getElementById('nf-pedido').addEventListener('change', function() {
+    const pedidoId = this.value;
+    if (!pedidoId) {
+        document.getElementById('banner-pedido').classList.remove('active');
+        pedidoVinculadoId = null;
+        return;
+    }
+    
+    pedidoVinculadoId = pedidoId;
+    
+    fetch(`/api/pedido/${pedidoId}/dados-para-nfe/`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) {
+                mostrarToast(data.message || 'Erro ao carregar pedido', 'warning');
+                return;
+            }
+            
+            if (data.ja_existe_nf) {
+                mostrarToast(data.message, 'warning');
+                return;
+            }
+            
+            const pedido = data.pedido;
+            
+            document.getElementById('nf-fornecedor').value = pedido.fornecedor_id;
+            if (pedido.condicao_pagamento_id) {
+                document.getElementById('nf-condicao').value = pedido.condicao_pagamento_id;
+            }
+            if (pedido.forma_pagamento_id) {
+                document.getElementById('nf-forma').value = pedido.forma_pagamento_id;
+            }
+            
+            if (data.itens && data.itens.length > 0) {
+                const tbody = document.getElementById('itens-tbody');
+                tbody.innerHTML = '';
+                
+                data.itens.forEach(item => {
+                    tbody.innerHTML += criarLinhaItemHTML(
+                        item.produto_nome,
+                        item.quantidade,
+                        item.unidade,
+                        item.valor_unitario,
+                        item.valor_total
+                    );
+                });
+                
+                atualizarTotaisNF();
+            }
+            
+            document.getElementById('banner-pedido-titulo').textContent = `NF vinculada ao Pedido ${pedido.numero}`;
+            document.getElementById('banner-pedido').classList.add('active');
+            
+            mostrarToast(`${data.itens.length} itens carregados`, 'success');
+        });
+});
+
+function adicionarItem() {
+    const tbody = document.getElementById('itens-tbody');
+    tbody.innerHTML += `<tr class="item-row">
+        <td class="col-produto"><input type="text" class="item-produto" placeholder="Nome do produto"></td>
+        <td class="col-qtd"><input type="number" class="item-quantidade" placeholder="0" min="0.01" step="0.01" onchange="calcularTotalItem(this)"></td>
+        <td class="col-un"><input type="text" class="item-unidade" value="UN" placeholder="UN"></td>
+        <td class="col-valor"><input type="text" class="item-valor" placeholder="0,00" onchange="calcularTotalItem(this)"></td>
+        <td class="col-valor"><input type="text" class="item-total" placeholder="0,00" readonly style="font-weight:600;"></td>
+        <td class="col-acao"><button type="button" class="btn-acao btn-acao--excluir" onclick="removerItem(this)">🗑️</button></td>
+    </tr>`;
+}
+
+function removerItem(btn) {
+    const tbody = document.getElementById('itens-tbody');
+    if (tbody.children.length <= 1) {
+        mostrarToast('A nota deve ter pelo menos um item', 'warning');
+        return;
+    }
+    btn.closest('tr').remove();
+    atualizarTotaisNF();
+}
+
+function calcularTotalItem(elemento) {
+    const row = elemento.closest('tr');
+    const qtd = parseFloat(row.querySelector('.item-quantidade').value) || 0;
+    const valorStr = row.querySelector('.item-valor').value || '0';
+    const valor = parseFloat(valorStr.replace(/\./g, '').replace(',', '.')) || 0;
+    const total = qtd * valor;
+    
+    row.querySelector('.item-total').value = formatarMoeda(total);
+    atualizarTotaisNF();
+}
+
+function atualizarTotaisNF() {
+    let totalProdutos = 0;
+    document.querySelectorAll('.item-total').forEach(input => {
+        const val = input.value || '0';
+        totalProdutos += parseFloat(val.replace(/\./g, '').replace(',', '.')) || 0;
+    });
+    
+    document.getElementById('total-produtos').textContent = 'R$ ' + formatarMoeda(totalProdutos);
+    document.getElementById('total-nf').textContent = 'R$ ' + formatarMoeda(totalProdutos);
+}
+
+function formatarMoeda(valor) {
+    if (!valor || valor === null) return '0,00';
+    return parseFloat(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function salvarNota(status) {
+    const numero = document.getElementById('nf-numero').value.trim();
+    const fornecedorId = document.getElementById('nf-fornecedor').value;
+    const dataEmissao = document.getElementById('nf-data-emissao').value;
+    
+    if (!numero) { mostrarToast('Informe o número da nota fiscal', 'warning'); return; }
+    if (!fornecedorId) { mostrarToast('Selecione o fornecedor', 'warning'); return; }
+    if (!dataEmissao) { mostrarToast('Informe a data de emissão', 'warning'); return; }
+    
+    const itens = coletarItens();
+    const pedidoId = document.getElementById('nf-pedido').value || null;
+    
+    if (itens.length === 0 && !pedidoId) {
+        mostrarToast('Adicione pelo menos um item válido', 'warning');
+        return;
+    }
+    
+    const dados = {
+        id: notaId,
+        numero: numero,
+        serie: document.getElementById('nf-serie').value,
+        chave_acesso: document.getElementById('nf-chave').value,
+        modelo: document.getElementById('nf-modelo').value,
+        fornecedor_id: fornecedorId,
+        pedido_id: pedidoId,
+        data_emissao: dataEmissao,
+        data_entrada: document.getElementById('nf-data-entrada').value || new Date().toISOString().split('T')[0],
+        condicao_pagamento_id: document.getElementById('nf-condicao').value || null,
+        forma_pagamento_id: document.getElementById('nf-forma').value || null,
+        status: status,
+        itens: itens
+    };
+    
+    fetch('/api/nota-fiscal/salvar/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(dados)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            mostrarToast(data.message, 'success');
+            setTimeout(() => window.location.href = "{% url 'ERP_ServicesBI:nota_fiscal_entrada_manager' %}", 1500);
+        } else {
+            throw new Error(data.message);
+        }
+    })
+    .catch(err => {
+        mostrarToast('Erro: ' + err.message, 'danger');
+    });
+}
+
+function confirmarEntrada() {
+    const numero = document.getElementById('nf-numero').value.trim();
+    const fornecedorId = document.getElementById('nf-fornecedor').value;
+    const dataEmissao = document.getElementById('nf-data-emissao').value;
+    
+    if (!numero || !fornecedorId || !dataEmissao) {
+        mostrarToast('Complete os dados obrigatórios', 'warning');
+        return;
+    }
+    
+    const itens = coletarItens();
+    const pedidoId = document.getElementById('nf-pedido').value || null;
+    
+    if (itens.length === 0 && !pedidoId) {
+        mostrarToast('Adicione pelo menos um item válido', 'warning');
+        return;
+    }
+    
+    const dados = {
+        id: notaId,
+        numero: numero,
+        serie: document.getElementById('nf-serie').value,
+        chave_acesso: document.getElementById('nf-chave').value,
+        modelo: document.getElementById('nf-modelo').value,
+        fornecedor_id: fornecedorId,
+        pedido_id: pedidoId,
+        data_emissao: dataEmissao,
+        data_entrada: document.getElementById('nf-data-entrada').value || new Date().toISOString().split('T')[0],
+        condicao_pagamento_id: document.getElementById('nf-condicao').value || null,
+        forma_pagamento_id: document.getElementById('nf-forma').value || null,
+        status: 'pendente',
+        itens: itens
+    };
+    
+    fetch('/api/nota-fiscal/salvar/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(dados)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (!data.success) throw new Error(data.message);
+        
+        return fetch(`/api/nota-fiscal/${data.id}/confirmar/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') }
+        });
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            mostrarToast('✅ ' + data.message, 'success');
+            setTimeout(() => window.location.href = "{% url 'ERP_ServicesBI:nota_fiscal_entrada_manager' %}", 2000);
+        } else {
+            throw new Error(data.message);
+        }
+    })
+    .catch(err => {
+        mostrarToast('Erro: ' + err.message, 'danger');
+    });
+}
+
+function coletarItens() {
+    const itens = [];
+    document.querySelectorAll('.item-row').forEach(row => {
+        const produto = row.querySelector('.item-produto').value.trim();
+        const quantidade = parseFloat(row.querySelector('.item-quantidade').value);
+        const unidade = row.querySelector('.item-unidade').value.trim();
+        const valorStr = row.querySelector('.item-valor').value || '0';
+        const valor = parseFloat(valorStr.replace(/\./g, '').replace(',', '.'));
+        
+        if (produto && quantidade > 0 && valor > 0) {
+            itens.push({
+                produto: produto,
+                quantidade: quantidade,
+                unidade: unidade || 'UN',
+                valor_unitario: valor
+            });
+        }
+    });
+    return itens;
+}
+
+function desabilitarCampos() {
+    document.querySelectorAll('.form-input, .form-select, .form-textarea').forEach(el => {
+        el.disabled = true;
+    });
+    document.querySelector('.form-actions__right').style.display = 'none';
+}
+
+function mostrarToast(mensagem, tipo) {
+    const toast = document.createElement('div');
+    toast.className = 'erp-alert erp-alert--' + tipo;
+    toast.style.cssText = 'position: fixed; top: 90px; right: 20px; z-index: 9999; min-width: 300px; animation: slideIn 0.3s ease;';
+    toast.innerHTML = mensagem;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 5000);
+}
+
+function getCookie(name) {
+    let v = null;
+    if (document.cookie) {
+        const c = document.cookie.split(';');
+        for (let i = 0; i < c.length; i++) {
+            const x = c[i].trim();
+            if (x.substring(0, name.length + 1) === (name + '=')) {
+                v = decodeURIComponent(x.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return v;
+}
+</script>
+{% endblock %}

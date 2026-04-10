@@ -1,0 +1,460 @@
+{% extends 'base.html' %}
+{% load static custom_filters %}
+
+{% block title %}Pedido de Compra - ERP ServicesBI{% endblock %}
+
+{% block content %}
+
+<div class="form-inline-header">
+    <div class="form-inline-header__title">
+        <h2 id="form-titulo">Novo Pedido</h2>
+        <p>Preencha os dados para criar um pedido de compra</p>
+    </div>
+    <a href="{% url 'ERP_ServicesBI:pedido_compra_manager' %}" class="erp-btn erp-btn--secondary">
+        ← Voltar para Lista
+    </a>
+</div>
+
+<!-- DADOS DO PEDIDO -->
+<div class="form-card">
+    <h3 class="form-section__title">Dados do Pedido</h3>
+    
+    <div class="form-row">
+        <div class="form-group two-thirds">
+            <label class="form-label" for="pedido-fornecedor">
+                Fornecedor <span class="required">*</span>
+            </label>
+            <select id="pedido-fornecedor" class="form-select">
+                <option value="">Selecione o fornecedor...</option>
+                {% for fornecedor in fornecedores %}
+                    <option value="{{ fornecedor.id }}" 
+                            data-condicao="{{ fornecedor.condicao_pagamento_padrao_id|default:'' }}"
+                            data-forma="{{ fornecedor.forma_pagamento_padrao_id|default:'' }}">
+                        {{ fornecedor.nome_razao_social }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="pedido-data-previsao">
+                Previsão de Entrega
+            </label>
+            <input type="date" id="pedido-data-previsao" class="form-input">
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label class="form-label" for="pedido-centro-custo">Centro de Custo</label>
+            <select id="pedido-centro-custo" class="form-select">
+                <option value="">Selecione...</option>
+                {% for centro in centros_custo %}
+                    <option value="{{ centro.id }}">{{ centro.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="pedido-prioridade">
+                Prioridade <span class="required">*</span>
+            </label>
+            <select id="pedido-prioridade" class="form-select">
+                <option value="baixa">🟢 Baixa</option>
+                <option value="media" selected>🟡 Média</option>
+                <option value="alta">🟠 Alta</option>
+                <option value="urgente">🔴 Urgente</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Solicitante</label>
+            <input type="text" class="form-input" value="{{ request.user.get_full_name|default:request.user.username }}" disabled>
+            <input type="hidden" id="pedido-solicitante" value="{{ request.user.id }}">
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label class="form-label" for="pedido-condicao-pagamento">
+                Condição de Pagamento <span class="required">*</span>
+            </label>
+            <select id="pedido-condicao-pagamento" class="form-select">
+                <option value="">Selecione...</option>
+                {% for condicao in condicoes_pagamento %}
+                    <option value="{{ condicao.descricao }}">
+                        {{ condicao.descricao }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="pedido-forma-pagamento">
+                Forma de Pagamento <span class="required">*</span>
+            </label>
+            <select id="pedido-forma-pagamento" class="form-select">
+                <option value="">Selecione...</option>
+                {% for forma in formas_pagamento %}
+                    <option value="{{ forma.descricao }}">{{ forma.descricao }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="pedido-cotacao">Cotação de Origem</label>
+            <select id="pedido-cotacao" class="form-select">
+                <option value="">Nenhuma (manual)</option>
+                {% for cotacao in cotacoes_concluidas %}
+                    <option value="{{ cotacao.id }}">{{ cotacao.numero }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group full-width">
+            <label class="form-label" for="pedido-observacoes">Observações</label>
+            <textarea id="pedido-observacoes" class="form-textarea" 
+                      placeholder="Informações adicionais sobre o pedido..."></textarea>
+        </div>
+    </div>
+</div>
+
+<!-- ITENS DO PEDIDO -->
+<div class="itens-section">
+    <h3 class="form-section__title">Itens do Pedido</h3>
+    
+    <table class="itens-table" id="tabela-itens">
+        <thead>
+            <tr>
+                <th class="col-produto">Produto/Serviço <span class="required">*</span></th>
+                <th class="col-qtd">Qtd <span class="required">*</span></th>
+                <th class="col-un">Un</th>
+                <th class="col-valor">Valor Unit. <span class="required">*</span></th>
+                <th class="col-total">Total</th>
+                <th class="col-acao"></th>
+            </tr>
+        </thead>
+        <tbody id="itens-tbody">
+            <tr class="item-row">
+                <td class="col-produto">
+                    <input type="text" class="item-produto" placeholder="Nome do produto">
+                </td>
+                <td class="col-qtd">
+                    <input type="number" class="item-quantidade" placeholder="0" min="1" step="1" oninput="calcularTotalItem(this)">
+                </td>
+                <td class="col-un">
+                    <input type="text" class="item-unidade" value="UN" placeholder="UN">
+                </td>
+                <td class="col-valor">
+                    <div class="input-group">
+                        <span class="input-prefix">R$</span>
+                        <input type="text" class="item-valor" placeholder="0,00" oninput="mascaraMoeda(this)" onblur="formatarInputMoeda(this)" onfocus="selecionarTexto(this)">
+                    </div>
+                </td>
+                <td class="col-total">
+                    <div class="input-group">
+                        <span class="input-prefix">R$</span>
+                        <input type="text" class="item-total" placeholder="0,00" readonly>
+                    </div>
+                </td>
+                <td class="col-acao">
+                    <button type="button" class="btn-acao btn-acao--excluir" onclick="removerItem(this)">🗑️</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <button type="button" class="btn-add-item" onclick="adicionarItem()">
+        <span>➕</span> Adicionar Item
+    </button>
+
+    <div class="total-pedido">
+        <span class="total-pedido__label">TOTAL DO PEDIDO</span>
+        <span class="total-pedido__valor" id="total-pedido">R$ 0,00</span>
+    </div>
+</div>
+
+<!-- AÇÕES -->
+<div class="form-actions">
+    <a href="{% url 'ERP_ServicesBI:pedido_compra_manager' %}" class="erp-btn erp-btn--secondary">
+        Cancelar
+    </a>
+    <div class="form-actions__right">
+        <button type="button" class="erp-btn erp-btn--primary" onclick="salvarPedido('rascunho')">
+            💾 Salvar Rascunho
+        </button>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let pedidoId = null;
+
+(function() {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    const modo = params.get('modo');
+    
+    if (id) {
+        pedidoId = parseInt(id);
+        carregarPedido();
+        if (modo === 'visualizar') {
+            desabilitarCampos();
+        }
+    }
+})();
+
+document.getElementById('pedido-fornecedor').addEventListener('change', function() {
+    const option = this.options[this.selectedIndex];
+    const condicaoId = option.dataset.condicao;
+    const formaId = option.dataset.forma;
+    
+    if (condicaoId) {
+        document.getElementById('pedido-condicao-pagamento').value = condicaoId;
+    }
+    if (formaId) {
+        document.getElementById('pedido-forma-pagamento').value = formaId;
+    }
+});
+
+function carregarPedido() {
+    fetch('/api/pedido/' + pedidoId + '/dados/')
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('pedido-fornecedor').value = data.fornecedor_id;
+                document.getElementById('pedido-data-previsao').value = data.data_previsao_entrega ? data.data_previsao_entrega.split('T')[0] : '';
+                document.getElementById('pedido-centro-custo').value = data.centro_custo_id || '';
+                document.getElementById('pedido-prioridade').value = data.prioridade || 'media';
+                document.getElementById('pedido-condicao-pagamento').value = data.condicao_pagamento || '';
+                document.getElementById('pedido-forma-pagamento').value = data.forma_pagamento || '';
+                document.getElementById('pedido-cotacao').value = data.cotacao_id || '';
+                document.getElementById('pedido-observacoes').value = data.observacoes || '';
+                
+                if (data.itens && data.itens.length > 0) {
+                    const tbody = document.getElementById('itens-tbody');
+                    tbody.innerHTML = '';
+                    data.itens.forEach(item => {
+                        tbody.innerHTML += criarLinhaItem(item);
+                    });
+                }
+                
+                atualizarTotalPedido();
+                document.getElementById('form-titulo').textContent = 'Editar Pedido ' + data.numero;
+            }
+        });
+}
+
+function criarLinhaItem(item) {
+    return '<tr class="item-row">' +
+        '<td class="col-produto"><input type="text" class="item-produto" value="' + escapeHtml(item.produto) + '" placeholder="Nome do produto"></td>' +
+        '<td class="col-qtd"><input type="number" class="item-quantidade" value="' + parseInt(item.quantidade) + '" placeholder="0" min="1" step="1" oninput="calcularTotalItem(this)"></td>' +
+        '<td class="col-un"><input type="text" class="item-unidade" value="' + item.unidade + '" placeholder="UN"></td>' +
+        '<td class="col-valor"><div class="input-group"><span class="input-prefix">R$</span><input type="text" class="item-valor" value="' + formatarMoeda(item.valor_unitario) + '" placeholder="0,00" oninput="mascaraMoeda(this)" onblur="formatarInputMoeda(this)" onfocus="selecionarTexto(this)"></div></td>' +
+        '<td class="col-total"><div class="input-group"><span class="input-prefix">R$</span><input type="text" class="item-total" value="' + formatarMoeda(item.valor_total) + '" placeholder="0,00" readonly></div></td>' +
+        '<td class="col-acao"><button type="button" class="btn-acao btn-acao--excluir" onclick="removerItem(this)">🗑️</button></td>' +
+    '</tr>';
+}
+
+function adicionarItem() {
+    const tbody = document.getElementById('itens-tbody');
+    const tr = document.createElement('tr');
+    tr.className = 'item-row';
+    tr.innerHTML = '<td class="col-produto"><input type="text" class="item-produto" placeholder="Nome do produto"></td>' +
+        '<td class="col-qtd"><input type="number" class="item-quantidade" placeholder="0" min="1" step="1" oninput="calcularTotalItem(this)"></td>' +
+        '<td class="col-un"><input type="text" class="item-unidade" value="UN" placeholder="UN"></td>' +
+        '<td class="col-valor"><div class="input-group"><span class="input-prefix">R$</span><input type="text" class="item-valor" placeholder="0,00" oninput="mascaraMoeda(this)" onblur="formatarInputMoeda(this)" onfocus="selecionarTexto(this)"></div></td>' +
+        '<td class="col-total"><div class="input-group"><span class="input-prefix">R$</span><input type="text" class="item-total" placeholder="0,00" readonly></div></td>' +
+        '<td class="col-acao"><button type="button" class="btn-acao btn-acao--excluir" onclick="removerItem(this)">🗑️</button></td>';
+    tbody.appendChild(tr);
+}
+
+function removerItem(btn) {
+    btn.closest('tr').remove();
+    atualizarTotalPedido();
+}
+
+function calcularTotalItem(elemento) {
+    const row = elemento.closest('tr');
+    const qtdInput = row.querySelector('.item-quantidade');
+    const valorInput = row.querySelector('.item-valor');
+    
+    let qtd = parseInt(qtdInput.value) || 0;
+    if (qtd < 0) qtd = 0;
+    qtdInput.value = qtd > 0 ? qtd : '';
+    
+    let valorStr = valorInput.value || '0,00';
+    const valor = limparMoeda(valorStr);
+    const total = qtd * valor;
+    
+    row.querySelector('.item-total').value = formatarMoeda(total);
+    atualizarTotalPedido();
+}
+
+function atualizarTotalPedido() {
+    let total = 0;
+    document.querySelectorAll('.item-total').forEach(input => {
+        total += limparMoeda(input.value);
+    });
+    document.getElementById('total-pedido').textContent = 'R$ ' + formatarMoeda(total);
+}
+
+function mascaraMoeda(input) {
+    let valor = input.value.replace(/\D/g, '');
+    if (!valor) {
+        input.value = '';
+        return;
+    }
+    const numero = parseInt(valor) / 100;
+    input.value = formatarMoeda(numero);
+    calcularTotalItem(input);
+}
+
+function formatarInputMoeda(input) {
+    if (!input.value) {
+        input.value = '0,00';
+        calcularTotalItem(input);
+        return;
+    }
+    const valor = limparMoeda(input.value);
+    input.value = formatarMoeda(valor);
+    calcularTotalItem(input);
+}
+
+function selecionarTexto(input) {
+    input.select();
+}
+
+function formatarMoeda(valor) {
+    if (!valor || valor === null || isNaN(valor)) return '0,00';
+    return parseFloat(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function limparMoeda(valor) {
+    if (!valor || valor === '' || valor === '0,00') return 0;
+    const limpo = valor.toString().replace(/\./g, '').replace(',', '.');
+    return parseFloat(limpo) || 0;
+}
+
+function coletarItens() {
+    const itens = [];
+    document.querySelectorAll('.item-row').forEach(row => {
+        const produto = row.querySelector('.item-produto').value.trim();
+        const quantidade = parseInt(row.querySelector('.item-quantidade').value) || 0;
+        const unidade = row.querySelector('.item-unidade').value.trim();
+        const valor = limparMoeda(row.querySelector('.item-valor').value);
+        
+        if (produto && quantidade > 0 && valor > 0) {
+            itens.push({
+                produto: produto,
+                quantidade: quantidade,
+                unidade: unidade || 'UN',
+                valor_unitario: valor
+            });
+        }
+    });
+    return itens;
+}
+
+function salvarPedido(status) {
+    const fornecedorId = document.getElementById('pedido-fornecedor').value;
+    const condicao = document.getElementById('pedido-condicao-pagamento').value;
+    const forma = document.getElementById('pedido-forma-pagamento').value;
+    
+    if (!fornecedorId) {
+        mostrarToast('Selecione o fornecedor', 'warning');
+        return;
+    }
+    if (!condicao) {
+        mostrarToast('Selecione a condição de pagamento', 'warning');
+        return;
+    }
+    if (!forma) {
+        mostrarToast('Selecione a forma de pagamento', 'warning');
+        return;
+    }
+    
+    const itens = coletarItens();
+    
+    if (itens.length === 0) {
+        mostrarToast('Adicione pelo menos um item válido', 'warning');
+        return;
+    }
+    
+    const dados = {
+        id: pedidoId,
+        fornecedor_id: fornecedorId,
+        data_previsao_entrega: document.getElementById('pedido-data-previsao').value,
+        centro_custo_id: document.getElementById('pedido-centro-custo').value || null,
+        prioridade: document.getElementById('pedido-prioridade').value,
+        condicao_pagamento: condicao,
+        forma_pagamento: forma,
+        cotacao_id: document.getElementById('pedido-cotacao').value || null,
+        observacoes: document.getElementById('pedido-observacoes').value,
+        status: status,
+        itens: itens
+    };
+    
+    fetch('/api/pedido/salvar/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(dados)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            mostrarToast(data.message, 'success');
+            setTimeout(() => window.location.href = "{% url 'ERP_ServicesBI:pedido_compra_manager' %}", 1500);
+        } else {
+            throw new Error(data.message);
+        }
+    })
+    .catch(err => {
+        mostrarToast('Erro: ' + err.message, 'danger');
+    });
+}
+
+function desabilitarCampos() {
+    document.querySelectorAll('.form-input, .form-select, .form-textarea').forEach(el => {
+        el.disabled = true;
+    });
+    document.querySelector('.form-actions__right').style.display = 'none';
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function mostrarToast(mensagem, tipo) {
+    const toast = document.createElement('div');
+    toast.className = 'erp-alert erp-alert--' + tipo;
+    toast.style.cssText = 'position: fixed; top: 90px; right: 20px; z-index: 9999; min-width: 300px; animation: slideIn 0.3s ease;';
+    toast.innerHTML = mensagem;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 5000);
+}
+
+function getCookie(name) {
+    let v = null;
+    if (document.cookie) {
+        const c = document.cookie.split(';');
+        for (let i = 0; i < c.length; i++) {
+            const x = c[i].trim();
+            if (x.substring(0, name.length + 1) === (name + '=')) {
+                v = decodeURIComponent(x.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return v;
+}
+</script>
+{% endblock %}

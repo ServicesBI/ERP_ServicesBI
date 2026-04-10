@@ -1,25 +1,27 @@
+{% load static %}
 <header class="erp-header">
-    <div class="erp-flex erp-items-center erp-gap-2">
+    <div class="erp-header__left">
         <!-- Botão hambúrguer (mobile) -->
         <button onclick="toggleSidebar()" class="erp-mobile-menu-btn" title="Abrir menu">☰</button>
-        <h1 class="erp-header__title">
-            {% block header_title %}ERP - ServicesBI{% endblock %}
-        </h1>
+        <a href="{% url 'ERP_ServicesBI:dashboard' %}" class="erp-header__logo">
+            <span>ERP_ServicesBI</span>
+        </a>
     </div>
+    
     <div class="erp-header__controls">
         <!-- Botão Dark/Light Mode -->
-        <button class="erp-header__theme-btn" 
+        <button class="erp-theme-btn" 
                 onclick="toggleTheme()" 
                 title="Alternar tema (dark/light)"
                 id="themeToggleBtn">
             <span id="themeIcon">🌙</span>
         </button>
-    </div>
-    <div class="erp-header__user">
-        <span class="erp-header__user-name">
-            {{ request.user.first_name|default:request.user.username }}
-        </span>
-        <span style="opacity:0.5">|</span>
-        <a href="{% url 'ERP_ServicesBI:logout' %}" class="erp-header__logout">Sair</a>
+        
+        <!-- User Info -->
+        <div class="erp-user-info">
+            <span>{{ request.user.first_name|default:request.user.username }}</span>
+            <span>|</span>
+            <a href="{% url 'ERP_ServicesBI:logout' %}">Sair</a>
+        </div>
     </div>
 </header>

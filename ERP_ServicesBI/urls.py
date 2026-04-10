@@ -75,6 +75,8 @@ urlpatterns = [
     # COMPRAS - COTAÇÕES
     # =============================================================================
     path('compras/cotacoes/', views.cotacao_manager, name='cotacao_manager'),
+    path('compras/cotacoes/form/', views.cotacao_form, name='cotacao_form'),  # ✅ NEW
+    path('compras/cotacoes/<int:pk>/gerar-pedidos/', views.cotacao_gerar_pedidos, name='cotacao_gerar_pedidos'),  # ✅ NEW
     path('api/cotacao/salvar/', views.cotacao_salvar_api, name='cotacao_salvar_api'),
     path('api/cotacao/<int:pk>/dados/', views.cotacao_dados_api, name='cotacao_dados_api'),
     path('api/cotacao/<int:pk>/comparativo/', views.cotacao_comparativo_api, name='cotacao_comparativo_api'),
@@ -95,6 +97,7 @@ urlpatterns = [
     # COMPRAS - PEDIDOS DE COMPRA
     # =============================================================================
     path('compras/pedidos/', views.pedido_compra_manager, name='pedido_compra_manager'),
+    path('compras/pedidos/form/', views.pedido_compra_form, name='pedido_compra_form'),  # ✅ NEW
     path('api/pedido/salvar/', views.pedido_salvar_api, name='pedido_salvar_api'),
     path('api/pedido/<int:pk>/dados/', views.pedido_dados_api, name='pedido_dados_api'),
     path('api/pedido/<int:pk>/dados-simples/', views.pedido_dados_simples_api, name='pedido_dados_simples_api'),
@@ -118,11 +121,13 @@ urlpatterns = [
     path('api/pedido/<int:pk>/rejeitar/', views.api_rejeitar_pedido, name='api_rejeitar_pedido'),
     path('api/pedido/<int:pk>/historico-aprovacoes/', views.api_historico_aprovacoes, name='api_historico_aprovacoes'),
     path('api/pedido/<int:pk>/divergencias-3way/', views.api_verificar_divergencias_3way, name='api_verificar_divergencias_3way'),
+    path('api/pedido/<int:pk>/enviar-aprovacao/', views.api_enviar_aprovacao, name='api_enviar_aprovacao'),  # ✅ NEW
 
     # =============================================================================
     # COMPRAS - NOTAS FISCAIS DE ENTRADA
     # =============================================================================
     path('compras/notas-fiscais/', views.nota_fiscal_entrada_manager, name='nota_fiscal_entrada_manager'),
+    path('compras/notas-fiscais/form/', views.nota_fiscal_entrada_form, name='nota_fiscal_entrada_form'),  # ✅ NEW
     path('api/nota-fiscal/salvar/', views.nota_fiscal_salvar_api, name='nota_fiscal_salvar_api'),
     path('api/nota-fiscal/<int:pk>/dados/', views.nota_fiscal_dados_api, name='nota_fiscal_dados_api'),
     path('api/nota-fiscal/<int:pk>/excluir/', views.nota_fiscal_excluir_api, name='nota_fiscal_excluir_api'),
@@ -162,6 +167,14 @@ urlpatterns = [
     path('vendas/notas-fiscais/novo/', views.nota_fiscal_saida_form, name='nota_fiscal_saida_form'),
     path('vendas/notas-fiscais/<int:pk>/editar/', views.nota_fiscal_saida_form, name='nota_fiscal_saida_form_edit'),
     path('vendas/notas-fiscais/<int:pk>/excluir/', views.nota_fiscal_saida_excluir_api, name='nota_fiscal_saida_excluir'),
+    # ✅ NOVAS APIs de Nota Fiscal Saída
+    path('api/nota-fiscal-saida/salvar/', views.nota_fiscal_saida_salvar_api, name='nota_fiscal_saida_salvar_api'),
+    path('api/nota-fiscal-saida/<int:pk>/dados/', views.nota_fiscal_saida_dados_api, name='nota_fiscal_saida_dados_api'),
+    path('api/nota-fiscal-saida/<int:pk>/confirmar/', views.nota_fiscal_saida_confirmar_api, name='nota_fiscal_saida_confirmar_api'),
+    path('api/nota-fiscal-saida/<int:pk>/cancelar/', views.nota_fiscal_saida_cancelar_api, name='nota_fiscal_saida_cancelar_api'),
+    path('vendas/nota-fiscal-saida/<int:pk>/confirmar-delete/', views.nota_fiscal_saida_confirm_delete, name='nota_fiscal_saida_confirm_delete'),
+    path('api/pedido-venda/<int:pk>/dados-para-nfe/', views.api_pedido_dados_para_nfe_saida, name='api_pedido_dados_para_nfe_saida'),
+    path('api/pedido-venda/<int:pk>/gerar-nfe/', views.api_gerar_nfe_from_pedido_venda, name='api_gerar_nfe_from_pedido_venda'),
 
     # =============================================================================
     # VENDAS - RELATÓRIOS
@@ -204,11 +217,9 @@ urlpatterns = [
     path('contas-pagar/<int:pk>/excluir/', views.conta_pagar_delete, name='conta_pagar_excluir'),
     path('contas-pagar/<int:pk>/baixar/', views.conta_pagar_baixar, name='conta_pagar_baixar'),
 
-
     # =============================================================================
     # FINANCEIRO - CONCILIAÇÃO BANCÁRIA
     # =============================================================================
-
     path('conciliacao-bancaria/', views.conciliacao_bancaria_list, name='conciliacao_bancaria_list'),
     path('conciliacao-bancaria/adicionar/', views.conciliacao_bancaria_add, name='conciliacao_bancaria_add'),
     path('conciliacao-bancaria/<int:pk>/editar/', views.conciliacao_bancaria_edit, name='conciliacao_bancaria_edit'),
@@ -239,8 +250,10 @@ urlpatterns = [
     # =============================================================================
     # FINANCEIRO - PLANEJADO X REALIZADO
     # =============================================================================
-    path('planejado-realizado/', views.planejado_x_realizado_list, name='planejado_x_realizado_list'),
-    path('planejado-realizado/adicionar/', views.planejado_x_realizado_add, name='planejado_x_realizado_add'),
+    # ✅ CORRIGIDO: Adicionada rota para planejado_x_realizado_manager
+    path('planejado-realizado/', views.planejado_x_realizado_manager, name='planejado_x_realizado_manager'),
+    path('planejado-realizado/lista/', views.planejado_x_realizado_list, name='planejado_x_realizado_list'),
+    path('planejado-realizado/novo/', views.planejado_x_realizado_add, name='planejado_x_realizado_add'),
     path('planejado-realizado/<int:pk>/editar/', views.planejado_x_realizado_edit, name='planejado_x_realizado_edit'),
     path('planejado-realizado/excel/', views.planejado_x_realizado_excel, name='planejado_x_realizado_excel'),
     path('api/projetos/criar/', views.api_criar_projeto, name='api_criar_projeto'),
@@ -305,7 +318,6 @@ urlpatterns = [
     # =============================================================================
     path('api/estoque/saldo/', views.api_estoque_saldo, name='api_estoque_saldo'),
     path('api/produto/<int:pk>/saldo/', views.api_produto_saldo_disponivel, name='api_produto_saldo_disponivel'),
-    # REMOVIDO: path('api/produto/<int:produto_id>/saldo/', views.api_produto_saldo, name='api_produto_saldo'),
     path('api/produtos/busca/', views.api_produtos_busca, name='api_produtos_busca'),
 
     # =============================================================================

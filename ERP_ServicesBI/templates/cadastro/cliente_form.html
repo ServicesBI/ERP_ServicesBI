@@ -6,543 +6,15 @@
 {% endblock %}
 
 {% block extra_css %}
-<style>
-/* ============================================================================
-   CLIENTE FORM - PÁGINA SEPARADA
-   ============================================================================ */
-
-:root {
-    --input-bg-light: #f5f5f0;
-    --input-bg-dark: #1e3048;
-}
-
-/* Container do formulário */
-.form-page-container {
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-/* Header com botão voltar */
-.form-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-}
-
-.form-header__info h1 {
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 4px;
-}
-
-.form-header__info p {
-    font-size: 14px;
-    color: var(--text-secondary);
-}
-
-/* Card do formulário */
-.form-card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: 16px;
-    padding: 32px;
-    box-shadow: var(--card-shadow);
-}
-
-/* Seções do formulário */
-.form-section {
-    margin-bottom: 32px;
-    padding-bottom: 24px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.form-section:last-of-type {
-    border-bottom: none;
-    margin-bottom: 0;
-    padding-bottom: 0;
-}
-
-.form-section__title {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--text-primary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.form-section__title::before {
-    content: '';
-    width: 4px;
-    height: 18px;
-    background: var(--primary-600);
-    border-radius: 2px;
-}
-
-/* Grid de campos */
-.form-row {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-    margin-bottom: 20px;
-}
-
-.form-row:last-child {
-    margin-bottom: 0;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-}
-
-.form-group.full-width {
-    grid-column: 1 / -1;
-}
-
-/* Labels */
-.form-label {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 8px;
-}
-
-.form-label .required {
-    color: var(--danger-500);
-    margin-left: 2px;
-}
-
-/* Inputs com cor bege */
-.form-input,
-.form-select,
-.form-textarea {
-    padding: 12px 16px;
-    border: 1px solid transparent;
-    border-radius: 10px;
-    background: var(--input-bg-light);
-    color: var(--text-primary);
-    font-size: 14px;
-    font-family: inherit;
-    width: 100%;
-    transition: all var(--transition-fast);
-}
-
-html[data-theme="dark"] .form-input,
-html[data-theme="dark"] .form-select,
-html[data-theme="dark"] .form-textarea {
-    background: var(--input-bg-dark);
-    border-color: var(--border-color);
-}
-
-.form-input:focus,
-.form-select:focus,
-.form-textarea:focus {
-    outline: none;
-    border-color: var(--primary-400);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-    background: #ffffff;
-}
-
-html[data-theme="dark"] .form-input:focus,
-html[data-theme="dark"] .form-select:focus,
-html[data-theme="dark"] .form-textarea:focus {
-    background: var(--bg-primary);
-}
-
-.form-input::placeholder,
-.form-textarea::placeholder {
-    color: var(--text-tertiary);
-}
-
-.form-textarea {
-    resize: vertical;
-    min-height: 100px;
-}
-
-.form-select {
-    cursor: pointer;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 16px center;
-    padding-right: 40px;
-}
-
-/* Checkbox */
-.form-checkbox-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    background: var(--input-bg-light);
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-}
-
-html[data-theme="dark"] .form-checkbox-wrapper {
-    background: var(--input-bg-dark);
-}
-
-.form-checkbox-wrapper:hover {
-    background: #ffffff;
-    box-shadow: var(--shadow-sm);
-}
-
-html[data-theme="dark"] .form-checkbox-wrapper:hover {
-    background: var(--bg-primary);
-}
-
-.form-checkbox-wrapper input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-    accent-color: var(--primary-600);
-}
-
-.form-checkbox-wrapper label {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text-primary);
-    cursor: pointer;
-    margin: 0;
-}
-
-/* Grupo de input com ícone/prefixo */
-.input-group {
-    position: relative;
-}
-
-.input-prefix {
-    position: absolute;
-    left: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-tertiary);
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.input-group .form-input {
-    padding-left: 40px;
-}
-
-/* NOVO: Grupo de select com ações */
-.select-with-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.select-with-actions .form-select {
-    flex: 1;
-}
-
-/* Botões de ação do select */
-.btn-select-action {
-    width: 36px;
-    height: 36px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    background: var(--input-bg-light);
-    color: var(--text-tertiary);
-    font-size: 16px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    flex-shrink: 0;
-}
-
-html[data-theme="dark"] .btn-select-action {
-    background: var(--input-bg-dark);
-}
-
-.btn-select-action:hover {
-    background: #ffffff;
-    border-color: var(--primary-400);
-    color: var(--primary-600);
-    transform: scale(1.05);
-}
-
-.btn-select-action.btn-add:hover {
-    background: var(--success-light);
-    border-color: var(--success-400);
-    color: var(--success-600);
-}
-
-.btn-select-action.btn-delete:hover {
-    background: var(--danger-light);
-    border-color: var(--danger-400);
-    color: var(--danger-600);
-}
-
-.btn-select-action:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-    transform: none;
-}
-
-/* Erros de validação */
-.form-group.has-error .form-input,
-.form-group.has-error .form-select,
-.form-group.has-error .form-textarea {
-    border-color: var(--danger-500);
-    background: var(--danger-50);
-}
-
-.form-error {
-    color: var(--danger-600);
-    font-size: 12px;
-    margin-top: 6px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-/* Botões de ação do formulário */
-.form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    margin-top: 32px;
-    padding-top: 24px;
-    border-top: 1px solid var(--border-color);
-}
-
-.btn-voltar {
-    padding: 12px 24px;
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    background: var(--bg-primary);
-    color: var(--text-secondary);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all var(--transition-fast);
-    text-decoration: none;
-}
-
-.btn-voltar:hover {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-    border-color: var(--gray-400);
-}
-
-.btn-salvar {
-    padding: 12px 32px;
-    border: none;
-    border-radius: 10px;
-    background: var(--primary-600);
-    color: white;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all var(--transition-fast);
-}
-
-.btn-salvar:hover {
-    background: var(--primary-700);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-}
-
-.btn-salvar:active {
-    transform: translateY(0);
-}
-
-/* ============================================================================
-   MODAL PARA ADICIONAR ITENS
-   ============================================================================ */
-
-.modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-}
-
-.modal-overlay.active {
-    display: flex;
-}
-
-.modal-form {
-    background: var(--card-bg);
-    border-radius: 16px;
-    width: 100%;
-    max-width: 480px;
-    box-shadow: var(--shadow-xl);
-    overflow: hidden;
-    animation: modalSlideIn 0.3s ease;
-}
-
-@keyframes modalSlideIn {
-    from {
-        opacity: 0;
-        transform: scale(0.9) translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
-}
-
-.modal-form__header {
-    background: var(--primary-600);
-    color: #fff;
-    padding: 20px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.modal-form__title {
-    font-size: 16px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.modal-form__close {
-    background: none;
-    border: none;
-    color: #fff;
-    font-size: 24px;
-    cursor: pointer;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    transition: background 0.2s;
-}
-
-.modal-form__close:hover {
-    background: rgba(255,255,255,0.2);
-}
-
-.modal-form__body {
-    padding: 24px;
-}
-
-.modal-form__footer {
-    display: flex;
-    gap: 12px;
-    padding: 20px 24px;
-    border-top: 1px solid var(--border-color);
-    justify-content: flex-end;
-}
-
-/* Preview das parcelas */
-.preview-parcelas {
-    margin-top: 16px;
-    padding: 16px;
-    background: var(--bg-tertiary);
-    border-radius: 10px;
-    border: 1px dashed var(--border-color);
-}
-
-.preview-parcelas__title {
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.preview-parcelas__lista {
-    font-size: 13px;
-    color: var(--text-primary);
-    line-height: 1.8;
-}
-
-.preview-parcelas__item {
-    display: flex;
-    justify-content: space-between;
-    padding: 4px 0;
-    border-bottom: 1px solid var(--border-light);
-}
-
-.preview-parcelas__item:last-child {
-    border-bottom: none;
-}
-
-.preview-parcelas__total {
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 2px solid var(--border-color);
-    font-weight: 700;
-    color: var(--primary-600);
-    display: flex;
-    justify-content: space-between;
-}
-
-/* Responsivo */
-@media (max-width: 768px) {
-    .form-card {
-        padding: 24px;
-    }
-    
-    .form-row {
-        grid-template-columns: 1fr;
-    }
-    
-    .form-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 16px;
-    }
-    
-    .form-actions {
-        flex-direction: column-reverse;
-    }
-    
-    .btn-voltar,
-    .btn-salvar {
-        width: 100%;
-        justify-content: center;
-    }
-    
-    .select-with-actions {
-        flex-wrap: wrap;
-    }
-    
-    .select-with-actions .form-select {
-        width: 100%;
-    }
-}
-</style>
+<link rel="stylesheet" href="{% static 'css/erp-forms.css' %}">
 {% endblock %}
+
+{% block breadcrumb %}Cadastro / {% if cliente %}Editar Cliente{% else %}Novo Cliente{% endif %}{% endblock %}
 
 {% block content %}
 <div class="form-page-container">
-    <!-- Header -->
+    
+    <!-- HEADER -->
     <div class="form-header">
         <div class="form-header__info">
             <h1>{% if cliente %}Editar{% else %}Novo{% endif %} Cliente</h1>
@@ -553,16 +25,16 @@ html[data-theme="dark"] .btn-select-action {
         </a>
     </div>
     
-    <!-- Mensagens -->
+    <!-- MENSAGENS -->
     {% if messages %}
         {% for message in messages %}
-            <div class="erp-alert erp-alert--{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} erp-mb-4">
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
                 {{ message }}
             </div>
         {% endfor %}
     {% endif %}
     
-    <!-- Formulário -->
+    <!-- FORMULÁRIO -->
     <div class="form-card">
         <form method="post" id="clienteForm" novalidate>
             {% csrf_token %}
@@ -579,7 +51,7 @@ html[data-theme="dark"] .btn-select-action {
                 </div>
             </div>
             
-            <!-- Seção: Dados Básicos -->
+            <!-- SEÇÃO: Dados Básicos -->
             <div class="form-section">
                 <h2 class="form-section__title">Dados Básicos</h2>
                 
@@ -639,7 +111,7 @@ html[data-theme="dark"] .btn-select-action {
                 </div>
             </div>
             
-            <!-- Seção: Contato -->
+            <!-- SEÇÃO: Contato -->
             <div class="form-section">
                 <h2 class="form-section__title">Contato</h2>
                 
@@ -662,7 +134,7 @@ html[data-theme="dark"] .btn-select-action {
                 </div>
             </div>
             
-            <!-- Seção: Endereço -->
+            <!-- SEÇÃO: Endereço -->
             <div class="form-section">
                 <h2 class="form-section__title">Endereço</h2>
                 
@@ -747,7 +219,7 @@ html[data-theme="dark"] .btn-select-action {
                 </div>
             </div>
             
-            <!-- Seção: Informações Comerciais -->
+            <!-- SEÇÃO: Informações Comerciais -->
             <div class="form-section">
                 <h2 class="form-section__title">Informações Comerciais</h2>
                 
@@ -830,7 +302,7 @@ html[data-theme="dark"] .btn-select-action {
                 </div>
             </div>
             
-            <!-- Ações -->
+            <!-- AÇÕES -->
             <div class="form-actions">
                 <a href="{% url 'ERP_ServicesBI:cliente_manager' %}" class="btn-voltar">
                     ← Cancelar
@@ -843,7 +315,7 @@ html[data-theme="dark"] .btn-select-action {
     </div>
 </div>
 
-<!-- MODAL: Adicionar Condição de Pagamento (COM PERIODICIDADE E PREVIEW) -->
+<!-- MODAL: Adicionar Condição de Pagamento -->
 <div class="modal-overlay" id="modalCondicao">
     <div class="modal-form">
         <div class="modal-form__header">
@@ -1357,7 +829,7 @@ function mascaraMoeda(input) {
 
 function mostrarToast(mensagem, tipo) {
     const toast = document.createElement('div');
-    toast.className = `erp-alert erp-alert--${tipo}`;
+    toast.className = `alert alert-${tipo}`;
     toast.style.cssText = `
         position: fixed;
         top: 90px;

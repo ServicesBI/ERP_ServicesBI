@@ -1709,6 +1709,7 @@ class ItemPedidoVenda(models.Model):
 class NotaFiscalSaida(models.Model):
     """
     Nota Fiscal de Saída (Vendas) - INTEGRADA COM ESTOQUE
+    Com rastreabilidade de Pedido de Venda
     """
     STATUS_CHOICES = [
         ('rascunho', 'Rascunho'),
@@ -1723,7 +1724,24 @@ class NotaFiscalSaida(models.Model):
         on_delete=models.PROTECT,
         related_name='notas_fiscais_saida'
     )
+    
+    # ✅ NOVO CAMPO - Rastreabilidade com Pedido de Venda
+    pedido_venda = models.ForeignKey(
+        'PedidoVenda',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='notas_fiscais_saida',
+        verbose_name='Pedido de Venda'
+    )
+    
     data_emissao = models.DateField('Data Emissão', default=timezone.now)
+    data_saida = models.DateField(
+        'Data Saída',
+        null=True,
+        blank=True,
+        help_text='Data em que a mercadoria foi entregue'
+    )
 
     deposito_origem = models.ForeignKey(
         Deposito,
@@ -1910,7 +1928,6 @@ class ItemNotaFiscalSaida(models.Model):
         self.valor_total = self.quantidade * self.preco_unitario
         super().save(*args, **kwargs)
         self.nota_fiscal.calcular_total()
-
 # =============================================================================
 # MÓDULO: FINANCEIRO - CATEGORIA FINANCEIRA
 # =============================================================================

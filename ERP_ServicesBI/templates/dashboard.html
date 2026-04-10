@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERP - Dashboard | ServicesBI</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tooltip.js@1.3.2/tooltip.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Dark Mode (Default) */
+            --primary: #00d4d4;
+            --primary-dark: #0099a1;
+            --bg-dark: #0f1419;
+            --bg-card: #1a2332;
+            --border: #2a3a52;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a8b8;
+            --accent: #00d4d4;
+        }
+
+        /* Light Mode */
+        body.light-mode {
+            --primary: #0099a1;
+            --primary-dark: #006b75;
+            --bg-dark: #f5f7fa;
+            --bg-card: #ffffff;
+            --border: #e0e8f0;
+            --text-primary: #1a2332;
+            --text-secondary: #6b7a8b;
+            --accent: #0099a1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* ========================================
+           HEADER/NAVBAR
+           ======================================== */
+        .header {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 0 1.5rem;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            flex: 1;
+        }
+
+        .toggle-sidebar {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-primary);
+            padding: 8px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-sidebar:hover {
+            background: rgba(0, 212, 212, 0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .breadcrumb {
+            color: var(--text-secondary);
+            font-size: 13px;
+            display: none;
+        }
+
+        @media (min-width: 768px) {
+            .breadcrumb {
+                display: block;
+            }
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .header-actions button {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-primary);
+            padding: 8px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .header-actions button:hover {
+            background: rgba(0, 212, 212, 0.1);
+            color: var(--accent);
+        }
+
+        .theme-toggle {
+            background: rgba(0, 212, 212, 0.1);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-primary);
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(0, 212, 212, 0.2);
+            border-color: var(--accent);
+        }
+
+        .user-profile {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--bg-dark);
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* ========================================
+           SIDEBAR
+           ======================================== */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 70px;
+            width: 250px;
+            height: calc(100vh - 70px);
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            z-index: 999;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 1rem 0;
+        }
+
+        .sidebar-item {
+            padding: 0;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.25rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-link:hover {
+            background: rgba(0, 212, 212, 0.1);
+            color: var(--accent);
+        }
+
+        .sidebar-link.active {
+            background: rgba(0, 212, 212, 0.1);
+            color: var(--accent);
+            border-left-color: var(--accent);
+            font-weight: 600;
+        }
+
+        .sidebar-icon {
+            font-size: 18px;
+            width: 18px;
+            text-align: center;
+        }
+
+        /* ========== SUBMENUS ========== */
+        .sidebar-item.has-submenu > .sidebar-link::after {
+            content: '▶';
+            margin-left: auto;
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-item.has-submenu.open > .sidebar-link::after {
+            transform: rotate(90deg);
+        }
+
+        .submenu {
+            display: none;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .sidebar-item.has-submenu.open .submenu {
+            display: block;
+            max-height: 500px;
+        }
+
+        .submenu-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 1.25rem 0.6rem 2.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+        }
+
+        .submenu-link:hover {
+            background: rgba(0, 212, 212, 0.05);
+            color: var(--accent);
+        }
+
+        .submenu-link.active {
+            color: var(--accent);
+            border-left-color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* ========================================
+           MAIN CONTENT
+           ======================================== */
+        .main {
+            margin-left: 250px;
+            margin-top: 70px;
+            padding: 2rem;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main.sidebar-collapsed {
+            margin-left: 0;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1.5rem;
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* ========================================
+           CARDS GRID (KPIs)
+           ======================================== */
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px rgba(0, 212, 212, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
+        }
+
+        .card-content {
+            flex: 1;
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 212, 212, 0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            flex-shrink: 0;
+        }
+
+        .card-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .card-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .card-change {
+            display: inline-block;
+            margin-top: 0.5rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--primary);
+            background: rgba(0, 212, 212, 0.1);
+        }
+
+        /* ========================================
+           SECTIONS
+           ======================================== */
+        .section {
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* ========================================
+           CHARTS GRID
+           ======================================== */
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .chart-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px rgba(0, 212, 212, 0.1);
+        }
+
+        .chart-card-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 280px;
+            width: 100%;
+        }
+
+        .chart-insight {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(0, 212, 212, 0.05);
+            border-left: 3px solid var(--primary);
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .chart-insight strong {
+            color: var(--primary);
+        }
+
+        /* ========================================
+           TABELA
+           ======================================== */
+        .table-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table-header-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            background: rgba(0, 212, 212, 0.05);
+            padding: 1rem 1.5rem;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .table tr:hover {
+            background: rgba(0, 212, 212, 0.05);
+        }
+
+        .table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .client-name {
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .client-value {
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            background: rgba(0, 212, 212, 0.15);
+            color: var(--primary);
+        }
+
+        /* ========================================
+           RESPONSIVE
+           ======================================== */
+        @media (max-width: 1400px) {
+            .cards-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+
+            .cards-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 0 1rem;
+                height: 60px;
+            }
+
+            .sidebar {
+                top: 60px;
+                height: calc(100vh - 60px);
+            }
+
+            .main {
+                margin-left: 0;
+                margin-top: 60px;
+                padding: 1rem;
+            }
+
+            .cards-container {
+                grid-template-columns: 1fr;
+            }
+
+            .page-title {
+                font-size: 24px;
+            }
+
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ========================================
+           SCROLLBAR
+           ======================================== */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        /* ========================================
+           TOOLTIPS
+           ======================================== */
+        .tooltip-container {
+            position: relative;
+            cursor: help;
+            border-bottom: 1px dotted currentColor;
+        }
+
+        .tooltip {
+            position: absolute;
+            bottom: calc(100% + 10px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary-dark);
+            color: var(--bg-dark);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+        }
+
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid var(--primary-dark);
+        }
+
+        .tooltip-container:hover .tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        body.light-mode .tooltip {
+            background: var(--primary);
+            color: var(--bg-card);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        body.light-mode .tooltip::after {
+            border-top-color: var(--primary);
+        }
+
+        /* Tooltip Info Badge */
+        .info-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            background: rgba(0, 212, 212, 0.2);
+            border: 1px solid var(--accent);
+            border-radius: 50%;
+            font-size: 10px;
+            font-weight: bold;
+            cursor: help;
+            margin-left: 4px;
+            position: relative;
+        }
+
+        .info-icon:hover {
+            background: rgba(0, 212, 212, 0.3);
+        }
+
+        .info-tooltip {
+            position: absolute;
+            bottom: calc(100% + 10px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary-dark);
+            color: var(--bg-dark);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            white-space: nowrap;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+        }
+
+        .info-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid var(--primary-dark);
+        }
+
+        .info-icon:hover .info-tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        body.light-mode .info-tooltip {
+            background: var(--primary);
+            color: var(--bg-card);
+        }
+
+        body.light-mode .info-tooltip::after {
+            border-top-color: var(--primary);
+        }
+
+        /* ========================================
+           ANIMAÇÕES
+           ======================================== */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            animation: slideIn 0.4s ease;
+        }
+
+        .chart-card {
+            animation: slideIn 0.4s ease 0.1s backwards;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ========================================
+         HEADER/NAVBAR
+         ======================================== -->
+    <header class="header">
+        <div class="header-left">
+            <button class="toggle-sidebar" onclick="toggleSidebar()">☰</button>
+            <a href="#" class="logo">
+                <span>ERP_ServicesBI</span>
+            </a>
+            <div class="breadcrumb">Dashboard / Visão Geral</div>
+        </div>
+
+        <div class="header-right">
+            <div class="header-actions">
+                <button title="Buscar">🔍</button>
+                <button title="Filtros">⚙️</button>
+            </div>
+            <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">
+                <span id="theme-icon">🌙</span>
+                <span id="theme-text">Dark</span>
+            </button>
+            <div class="user-profile" title="Seu Perfil">JD</div>
+        </div>
+    </header>
+
+    <!-- ========================================
+         SIDEBAR
+         ======================================== -->
+    <aside class="sidebar" id="sidebar">
+        <nav class="sidebar-nav">
+            <!-- Dashboard -->
+            <li class="sidebar-item">
+                <a href="/" class="sidebar-link active" onclick="setActive(this)">
+                    <span class="sidebar-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+
+            <!-- Cadastro com Submenu -->
+            <li class="sidebar-item has-submenu" onclick="toggleSubmenu(event)">
+                <a class="sidebar-link">
+                    <span class="sidebar-icon">👥</span>
+                    <span>Cadastro</span>
+                </a>
+                <div class="submenu">
+                    <a href="/clientes/" class="submenu-link" onclick="setActive(this)">Clientes</a>
+                    <a href="/cadastro/fornecedores/" class="submenu-link" onclick="setActive(this)">Fornecedores</a>
+                    <a href="/cadastro/produtos/" class="submenu-link" onclick="setActive(this)">Produtos</a>
+                    <a href="/cadastro/empresas/" class="submenu-link" onclick="setActive(this)">Empresas</a>
+                    <a href="/vendedores/" class="submenu-link" onclick="setActive(this)">Vendedores</a>
+                </div>
+            </li>
+
+            <!-- Compras com Submenu -->
+            <li class="sidebar-item has-submenu" onclick="toggleSubmenu(event)">
+                <a class="sidebar-link">
+                    <span class="sidebar-icon">📦</span>
+                    <span>Compras</span>
+                </a>
+                <div class="submenu">
+                    <a href="/compras/cotacoes/" class="submenu-link" onclick="setActive(this)">Cotações Comparativas</a>
+                    <a href="/compras/pedidos/" class="submenu-link" onclick="setActive(this)">Pedidos de Compra</a>
+                    <a href="/compras/notas-fiscais/" class="submenu-link" onclick="setActive(this)">Notas Fiscais de Entrada</a>
+                    <a href="/compras/relatorios/" class="submenu-link" onclick="setActive(this)">Relatório de Compras</a>
+                </div>
+            </li>
+
+            <!-- Vendas com Submenu -->
+            <li class="sidebar-item has-submenu" onclick="toggleSubmenu(event)">
+                <a class="sidebar-link">
+                    <span class="sidebar-icon">🛒</span>
+                    <span>Vendas</span>
+                </a>
+                <div class="submenu">
+                    <a href="/vendas/orcamentos/" class="submenu-link" onclick="setActive(this)">Orçamentos</a>
+                    <a href="/vendas/pedidos/" class="submenu-link" onclick="setActive(this)">Pedidos de Venda</a>
+                    <a href="/vendas/notas-fiscais/" class="submenu-link" onclick="setActive(this)">Notas Fiscais de Saída</a>
+                    <a href="/vendas/relatorios/" class="submenu-link" onclick="setActive(this)">Relatório de Vendas</a>
+                </div>
+            </li>
+
+            <!-- Financeiro com Submenu -->
+            <li class="sidebar-item has-submenu" onclick="toggleSubmenu(event)">
+                <a class="sidebar-link">
+                    <span class="sidebar-icon">💰</span>
+                    <span>Financeiro</span>
+                </a>
+                <div class="submenu">
+                    <a href="/financeiro/" class="submenu-link" onclick="setActive(this)">Relatório Financeiro</a>
+                    <a href="/fluxo-caixa/" class="submenu-link" onclick="setActive(this)">Fluxo de Caixa</a>
+                    <a href="/contas-receber/" class="submenu-link" onclick="setActive(this)">Contas a Receber</a>
+                    <a href="/contas-pagar/" class="submenu-link" onclick="setActive(this)">Contas a Pagar</a>
+                    <a href="/conciliacao-bancaria/" class="submenu-link" onclick="setActive(this)">Conciliação Bancária</a>
+                    <a href="/dre/" class="submenu-link" onclick="setActive(this)">DRE Gerencial</a>
+                    <a href="/planejado-realizado/" class="submenu-link" onclick="setActive(this)">Planejado x Realizado</a>
+                </div>
+            </li>
+
+            <!-- Estoque com Submenu -->
+            <li class="sidebar-item has-submenu" onclick="toggleSubmenu(event)">
+                <a class="sidebar-link">
+                    <span class="sidebar-icon">📦</span>
+                    <span>Estoque</span>
+                </a>
+                <div class="submenu">
+                    <a href="/estoque/movimentacoes/" class="submenu-link" onclick="setActive(this)">Movimentações</a>
+                    <a href="/estoque/relatorio-posicao/" class="submenu-link" onclick="setActive(this)">Posição de Estoque</a>
+                    <a href="/estoque/transferencias/" class="submenu-link" onclick="setActive(this)">Transferências</a>
+                    <a href="/estoque/inventarios/" class="submenu-link" onclick="setActive(this)">Inventário</a>
+                    <a href="/estoque/relatorio-movimentacoes/" class="submenu-link" onclick="setActive(this)">Relatório de Movimentações</a>
+                </div>
+            </li>
+
+            <!-- Relatórios com Submenu -->
+            <li class="sidebar-item has-submenu" onclick="toggleSubmenu(event)">
+                <a class="sidebar-link">
+                    <span class="sidebar-icon">📋</span>
+                    <span>Relatórios</span>
+                </a>
+                <div class="submenu">
+                    <a href="/vendas/relatorios/" class="submenu-link" onclick="setActive(this)">Vendas</a>
+                    <a href="/compras/relatorios/" class="submenu-link" onclick="setActive(this)">Compras</a>
+                    <a href="/financeiro/" class="submenu-link" onclick="setActive(this)">Financeiro</a>
+                    <a href="/estoque/relatorio-posicao/" class="submenu-link" onclick="setActive(this)">Estoque</a>
+                </div>
+            </li>
+        </nav>
+    </aside>
+
+    <!-- ========================================
+         MAIN CONTENT
+         ======================================== -->
+    <main class="main" id="main">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title">Dashboard</h1>
+            <p class="page-subtitle">Análise de Desempenho Geral - Real x Meta</p>
+        </div>
+
+        <!-- KPI Cards - 3 por linha -->
+        <div class="section">
+            <h2 class="section-title">KPIs Principais</h2>
+        </div>
+
+        <div class="cards-container">
+            <!-- Card 1: Faturamento Total -->
+            <div class="card">
+                <div class="card-icon">💵</div>
+                <div class="card-content">
+                    <div class="card-label">Faturamento Total</div>
+                    <div class="card-value">R$ 245.609</div>
+                    <div class="card-subtitle">Total de vendas mês</div>
+                    <div class="card-change">↑ 12% vs. mês anterior</div>
+                </div>
+            </div>
+
+            <!-- Card 2: Pedidos Pendentes -->
+            <div class="card">
+                <div class="card-icon">⏳</div>
+                <div class="card-content">
+                    <div class="card-label">Pedidos Pendentes</div>
+                    <div class="card-value">23</div>
+                    <div class="card-subtitle">Aguardando processamento</div>
+                    <div class="card-change">↑ 5% vs. semana anterior</div>
+                </div>
+            </div>
+
+            <!-- Card 3: Estoque Total -->
+            <div class="card">
+                <div class="card-icon">📦</div>
+                <div class="card-content">
+                    <div class="card-label">Produtos em Estoque</div>
+                    <div class="card-value">1.245</div>
+                    <div class="card-subtitle">Itens disponíveis</div>
+                    <div class="card-change">↓ 3% vs. semana anterior</div>
+                </div>
+            </div>
+
+            <!-- Card 4: Contas a Receber -->
+            <div class="card">
+                <div class="card-icon">🎯</div>
+                <div class="card-content">
+                    <div class="card-label">Contas a Receber</div>
+                    <div class="card-value">R$ 158.450</div>
+                    <div class="card-subtitle">Valor em aberto</div>
+                    <div class="card-change">↓ 8% vs. mês anterior</div>
+                </div>
+            </div>
+
+            <!-- Card 5: Contas a Pagar -->
+            <div class="card">
+                <div class="card-icon">💳</div>
+                <div class="card-content">
+                    <div class="card-label">Contas a Pagar</div>
+                    <div class="card-value">R$ 95.230</div>
+                    <div class="card-subtitle">Compromissos financeiros</div>
+                    <div class="card-change">↑ 3% vs. mês anterior</div>
+                </div>
+            </div>
+
+            <!-- Card 6: Clientes Ativos -->
+            <div class="card">
+                <div class="card-icon">👥</div>
+                <div class="card-content">
+                    <div class="card-label">Clientes Ativos</div>
+                    <div class="card-value">87</div>
+                    <div class="card-subtitle">Com movimentação</div>
+                    <div class="card-change">↑ 7% vs. mês anterior</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="section" style="margin-top: 3rem;">
+            <h2 class="section-title">Análise de Desempenho</h2>
+        </div>
+
+        <div class="charts-container">
+            <!-- Gráfico 1: Linha - Faturamento por Mês -->
+            <div class="chart-card">
+                <div class="chart-card-title">
+                    Faturamento Mensal vs Meta
+                    <span class="info-icon">?
+                        <span class="info-tooltip">Evolução do faturamento real comparado com meta planejada</span>
+                    </span>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="lineChart"></canvas>
+                </div>
+                <div class="chart-insight">
+                    <strong>⚠️ Insight:</strong> Meses críticos (Jan, Ago) não atingiram metas. Tendência geral é 33% mês anterior.
+                </div>
+            </div>
+
+            <!-- Gráfico 2: Barras - Comparativo Real vs Meta -->
+            <div class="chart-card">
+                <div class="chart-card-title">
+                    Real vs Meta por Período
+                    <span class="info-icon">?
+                        <span class="info-tooltip">Comparação entre valores reais realizados e metas estabelecidas</span>
+                    </span>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="barChart"></canvas>
+                </div>
+                <div class="chart-insight">
+                    <strong>✓ Desempenho:</strong> Períodos Apr-23 e Abr-22 superaram expectativas com +93% e +111%.
+                </div>
+            </div>
+
+            <!-- Gráfico 3: Gauge - Taxa de Realização -->
+            <div class="chart-card">
+                <div class="chart-card-title">
+                    Taxa de Realização Atual
+                    <span class="info-icon">?
+                        <span class="info-tooltip">Percentual de meta alcançado no período atual</span>
+                    </span>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="gaugeChart"></canvas>
+                </div>
+                <div class="chart-insight">
+                    <strong>📊 Status:</strong> Atingindo 91.4% da meta. Necessário +8.6 pontos para 100%.
+                </div>
+            </div>
+
+            <!-- Gráfico 4: Área - Evolução Acumulada -->
+            <div class="chart-card">
+                <div class="chart-card-title">
+                    Evolução Acumulada YTD
+                    <span class="info-icon">?
+                        <span class="info-tooltip">Faturamento acumulado desde o início do ano (Year To Date)</span>
+                    </span>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="areaChart"></canvas>
+                </div>
+                <div class="chart-insight">
+                    <strong>📈 Tendência:</strong> Crescimento consistente até Jul, queda em Set-Out, recuperação em Nov.
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Clientes -->
+        <div class="section" style="margin-top: 3rem;">
+            <h2 class="section-title">
+                Top 5 Clientes
+                <span class="info-icon">?
+                    <span class="info-tooltip">Clientes com maior volume de faturamento no período</span>
+                </span>
+            </h2>
+        </div>
+
+        <div class="table-card">
+            <div class="table-header">
+                <div class="table-header-title">Clientes com Maior Volume</div>
+            </div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>
+                            Posição
+                            <span class="info-icon">?
+                                <span class="info-tooltip">Ranking por volume</span>
+                            </span>
+                        </th>
+                        <th>
+                            Cliente
+                            <span class="info-icon">?
+                                <span class="info-tooltip">Nome da empresa</span>
+                            </span>
+                        </th>
+                        <th>
+                            Faturamento
+                            <span class="info-icon">?
+                                <span class="info-tooltip">Total vendido para este cliente</span>
+                            </span>
+                        </th>
+                        <th>
+                            Crescimento
+                            <span class="info-icon">?
+                                <span class="info-tooltip">Variação vs período anterior</span>
+                            </span>
+                        </th>
+                        <th>
+                            Status
+                            <span class="info-icon">?
+                                <span class="info-tooltip">Classificação do cliente</span>
+                            </span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>1º</strong></td>
+                        <td class="client-name">Distribuidora ABC Ltda</td>
+                        <td class="client-value">R$ 145.800</td>
+                        <td>+23%</td>
+                        <td><span class="badge">VIP</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>2º</strong></td>
+                        <td class="client-name">Comércio XYZ S.A.</td>
+                        <td class="client-value">R$ 98.500</td>
+                        <td>+15%</td>
+                        <td><span class="badge">VIP</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>3º</strong></td>
+                        <td class="client-name">Indústria Tech Brasil</td>
+                        <td class="client-value">R$ 87.300</td>
+                        <td>+8%</td>
+                        <td><span class="badge">Ativo</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>4º</strong></td>
+                        <td class="client-name">Logística Global Ltda</td>
+                        <td class="client-value">R$ 72.150</td>
+                        <td>+5%</td>
+                        <td><span class="badge">Ativo</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>5º</strong></td>
+                        <td class="client-name">Consultoria Smart Group</td>
+                        <td class="client-value">R$ 56.800</td>
+                        <td>-2%</td>
+                        <td><span class="badge">Ativo</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <br><br>
+    </main>
+
+    <!-- ========================================
+         JAVASCRIPT & CHARTS
+         ======================================== -->
+    <script>
+        // ========== THEME TOGGLE ==========
+        function toggleTheme() {
+            const html = document.documentElement;
+            const body = document.body;
+            const icon = document.getElementById('theme-icon');
+            const text = document.getElementById('theme-text');
+            
+            const isLightMode = body.classList.contains('light-mode');
+            
+            if (isLightMode) {
+                body.classList.remove('light-mode');
+                localStorage.setItem('theme', 'dark');
+                icon.textContent = '🌙';
+                text.textContent = 'Dark';
+            } else {
+                body.classList.add('light-mode');
+                localStorage.setItem('theme', 'light');
+                icon.textContent = '☀️';
+                text.textContent = 'Light';
+            }
+        }
+
+        // ========== INICIALIZAR TEMA SALVO ==========
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            const body = document.body;
+            const icon = document.getElementById('theme-icon');
+            const text = document.getElementById('theme-text');
+            
+            if (savedTheme === 'light') {
+                body.classList.add('light-mode');
+                icon.textContent = '☀️';
+                text.textContent = 'Light';
+            } else {
+                body.classList.remove('light-mode');
+                icon.textContent = '🌙';
+                text.textContent = 'Dark';
+            }
+        });
+
+        // ========== FUNCTIONS ==========
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const main = document.getElementById('main');
+            
+            sidebar.classList.toggle('collapsed');
+            main.classList.toggle('sidebar-collapsed');
+        }
+
+        function setActive(element) {
+            document.querySelectorAll('.sidebar-link, .submenu-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            element.classList.add('active');
+        }
+
+        function toggleSubmenu(event) {
+            const item = event.currentTarget;
+            const isOpen = item.classList.contains('open');
+            
+            // Fechar todos os submenus
+            document.querySelectorAll('.sidebar-item.has-submenu').forEach(el => {
+                el.classList.remove('open');
+            });
+            
+            // Abrir o submenu clicado
+            if (!isOpen) {
+                item.classList.add('open');
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 768) {
+                document.getElementById('sidebar').classList.remove('collapsed');
+            }
+        });
+
+        if (window.innerWidth < 768) {
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth < 768) {
+                        document.getElementById('sidebar').classList.add('collapsed');
+                    }
+                });
+            });
+        }
+
+        // ========== CHART COLORS - DINÂMICO LIGHT/DARK ==========
+        const primaryColor = '#00d4d4';
+        const isLightMode = document.body.classList.contains('light-mode');
+        const chartTextColor = isLightMode ? '#1a2332' : '#ffffff';
+        const chartPointColor = isLightMode ? '#f5f7fa' : '#1a2332';
+
+        // Chart 1: LINHA - Faturamento Mensal vs Meta
+        try {
+            new Chart(document.getElementById('lineChart'), {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out'],
+                    datasets: [
+                        {
+                            label: 'Faturamento Real',
+                            data: [215000, 266000, 342000, 290000, 264000, 330000, 273000, 262000, 234000, 245000],
+                            borderColor: primaryColor,
+                            backgroundColor: 'rgba(0, 212, 212, 0.12)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: primaryColor,
+                            pointBorderColor: chartPointColor,
+                            pointBorderWidth: 2,
+                            pointRadius: 5,
+                            pointHoverRadius: 7
+                        },
+                        {
+                            label: 'Meta',
+                            data: [250000, 250000, 280000, 290000, 310000, 340000, 300000, 280000, 320000, 310000],
+                            borderColor: 'rgba(0, 212, 212, 0.3)',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.4,
+                            pointRadius: 0,
+                            borderDash: [5, 5]
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { 
+                                usePointStyle: true, 
+                                padding: 15,
+                                color: chartTextColor,
+                                font: { size: 12, weight: '600' }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            display: true,
+                            grid: { display: false },
+                            ticks: { 
+                                color: chartTextColor,
+                                callback: function(value) { 
+                                    return 'R$ ' + (value / 1000).toLocaleString('pt-BR') + 'k'; 
+                                }
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: chartTextColor }
+                        }
+                    }
+                }
+            });
+        } catch (e) { console.log('Erro Chart 1:', e); }
+
+        // Chart 2: BARRAS - Real vs Meta por Período
+        try {
+            new Chart(document.getElementById('barChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Abr-22', 'Mai-22', 'Jun-22', 'Jul-22', 'Ago-22', 'Set-22', 'Abr-23'],
+                    datasets: [
+                        {
+                            label: 'Real',
+                            data: [290000, 264000, 330000, 273000, 262000, 234000, 290000],
+                            backgroundColor: primaryColor,
+                            borderRadius: 6,
+                            borderWidth: 0
+                        },
+                        {
+                            label: 'Meta',
+                            data: [155000, 155000, 155000, 155000, 155000, 155000, 155000],
+                            backgroundColor: isLightMode ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.15)',
+                            borderRadius: 6,
+                            borderWidth: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                color: chartTextColor,
+                                font: { size: 12, weight: '600' }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: { display: false },
+                            ticks: {
+                                color: chartTextColor,
+                                callback: function(value) { 
+                                    return 'R$ ' + (value / 1000).toLocaleString('pt-BR') + 'k'; 
+                                }
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: chartTextColor }
+                        }
+                    }
+                }
+            });
+        } catch (e) { console.log('Erro Chart 2:', e); }
+
+        // Chart 3: GAUGE - Taxa de Realização
+        try {
+            const gaugeCtx = document.getElementById('gaugeChart');
+            if (gaugeCtx) {
+                new Chart(gaugeCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Atingido', 'Meta Restante'],
+                        datasets: [{
+                            data: [91.4, 8.6],
+                            backgroundColor: [
+                                primaryColor, 
+                                isLightMode ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.12)'
+                            ],
+                            borderColor: chartPointColor,
+                            borderWidth: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    },
+                    plugins: [{
+                        id: 'textCenter',
+                        beforeDatasetsDraw(chart) {
+                            const {width, height, ctx} = chart;
+                            ctx.restore();
+                            ctx.font = 'bold 28px sans-serif';
+                            ctx.textBaseline = "middle";
+                            ctx.fillStyle = primaryColor;
+                            
+                            const text = "91.4%";
+                            const textX = Math.round((width - ctx.measureText(text).width) / 2);
+                            const textY = height / 2;
+                            
+                            ctx.fillText(text, textX, textY);
+                            ctx.save();
+                        }
+                    }]
+                });
+            }
+        } catch (e) { console.log('Erro Chart 3:', e); }
+
+        // Chart 4: ÁREA - Evolução Acumulada YTD
+        try {
+            new Chart(document.getElementById('areaChart'), {
+                type: 'line',
+                data: {
+                    labels: ['Nov', 'Dez', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov'],
+                    datasets: [{
+                        label: 'Faturamento Acumulado YTD',
+                        data: [215000, 481000, 747000, 1013000, 1355000, 1645000, 1909000, 2239000, 2512000, 2774000, 3008000, 3242000, 3487000],
+                        borderColor: primaryColor,
+                        backgroundColor: 'rgba(0, 212, 212, 0.12)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointBackgroundColor: primaryColor,
+                        pointBorderColor: chartPointColor,
+                        pointBorderWidth: 2,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                color: chartTextColor,
+                                font: { size: 12, weight: '600' }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: { display: false },
+                            ticks: {
+                                color: chartTextColor,
+                                callback: function(value) { 
+                                    return 'R$ ' + (value / 1000000).toLocaleString('pt-BR') + 'M'; 
+                                }
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: chartTextColor }
+                        }
+                    }
+                }
+            });
+        } catch (e) { console.log('Erro Chart 4:', e); }
+    </script>
+
+</body>
+</html>
