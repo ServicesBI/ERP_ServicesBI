@@ -375,15 +375,15 @@ let pedidoIdAprovacao = null;
 let pedidoIdReceber = null;
 
 function novoPedido() {
-    window.location.href = "{% url 'ERP_ServicesBI:pedido_compra_form' %}";
+    window.location.href = "{% url 'ERP_ServicesBI:pedido_compra_add' %}";
 }
 
 function editarPedido(id) {
-    window.location.href = "{% url 'ERP_ServicesBI:pedido_compra_form' %}?id=" + id;
+    window.location.href = "{% url 'ERP_ServicesBI:pedido_compra_add' %}?id=" + id;
 }
 
 function visualizarPedido(id) {
-    window.location.href = "{% url 'ERP_ServicesBI:pedido_compra_form' %}?id=" + id + "&modo=visualizar";
+    window.location.href = "{% url 'ERP_ServicesBI:pedido_compra_add' %}?id=" + id + "&modo=visualizar";
 }
 
 function enviarAprovacao(id) {

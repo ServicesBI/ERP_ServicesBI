@@ -1,299 +1,157 @@
-{% load static %}
+{% load static custom_filters %}
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Sistema ERP ServicesBI - Gestão completa de compras, vendas, financeiro e estoque">
-    <meta name="theme-color" content="#0099a1">
+    <title>{% block title %}ERP ServicesBI{% endblock %}</title>
     
-    <title>{% block title %}ERP - ServicesBI{% endblock %}</title>
-    
-    <!-- ✅ CSS EXTERNO - OBRIGATÓRIO AQUI -->
+    <!-- CSS -->
     <link rel="stylesheet" href="{% static 'css/erp-theme.css' %}">
-    
-    <!-- ⚠️ CSS Adicional por página - APENAS arquivos externos! -->
+    <link rel="stylesheet" href="{% static 'css/erp-forms.css' %}">
+    <link rel="stylesheet" href="{% static 'css/erp-managers.css' %}">
+    <link rel="stylesheet" href="{% static 'css/erp-layout.css' %}">
+    <link rel="stylesheet" href="{% static 'css/modal-overlay-PATCH-AGRESSIVO.css' %}">
     {% block extra_css %}{% endblock %}
+    
+    <style>
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
 </head>
-
 <body>
-
-    <!-- ========================================
-         HEADER/NAVBAR
-         ======================================== -->
+    <!-- HEADER -->
     <header class="header">
         <div class="header-left">
-            <button class="toggle-sidebar" onclick="toggleSidebar()" title="Menu">☰</button>
+            <button class="toggle-sidebar" title="Menu">☰</button>
             <a href="{% url 'ERP_ServicesBI:dashboard' %}" class="logo">
                 <span>ERP_ServicesBI</span>
             </a>
             <div class="breadcrumb">{% block breadcrumb %}{% endblock %}</div>
         </div>
-
         <div class="header-right">
-            <div class="header-actions">
-                <button title="Buscar" onclick="event.preventDefault()">🔍</button>
-            </div>
-            <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">
+            <button class="theme-toggle" title="Tema">
                 <span id="theme-icon">🌙</span>
                 <span id="theme-text">Dark</span>
             </button>
-            <div class="user-profile" title="Seu Perfil">
+            <div class="user-profile" title="Perfil">
                 {{ request.user.first_name|first|upper|default:"U" }}
             </div>
         </div>
     </header>
 
-    <!-- ========================================
-         SIDEBAR
-         ======================================== -->
+    <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
         <nav class="sidebar-nav">
-
             <!-- Dashboard -->
             <li class="sidebar-item">
-                <a href="{% url 'ERP_ServicesBI:dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" onclick="setActive(event)">
-                    <span class="sidebar-icon">📊</span>
-                    <span>Dashboard</span>
+                <a href="{% url 'ERP_ServicesBI:dashboard' %}" class="sidebar-link">
+                    📊 Dashboard
                 </a>
             </li>
 
-            <!-- Cadastro com Submenu -->
-            <li class="sidebar-item has-submenu {% if 'clientes' in request.path or 'vendedores' in request.path or 'empresas' in request.path or 'fornecedores' in request.path or 'produtos' in request.path %}open{% endif %}" onclick="toggleSubmenu(event)">
-                <a class="sidebar-link" href="javascript:void(0)">
-                    <span class="sidebar-icon">👥</span>
-                    <span>Cadastro</span>
-                </a>
+            <!-- Cadastro -->
+            <li class="sidebar-item has-submenu">
+                <a class="sidebar-link">📋 Cadastro</a>
                 <div class="submenu">
-                    <a href="{% url 'ERP_ServicesBI:cliente_manager' %}" class="submenu-link {% if 'clientes' in request.path %}active{% endif %}" onclick="setActive(event)">Clientes</a>
-                    <a href="{% url 'ERP_ServicesBI:vendedor_manager' %}" class="submenu-link {% if 'vendedores' in request.path %}active{% endif %}" onclick="setActive(event)">Vendedores</a>
-                    <a href="{% url 'ERP_ServicesBI:empresa_list' %}" class="submenu-link {% if 'empresas' in request.path %}active{% endif %}" onclick="setActive(event)">Empresas</a>
-                    <a href="{% url 'ERP_ServicesBI:fornecedor_manager' %}" class="submenu-link {% if 'fornecedores' in request.path %}active{% endif %}" onclick="setActive(event)">Fornecedores</a>
-                    <a href="{% url 'ERP_ServicesBI:produto_list' %}" class="submenu-link {% if 'produtos' in request.path %}active{% endif %}" onclick="setActive(event)">Produtos</a>
+                    <a href="{% url 'ERP_ServicesBI:cliente_manager' %}" class="submenu-link">👥 Clientes</a>
+                    <a href="{% url 'ERP_ServicesBI:fornecedor_manager' %}" class="submenu-link">🏭 Fornecedores</a>
+                    <a href="{% url 'ERP_ServicesBI:produto_manager' %}" class="submenu-link">📦 Produtos</a>
+                    <a href="{% url 'ERP_ServicesBI:empresa_manager' %}" class="submenu-link">🏢 Empresas</a>
+                    <a href="{% url 'ERP_ServicesBI:vendedor_manager' %}" class="submenu-link">👔 Vendedores</a>
                 </div>
             </li>
 
-            <!-- Compras com Submenu -->
-            <li class="sidebar-item has-submenu {% if 'compras' in request.path %}open{% endif %}" onclick="toggleSubmenu(event)">
-                <a class="sidebar-link" href="javascript:void(0)">
-                    <span class="sidebar-icon">📦</span>
-                    <span>Compras</span>
-                </a>
+            <!-- Compras -->
+            <li class="sidebar-item has-submenu">
+                <a class="sidebar-link">🛒 Compras</a>
                 <div class="submenu">
-                    <a href="{% url 'ERP_ServicesBI:cotacao_manager' %}" class="submenu-link {% if 'cotacoes' in request.path %}active{% endif %}" onclick="setActive(event)">Cotações</a>
-                    <a href="{% url 'ERP_ServicesBI:pedido_compra_manager' %}" class="submenu-link {% if 'compras/pedidos' in request.path %}active{% endif %}" onclick="setActive(event)">Pedidos</a>
-                    <a href="{% url 'ERP_ServicesBI:nota_fiscal_entrada_manager' %}" class="submenu-link {% if 'compras/notas-fiscais' in request.path %}active{% endif %}" onclick="setActive(event)">Notas Fiscais</a>
-                    <a href="{% url 'ERP_ServicesBI:relatorio_compras' %}" class="submenu-link {% if 'compras/relatorios' in request.path %}active{% endif %}" onclick="setActive(event)">Relatórios</a>
+                    <a href="{% url 'ERP_ServicesBI:cotacao_manager' %}" class="submenu-link">📝 Cotações</a>
+                    <a href="{% url 'ERP_ServicesBI:pedido_compra_manager' %}" class="submenu-link">📋 Pedidos</a>
+                    <a href="{% url 'ERP_ServicesBI:nota_fiscal_entrada_manager' %}" class="submenu-link">📄 Notas Fiscais</a>
+                    <a href="{% url 'ERP_ServicesBI:relatorio_compras' %}" class="submenu-link">📊 Relatórios</a>
                 </div>
             </li>
 
-            <!-- Vendas com Submenu -->
-            <li class="sidebar-item has-submenu {% if 'vendas' in request.path %}open{% endif %}" onclick="toggleSubmenu(event)">
-                <a class="sidebar-link" href="javascript:void(0)">
-                    <span class="sidebar-icon">🛒</span>
-                    <span>Vendas</span>
-                </a>
+            <!-- Vendas -->
+            <li class="sidebar-item has-submenu">
+                <a class="sidebar-link">💰 Vendas</a>
                 <div class="submenu">
-                    <a href="{% url 'ERP_ServicesBI:orcamento_manager' %}" class="submenu-link {% if 'orcamentos' in request.path %}active{% endif %}" onclick="setActive(event)">Orçamentos</a>
-                    <a href="{% url 'ERP_ServicesBI:pedido_venda_manager' %}" class="submenu-link {% if 'vendas/pedidos' in request.path %}active{% endif %}" onclick="setActive(event)">Pedidos</a>
-                    <a href="{% url 'ERP_ServicesBI:nota_fiscal_saida_manager' %}" class="submenu-link {% if 'vendas/notas-fiscais' in request.path %}active{% endif %}" onclick="setActive(event)">Notas Fiscais</a>
-                    <a href="{% url 'ERP_ServicesBI:relatorio_vendas' %}" class="submenu-link {% if 'vendas/relatorios' in request.path %}active{% endif %}" onclick="setActive(event)">Relatórios</a>
+                    <a href="{% url 'ERP_ServicesBI:orcamento_manager' %}" class="submenu-link">💡 Orçamentos</a>
+                    <a href="{% url 'ERP_ServicesBI:pedido_venda_manager' %}" class="submenu-link">📋 Pedidos</a>
+                    <a href="{% url 'ERP_ServicesBI:nota_fiscal_saida_manager' %}" class="submenu-link">📄 Notas Fiscais</a>
+                    <a href="{% url 'ERP_ServicesBI:relatorio_vendas' %}" class="submenu-link">📊 Relatórios</a>
                 </div>
             </li>
 
-            <!-- Financeiro com Submenu -->
-            <li class="sidebar-item has-submenu {% if 'financeiro' in request.path or 'fluxo-caixa' in request.path or 'contas-' in request.path %}open{% endif %}" onclick="toggleSubmenu(event)">
-                <a class="sidebar-link" href="javascript:void(0)">
-                    <span class="sidebar-icon">💰</span>
-                    <span>Financeiro</span>
-                </a>
+            <!-- Financeiro -->
+            <li class="sidebar-item has-submenu">
+                <a class="sidebar-link">💳 Financeiro</a>
                 <div class="submenu">
-                    <a href="{% url 'ERP_ServicesBI:relatorio_financeiro' %}" class="submenu-link {% if request.resolver_match.url_name == 'relatorio_financeiro' %}active{% endif %}" onclick="setActive(event)">Relatório</a>
-                    <a href="{% url 'ERP_ServicesBI:fluxo_caixa_list' %}" class="submenu-link {% if 'fluxo-caixa' in request.path %}active{% endif %}" onclick="setActive(event)">Fluxo Caixa</a>
-                    <a href="{% url 'ERP_ServicesBI:conta_receber_list' %}" class="submenu-link {% if 'contas-receber' in request.path %}active{% endif %}" onclick="setActive(event)">Contas Receber</a>
-                    <a href="{% url 'ERP_ServicesBI:conta_pagar_list' %}" class="submenu-link {% if 'contas-pagar' in request.path %}active{% endif %}" onclick="setActive(event)">Contas Pagar</a>
-                    <a href="{% url 'ERP_ServicesBI:conciliacao_bancaria_list' %}" class="submenu-link {% if 'conciliacao' in request.path %}active{% endif %}" onclick="setActive(event)">Conciliação</a>
-                    <a href="{% url 'ERP_ServicesBI:dre_list' %}" class="submenu-link {% if 'dre' in request.path %}active{% endif %}" onclick="setActive(event)">DRE</a>
-                    <a href="{% url 'ERP_ServicesBI:planejado_x_realizado_list' %}" class="submenu-link {% if 'planejado' in request.path %}active{% endif %}" onclick="setActive(event)">Planejado x Realizado</a>
+                    <a href="{% url 'ERP_ServicesBI:conta_receber_list' %}" class="submenu-link">📥 Contas a Receber</a>
+                    <a href="{% url 'ERP_ServicesBI:conta_pagar_list' %}" class="submenu-link">📤 Contas a Pagar</a>
+                    <a href="{% url 'ERP_ServicesBI:fluxo_caixa_manager' %}" class="submenu-link">📈 Fluxo de Caixa</a>
+                    <a href="{% url 'ERP_ServicesBI:conciliacao_bancaria_manager' %}" class="submenu-link">🏦 Conciliação</a>
+                    <a href="{% url 'ERP_ServicesBI:dre_manager' %}" class="submenu-link">📊 DRE</a>
                 </div>
             </li>
 
-            <!-- Estoque com Submenu -->
-            <li class="sidebar-item has-submenu {% if 'estoque' in request.path %}open{% endif %}" onclick="toggleSubmenu(event)">
-                <a class="sidebar-link" href="javascript:void(0)">
-                    <span class="sidebar-icon">📦</span>
-                    <span>Estoque</span>
-                </a>
+            <!-- Estoque -->
+            <li class="sidebar-item has-submenu">
+                <a class="sidebar-link">📦 Estoque</a>
                 <div class="submenu">
-                    <a href="{% url 'ERP_ServicesBI:movimentacao_estoque_list' %}" class="submenu-link {% if 'movimentacoes' in request.path %}active{% endif %}" onclick="setActive(event)">Movimentações</a>
-                    <a href="{% url 'ERP_ServicesBI:inventario_list' %}" class="submenu-link {% if 'inventarios' in request.path %}active{% endif %}" onclick="setActive(event)">Inventário</a>
-                    <a href="{% url 'ERP_ServicesBI:transferencia_list' %}" class="submenu-link {% if 'transferencias' in request.path %}active{% endif %}" onclick="setActive(event)">Transferências</a>
-                    <a href="{% url 'ERP_ServicesBI:relatorio_estoque' %}" class="submenu-link {% if 'relatorio-posicao' in request.path %}active{% endif %}" onclick="setActive(event)">Relatório</a>
-                    <a href="{% url 'ERP_ServicesBI:relatorio_movimentacoes' %}" class="submenu-link {% if 'relatorio-movimentacoes' in request.path %}active{% endif %}" onclick="setActive(event)">Movimentações</a>
+                    <a href="{% url 'ERP_ServicesBI:movimentacao_estoque_manager' %}" class="submenu-link">↔️ Movimentações</a>
+                    <a href="{% url 'ERP_ServicesBI:transferencia_estoque_manager' %}" class="submenu-link">🚚 Transferências</a>
+                    <a href="{% url 'ERP_ServicesBI:inventario_manager' %}" class="submenu-link">📋 Inventário</a>
+                    <a href="{% url 'ERP_ServicesBI:relatorio_estoque_posicao' %}" class="submenu-link">📊 Relatórios</a>
                 </div>
             </li>
 
+            <!-- Relatórios -->
+            <li class="sidebar-item has-submenu">
+                <a class="sidebar-link">📊 Relatórios</a>
+                <div class="submenu">
+                    <a href="{% url 'ERP_ServicesBI:relatorio_vendas' %}" class="submenu-link">Vendas</a>
+                    <a href="{% url 'ERP_ServicesBI:relatorio_compras' %}" class="submenu-link">Compras</a>
+                    <a href="{% url 'ERP_ServicesBI:relatorio_financeiro' %}" class="submenu-link">Financeiro</a>
+                    <a href="{% url 'ERP_ServicesBI:relatorio_estoque_posicao' %}" class="submenu-link">Estoque</a>
+                </div>
+            </li>
+
+            <!-- Admin -->
+            <li class="sidebar-item has-submenu">
+                <a class="sidebar-link">⚙️ Admin</a>
+                <div class="submenu">
+                    <a href="{% url 'admin:index' %}" class="submenu-link">Django Admin</a>
+                    <a href="{% url 'ERP_ServicesBI:logout' %}" class="submenu-link">🚪 Logout</a>
+                </div>
+            </li>
         </nav>
     </aside>
 
-    <!-- ========================================
-         MAIN CONTENT
-         ======================================== -->
+    <!-- MAIN CONTENT -->
     <main class="main" id="main">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}" style="animation: slideIn 0.3s ease;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
         {% block content %}{% endblock %}
     </main>
 
-    <!-- ========================================
-         JAVASCRIPT - OTIMIZADO
-         ======================================== -->
-    <script>
-        'use strict';
-
-        // ========== THEME TOGGLE ==========
-        function toggleTheme() {
-            const body = document.body;
-            const icon = document.getElementById('theme-icon');
-            const text = document.getElementById('theme-text');
-            
-            if (!body || !icon || !text) {
-                console.error('Elementos de tema não encontrados');
-                return;
-            }
-            
-            const isLightMode = body.classList.contains('light-mode');
-            
-            if (isLightMode) {
-                body.classList.remove('light-mode');
-                localStorage.setItem('theme', 'dark');
-                icon.textContent = '🌙';
-                text.textContent = 'Dark';
-            } else {
-                body.classList.add('light-mode');
-                localStorage.setItem('theme', 'light');
-                icon.textContent = '☀️';
-                text.textContent = 'Light';
-            }
-        }
-
-        // ========== INICIALIZAR TEMA SALVO ==========
-        function initializeTheme() {
-            const savedTheme = localStorage.getItem('theme') || 'dark';
-            const body = document.body;
-            const icon = document.getElementById('theme-icon');
-            const text = document.getElementById('theme-text');
-            
-            if (!icon || !text) return;
-            
-            if (savedTheme === 'light') {
-                body.classList.add('light-mode');
-                icon.textContent = '☀️';
-                text.textContent = 'Light';
-            } else {
-                body.classList.remove('light-mode');
-                icon.textContent = '🌙';
-                text.textContent = 'Dark';
-            }
-        }
-
-        // ========== SIDEBAR FUNCTIONS ==========
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const main = document.getElementById('main');
-            
-            if (!sidebar || !main) {
-                console.error('Sidebar ou Main não encontrados');
-                return;
-            }
-            
-            sidebar.classList.toggle('collapsed');
-            main.classList.toggle('sidebar-collapsed');
-        }
-
-        function setActive(event) {
-            const link = event.target.closest('a');
-            if (!link) return;
-            
-            // ✅ APENAS previne se for menu com submenu
-            if (link.parentElement.classList.contains('has-submenu')) {
-                event.preventDefault();
-                return;
-            }
-            
-            // ✅ Para links normais, deixa navegar naturalmente
-            // Remover active de todos os links
-            document.querySelectorAll('.sidebar-link, .submenu-link').forEach(el => {
-                el.classList.remove('active');
-            });
-            
-            // Adicionar active ao clicado
-            link.classList.add('active');
-            
-            // Navegar após marcar como active
-            // (não usa preventDefault, deixa o link fazer seu trabalho)
-        }
-
-        function toggleSubmenu(event) {
-            const item = event.currentTarget;
-            if (!item.classList.contains('has-submenu')) return;
-            
-            const isOpen = item.classList.contains('open');
-            
-            // Fechar todos os submenus
-            document.querySelectorAll('.sidebar-item.has-submenu').forEach(el => {
-                el.classList.remove('open');
-            });
-            
-            // Abrir o submenu clicado (se não estava aberto)
-            if (!isOpen) {
-                item.classList.add('open');
-            }
-        }
-
-        // ========== AUTO-CLOSE SIDEBAR EM MOBILE ==========
-        function handleMobileMenuClose() {
-            if (window.innerWidth < 768) {
-                document.querySelectorAll('.submenu-link').forEach(link => {
-                    link.addEventListener('click', function(e) {
-                        setTimeout(() => {
-                            const sidebar = document.getElementById('sidebar');
-                            const main = document.getElementById('main');
-                            if (sidebar && main) {
-                                sidebar.classList.add('collapsed');
-                                main.classList.add('sidebar-collapsed');
-                            }
-                        }, 100);
-                    });
-                });
-            }
-        }
-
-        // ========== RESIZE HANDLER ==========
-        window.addEventListener('resize', function() {
-            const sidebar = document.getElementById('sidebar');
-            const main = document.getElementById('main');
-            
-            if (!sidebar || !main) return;
-            
-            if (window.innerWidth >= 768) {
-                sidebar.classList.remove('collapsed');
-                main.classList.remove('sidebar-collapsed');
-            }
-        });
-
-        // ========== INICIALIZAÇÃO ==========
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                initializeTheme();
-                handleMobileMenuClose();
-            });
-        } else {
-            initializeTheme();
-            handleMobileMenuClose();
-        }
-    </script>
-
-    <!-- Scripts adicionais por página -->
+    <!-- SCRIPTS -->
+    <script src="{% static 'js/erp-core.js' %}"></script>
     {% block extra_js %}{% endblock %}
-
 </body>
 </html>

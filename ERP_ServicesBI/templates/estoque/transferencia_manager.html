@@ -22,7 +22,7 @@
     <!-- Filtros -->
     <div class="card mb-4">
         <div class="card-body">
-            <form hx-get="{% url 'ERP_ServicesBI:transferencia_list' %}" 
+            <form hx-get="{% url 'ERP_ServicesBI:transferencia_manager' %}" 
                   hx-target="#transferencia-table-container" 
                   hx-trigger="submit, change delay:300ms">
                 <div class="row">
@@ -151,19 +151,19 @@
                 <ul class="pagination justify-content-center">
                     {% if page_obj.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" hx-get="{% url 'ERP_ServicesBI:transferencia_list' %}?page={{ page_obj.previous_page_number }}" 
+                        <a class="page-link" hx-get="{% url 'ERP_ServicesBI:transferencia_manager' %}?page={{ page_obj.previous_page_number }}" 
                            hx-target="#transferencia-table-container">Anterior</a>
                     </li>
                     {% endif %}
                     {% for num in page_obj.paginator.page_range %}
                     <li class="page-item {% if page_obj.number == num %}active{% endif %}">
-                        <a class="page-link" hx-get="{% url 'ERP_ServicesBI:transferencia_list' %}?page={{ num }}" 
+                        <a class="page-link" hx-get="{% url 'ERP_ServicesBI:transferencia_manager' %}?page={{ num }}" 
                            hx-target="#transferencia-table-container">{{ num }}</a>
                     </li>
                     {% endfor %}
                     {% if page_obj.has_next %}
                     <li class="page-item">
-                        <a class="page-link" hx-get="{% url 'ERP_ServicesBI:transferencia_list' %}?page={{ page_obj.next_page_number }}" 
+                        <a class="page-link" hx-get="{% url 'ERP_ServicesBI:transferencia_manager' %}?page={{ page_obj.next_page_number }}" 
                            hx-target="#transferencia-table-container">Próxima</a>
                     </li>
                     {% endif %}

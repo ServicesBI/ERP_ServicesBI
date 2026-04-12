@@ -3429,3 +3429,514 @@ class ItemEntradaNFE(models.Model):
     def save(self, *args, **kwargs):
         self.valor_total = self.quantidade * self.valor_unitario
         super().save(*args, **kwargs)
+
+# =============================================================================
+# MÓDULO: ESTOQUE - POSIÇÃO DE ESTOQUE (ADICIONAR ANTES DOS MODELOS AUXILIARES)
+# =============================================================================
+
+class PosicaoEstoque(models.Model):
+    """
+    Posição atual de estoque por produto e depósito
+    Similar a SaldoEstoque mas com campos adicionais para relatórios
+    """
+    produto = models.ForeignKey(
+        'Produto',
+        on_delete=models.PROTECT,
+        related_name='posicoes_estoque',
+        verbose_name='Produto'
+    )
+    deposito = models.ForeignKey(
+        'Deposito',
+        on_delete=models.PROTECT,
+        related_name='posicoes_estoque',
+        verbose_name='Depósito'
+    )
+    
+    # Quantidades
+    quantidade_inicial = models.DecimalField(
+        'Quantidade Inicial',
+        max_digits=15,
+        decimal_places=3,
+        default=Decimal('0.000')
+    )
+    quantidade_entradas = models.DecimalField(
+        'Entradas',
+        max_digits=15,
+        decimal_places=3,
+        default=Decimal('0.000')
+    )
+    quantidade_saidas = models.DecimalField(
+        'Saídas',
+        max_digits=15,
+        decimal_places=3,
+        default=Decimal('0.000')
+    )
+    quantidade_atual = models.DecimalField(
+        'Quantidade Atual',
+        max_digits=15,
+        decimal_places=3,
+        default=Decimal('0.000')
+    )
+    
+    # Valores
+    valor_unitario_medio = models.DecimalField(
+        'Custo Médio',
+        max_digits=15,
+        decimal_places=4,
+        default=Decimal('0.0000')
+    )
+    valor_total = models.DecimalField(
+        'Valor Total',
+        max_digits=15,
+        decimal_places=2,
+        default=Decimal('0.00')
+    )
+    
+    # Controle
+    data_referencia = models.DateField(
+        'Data de Referência',
+        default=timezone.now
+    )
+    atualizado_em = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Posição de Estoque'
+        verbose_name_plural = 'Posições de Estoque'
+        unique_together = ['produto', 'deposito', 'data_referencia']
+        ordering = ['-data_referencia', 'produto__descricao']
+        db_table = 'estoque_posicao'
+
+    def __str__(self):
+        return f"{self.produto.descricao[:30]} - {self.deposito.nome}: {self.quantidade_atual}"
+
+    def calcular_totais(self):
+        """Recalcula quantidade e valor total"""
+        self.quantidade_atual = (
+            self.quantidade_inicial + 
+            self.quantidade_entradas - 
+            self.quantidade_saidas
+        )
+        self.valor_total = self.quantidade_atual * self.valor_unitario_medio
+        self.save(update_fields=['quantidade_atual', 'valor_total'])
+
+# =============================================================================
+# MODELOS AUXILIARES (ADICIONAR AO FINAL DO MODELS.PY)
+# =============================================================================
+
+class ItemMovimentacaoEstoque(models.Model):
+    """
+    Modelo para itens de uma movimentação de estoque
+    Usado quando uma movimentação envolve múltiplos produtos
+    """
+    TIPO_CHOICES = [
+        ('entrada', 'Entrada'),
+        ('saida', 'Saída'),
+        ('transferencia', 'Transferência'),
+        ('ajuste', 'Ajuste'),
+    ]
+
+    movimentacao = models.ForeignKey(
+        'MovimentacaoEstoque',
+        on_delete=models.CASCADE,
+        related_name='itens_movimentacao',
+        verbose_name='Movimentação'
+    )
+    produto = models.ForeignKey(
+        'Produto',
+        on_delete=models.CASCADE,
+        verbose_name='Produto'
+    )
+    tipo = models.CharField(
+        'Tipo',
+        max_length=20,
+        choices=TIPO_CHOICES,
+        default='entrada'
+    )
+    quantidade = models.DecimalField(
+        'Quantidade',
+        max_digits=15,
+        decimal_places=3,
+        default=Decimal('0.000')
+    )
+    preco_unitario = models.DecimalField(
+        'Preço Unitário',
+        max_digits=15,
+        decimal_places=4,
+        default=Decimal('0.0000'),
+        blank=True,
+        null=True
+    )
+    valor_total = models.DecimalField(
+        'Valor Total',
+        max_digits=15,
+        decimal_places=2,
+        default=Decimal('0.00'),
+        blank=True,
+        null=True
+    )
+    deposito_origem = models.ForeignKey(
+        'Deposito',
+        on_delete=models.SET_NULL,
+        related_name='itens_saida',
+        verbose_name='Depósito Origem',
+        blank=True,
+        null=True
+    )
+    deposito_destino = models.ForeignKey(
+        'Deposito',
+        on_delete=models.SET_NULL,
+        related_name='itens_entrada',
+        verbose_name='Depósito Destino',
+        blank=True,
+        null=True
+    )
+    observacoes = models.TextField('Observações', blank=True, null=True)
+
+    created_at = models.DateTimeField('Criado em', auto_now_add=True)
+    updated_at = models.DateTimeField('Atualizado em', auto_now=True)
+
+    class Meta:
+        verbose_name = 'Item de Movimentação'
+        verbose_name_plural = 'Itens de Movimentação'
+        ordering = ['movimentacao', 'produto']
+
+    def __str__(self):
+        return f"{self.movimentacao} - {self.produto}"
+
+    def save(self, *args, **kwargs):
+        # Calcular valor_total se não informado
+        if self.preco_unitario and self.quantidade and not self.valor_total:
+            self.valor_total = self.quantidade * self.preco_unitario
+        super().save(*args, **kwargs)
+
+
+class ItemCondicaoPagamento(models.Model):
+    """
+    Modelo para itens/parcelas de uma condição de pagamento
+    """
+    condicao_pagamento = models.ForeignKey(
+        'CondicaoPagamento',
+        on_delete=models.CASCADE,
+        related_name='itens',
+        verbose_name='Condição de Pagamento'
+    )
+    numero_parcela = models.PositiveIntegerField('Nº Parcela', default=1)
+    dias = models.PositiveIntegerField('Dias', default=30)
+    percentual = models.DecimalField(
+        'Percentual',
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal('0.00')
+    )
+
+    created_at = models.DateTimeField('Criado em', auto_now_add=True)
+    updated_at = models.DateTimeField('Atualizado em', auto_now=True)
+
+    class Meta:
+        verbose_name = 'Item de Condição de Pagamento'
+        verbose_name_plural = 'Itens de Condição de Pagamento'
+        ordering = ['condicao_pagamento', 'numero_parcela']
+        unique_together = ['condicao_pagamento', 'numero_parcela']
+
+    def __str__(self):
+        return f"{self.condicao_pagamento} - Parcela {self.numero_parcela}"
+
+class Transportadora(models.Model):
+    """
+    Modelo para cadastro de Transportadoras
+    """
+    TIPO_CHOICES = [
+        ('rodoviario', 'Rodoviário'),
+        ('aereo', 'Aéreo'),
+        ('maritimo', 'Marítimo'),
+        ('ferroviario', 'Ferroviário'),
+        ('outro', 'Outro'),
+    ]
+    
+    nome = models.CharField('Nome', max_length=200)
+    cnpj = models.CharField('CNPJ', max_length=20, blank=True, null=True)
+    ie = models.CharField('Inscrição Estadual', max_length=20, blank=True, null=True)
+    tipo = models.CharField('Tipo', max_length=20, choices=TIPO_CHOICES, default='rodoviario')
+    
+    # Endereço
+    endereco = models.CharField('Endereço', max_length=255, blank=True, null=True)
+    numero = models.CharField('Número', max_length=20, blank=True, null=True)
+    complemento = models.CharField('Complemento', max_length=100, blank=True, null=True)
+    bairro = models.CharField('Bairro', max_length=100, blank=True, null=True)
+    cidade = models.CharField('Cidade', max_length=100, blank=True, null=True)
+    estado = models.CharField('Estado', max_length=2, blank=True, null=True)
+    cep = models.CharField('CEP', max_length=10, blank=True, null=True)
+    
+    # Contato
+    telefone = models.CharField('Telefone', max_length=20, blank=True, null=True)
+    celular = models.CharField('Celular', max_length=20, blank=True, null=True)
+    email = models.EmailField('E-mail', blank=True, null=True)
+    contato = models.CharField('Nome do Contato', max_length=100, blank=True, null=True)
+    
+    # Configurações
+    ativo = models.BooleanField('Ativo', default=True)
+    created_at = models.DateTimeField('Criado em', auto_now_add=True)
+    updated_at = models.DateTimeField('Atualizado em', auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Transportadora'
+        verbose_name_plural = 'Transportadoras'
+        ordering = ['nome']
+    
+    def __str__(self):
+        return self.nome
+    
+class Categoria(models.Model):
+    """
+    Modelo para cadastro de Categorias (uso geral)
+    """
+    nome = models.CharField('Nome', max_length=100, unique=True)
+    descricao = models.TextField('Descrição', blank=True, null=True)
+    cor = models.CharField('Cor', max_length=7, default='#007bff', help_text='Código HEX para identificação')
+    
+    # Configurações
+    ativo = models.BooleanField('Ativo', default=True)
+    created_at = models.DateTimeField('Criado em', auto_now_add=True)
+    updated_at = models.DateTimeField('Atualizado em', auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Categoria'
+        verbose_name_plural = 'Categorias'
+        ordering = ['nome']
+    
+    def __str__(self):
+        return self.nome
+    
+class FluxoCaixa(models.Model):
+    """
+    Modelo para projeção/planejamento de Fluxo de Caixa
+    Diferente de MovimentoCaixa que registra movimentações reais
+    """
+    TIPO_CHOICES = [
+        ('entrada', 'Entrada'),
+        ('saida', 'Saída'),
+    ]
+    
+    PERIODO_CHOICES = [
+        ('diario', 'Diário'),
+        ('semanal', 'Semanal'),
+        ('mensal', 'Mensal'),
+        ('trimestral', 'Trimestral'),
+        ('anual', 'Anual'),
+    ]
+    
+    descricao = models.CharField('Descrição', max_length=255)
+    tipo = models.CharField('Tipo', max_length=10, choices=TIPO_CHOICES)
+    data = models.DateField('Data')
+    valor = models.DecimalField('Valor', max_digits=15, decimal_places=2, default=0)
+    
+    # Categorização
+    categoria = models.ForeignKey(
+        CategoriaFinanceira,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='fluxos_caixa'
+    )
+    
+    # Período de projeção
+    periodo = models.CharField('Período', max_length=20, choices=PERIODO_CHOICES, default='mensal')
+    data_inicio = models.DateField('Data Início', null=True, blank=True)
+    data_fim = models.DateField('Data Fim', null=True, blank=True)
+    
+    # Status
+    realizado = models.BooleanField('Realizado', default=False, help_text='Se já foi executado/realizado')
+    observacoes = models.TextField('Observações', blank=True)
+    
+    # Controle
+    criado_em = models.DateTimeField('Criado em', auto_now_add=True)
+    atualizado_em = models.DateTimeField('Atualizado em', auto_now=True)
+    usuario = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='fluxos_caixa'
+    )
+    
+    class Meta:
+        verbose_name = 'Fluxo de Caixa'
+        verbose_name_plural = 'Fluxos de Caixa'
+        ordering = ['-data', 'tipo']
+    
+    def __str__(self):
+        return f"{self.descricao} - {self.tipo} - R$ {self.valor}"
+    
+class ConciliacaoBancaria(models.Model):
+    """
+    Modelo para registro de conciliações bancárias
+    Diferente de ExtratoBancario que importa o arquivo
+    """
+    STATUS_CHOICES = [
+        ('pendente', 'Pendente'),
+        ('em_andamento', 'Em Andamento'),
+        ('conciliado', 'Conciliado'),
+        ('divergente', 'Divergente'),
+    ]
+    
+    conta_bancaria = models.ForeignKey(
+        ContaBancaria,
+        on_delete=models.PROTECT,
+        related_name='conciliacoes',
+        verbose_name='Conta Bancária'
+    )
+    
+    extrato = models.ForeignKey(
+        ExtratoBancario,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='conciliacao',
+        verbose_name='Extrato Importado'
+    )
+    
+    data_inicio = models.DateField('Data Início')
+    data_fim = models.DateField('Data Fim')
+    
+    saldo_inicial_extrato = models.DecimalField('Saldo Inicial Extrato', max_digits=15, decimal_places=2, default=0)
+    saldo_final_extrato = models.DecimalField('Saldo Final Extrato', max_digits=15, decimal_places=2, default=0)
+    saldo_inicial_sistema = models.DecimalField('Saldo Inicial Sistema', max_digits=15, decimal_places=2, default=0)
+    saldo_final_sistema = models.DecimalField('Saldo Final Sistema', max_digits=15, decimal_places=2, default=0)
+    
+    diferenca = models.DecimalField('Diferença', max_digits=15, decimal_places=2, default=0)
+    
+    status = models.CharField('Status', max_length=20, choices=STATUS_CHOICES, default='pendente')
+    observacoes = models.TextField('Observações', blank=True)
+    
+    # Controle
+    criado_em = models.DateTimeField('Criado em', auto_now_add=True)
+    atualizado_em = models.DateTimeField('Atualizado em', auto_now=True)
+    usuario = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='conciliacoes'
+    )
+    
+    class Meta:
+        verbose_name = 'Conciliação Bancária'
+        verbose_name_plural = 'Conciliações Bancárias'
+        ordering = ['-data_fim']
+    
+    def __str__(self):
+        return f"Conciliação {self.conta_bancaria} - {self.data_inicio} a {self.data_fim}"
+    
+    def calcular_diferenca(self):
+        self.diferenca = self.saldo_final_extrato - self.saldo_final_sistema
+        return self.diferenca
+    
+class PlanejadoRealizado(models.Model):
+    """
+    Modelo para comparativo Planejado vs Realizado
+    Pode ser usado por projeto, categoria, ou centro de custo
+    """
+    TIPO_CHOICES = [
+        ('projeto', 'Por Projeto'),
+        ('categoria', 'Por Categoria'),
+        ('centro_custo', 'Por Centro de Custo'),
+        ('geral', 'Geral'),
+    ]
+    
+    PERIODO_CHOICES = [
+        ('mensal', 'Mensal'),
+        ('trimestral', 'Trimestral'),
+        ('anual', 'Anual'),
+    ]
+    
+    tipo = models.CharField('Tipo', max_length=20, choices=TIPO_CHOICES, default='geral')
+    
+    # Referências (opcionais dependendo do tipo)
+    projeto = models.ForeignKey(
+        Projeto,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='planejado_realizado'
+    )
+    categoria = models.ForeignKey(
+        CategoriaFinanceira,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='planejado_realizado'
+    )
+    centro_custo = models.ForeignKey(
+        CentroCusto,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='planejado_realizado'
+    )
+    
+    # Período
+    ano = models.IntegerField('Ano')
+    mes = models.IntegerField('Mês', null=True, blank=True)
+    trimestre = models.IntegerField('Trimestre', null=True, blank=True)
+    periodo = models.CharField('Período', max_length=20, choices=PERIODO_CHOICES, default='mensal')
+    
+    # Valores Planejados
+    receitas_planejadas = models.DecimalField('Receitas Planejadas', max_digits=15, decimal_places=2, default=0)
+    despesas_planejadas = models.DecimalField('Despesas Planejadas', max_digits=15, decimal_places=2, default=0)
+    saldo_planejado = models.DecimalField('Saldo Planejado', max_digits=15, decimal_places=2, default=0)
+    
+    # Valores Realizados
+    receitas_realizadas = models.DecimalField('Receitas Realizadas', max_digits=15, decimal_places=2, default=0)
+    despesas_realizadas = models.DecimalField('Despesas Realizadas', max_digits=15, decimal_places=2, default=0)
+    saldo_realizado = models.DecimalField('Saldo Realizado', max_digits=15, decimal_places=2, default=0)
+    
+    # Variação
+    variacao_receitas = models.DecimalField('Variação Receitas (%)', max_digits=8, decimal_places=2, default=0)
+    variacao_despesas = models.DecimalField('Variação Despesas (%)', max_digits=8, decimal_places=2, default=0)
+    variacao_saldo = models.DecimalField('Variação Saldo (%)', max_digits=8, decimal_places=2, default=0)
+    
+    observacoes = models.TextField('Observações', blank=True)
+    
+    # Controle
+    criado_em = models.DateTimeField('Criado em', auto_now_add=True)
+    atualizado_em = models.DateTimeField('Atualizado em', auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Planejado x Realizado'
+        verbose_name_plural = 'Planejados x Realizados'
+        ordering = ['-ano', '-mes', 'tipo']
+    
+    def __str__(self):
+        ref = self.projeto or self.categoria or self.centro_custo or 'Geral'
+        periodo = f"{self.mes}/{self.ano}" if self.mes else f"{self.ano}"
+        return f"{self.get_tipo_display()} - {ref} - {periodo}"
+    
+    def calcular_variacoes(self):
+        """Calcula as variações percentuais"""
+        if self.receitas_planejadas != 0:
+            self.variacao_receitas = ((self.receitas_realizadas - self.receitas_planejadas) / self.receitas_planejadas) * 100
+        
+        if self.despesas_planejadas != 0:
+            self.variacao_despesas = ((self.despesas_realizadas - self.despesas_planejadas) / self.despesas_planejadas) * 100
+            
+        if self.saldo_planejado != 0:
+            self.variacao_saldo = ((self.saldo_realizado - self.saldo_planejado) / self.saldo_planejado) * 100
+
+class Marca(models.Model):
+    """
+    Modelo para cadastro de Marcas de Produtos
+    """
+    nome = models.CharField('Nome', max_length=100)
+    descricao = models.TextField('Descrição', blank=True, null=True)
+    ativo = models.BooleanField('Ativo', default=True)
+
+    created_at = models.DateTimeField('Criado em', auto_now_add=True)
+    updated_at = models.DateTimeField('Atualizado em', auto_now=True)
+
+    class Meta:
+        verbose_name = 'Marca'
+        verbose_name_plural = 'Marcas'
+        ordering = ['nome']
+
+    def __str__(self):
+        return self.nome

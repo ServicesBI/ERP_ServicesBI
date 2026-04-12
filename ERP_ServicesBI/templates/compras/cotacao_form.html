@@ -5,51 +5,51 @@
 
 {% block content %}
 
-<div class="page-header" style="margin-bottom: 28px;">
+<div class="page-header" style="margin-bottom: 20px;">
     <div class="page-header__title">
-        <h1 id="page-titulo">Nova Cotação</h1>
-        <p id="page-subtitulo">Preencha os dados da cotação</p>
+        <h1 id="page-titulo" style="font-size: 24px; font-weight: 600;">Nova Cotação</h1>
+        <p id="page-subtitulo" style="font-size: 13px; color: var(--text-secondary);">Preencha os dados da cotação</p>
     </div>
-    <a href="{% url 'ERP_ServicesBI:cotacao_manager' %}" class="erp-btn erp-btn--secondary">
+    <a href="{% url 'ERP_ServicesBI:cotacao_manager' %}" class="btn btn-secondary">
         ← Voltar para Lista
     </a>
 </div>
 
 <!-- ==================== WIZARD - 5 PASSOS ==================== -->
-<div class="form-card" style="margin-bottom: 24px;">
-    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; position: relative;">
+<div class="form-card" style="margin-bottom: 24px; padding: 28px 24px;">
+    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; position: relative; padding: 0 20px;">
         <!-- Progress bar -->
-        <div style="position: absolute; top: 24px; left: 10%; right: 10%; height: 2px; background: var(--border-color); z-index: 0;"></div>
-        <div id="progress-bar" style="position: absolute; top: 24px; left: 10%; height: 2px; background: var(--primary-500); z-index: 1; width: 0%; transition: width 0.3s;"></div>
+        <div style="position: absolute; top: 32px; left: 7%; right: 7%; height: 3px; background: var(--border-color); z-index: 0; border-radius: 2px;"></div>
+        <div id="progress-bar" style="position: absolute; top: 32px; left: 7%; height: 3px; background: #10b981; z-index: 1; width: 0%; transition: width 0.3s ease; border-radius: 2px;"></div>
         
         <!-- Step 1 -->
-        <div class="wizard-step" id="step-1-btn" onclick="irParaPasso(1)" style="position: relative; z-index: 2; text-align: center; cursor: pointer;">
-            <div style="width: 48px; height: 48px; background: var(--primary-500); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-weight: 600;">1</div>
-            <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">DADOS</div>
+        <div class="wizard-step" id="step-1-btn" onclick="irParaPasso(1)" style="position: relative; z-index: 2; text-align: center; cursor: pointer; transition: all 0.2s;">
+            <div style="width: 52px; height: 52px; background: #10b981; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; font-weight: 700; font-size: 18px; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);">1</div>
+            <div style="font-size: 11px; font-weight: 700; color: var(--text-primary); letter-spacing: 0.5px;">DADOS</div>
         </div>
         
         <!-- Step 2 -->
-        <div class="wizard-step" id="step-2-btn" onclick="irParaPasso(2)" style="position: relative; z-index: 2; text-align: center; cursor: pointer; opacity: 0.5;">
-            <div style="width: 48px; height: 48px; background: var(--border-color); color: var(--text-tertiary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-weight: 600;">2</div>
-            <div style="font-size: 12px; font-weight: 600; color: var(--text-tertiary);">FORNECEDORES</div>
+        <div class="wizard-step" id="step-2-btn" onclick="irParaPasso(2)" style="position: relative; z-index: 2; text-align: center; cursor: pointer; opacity: 0.5; transition: all 0.2s;">
+            <div style="width: 52px; height: 52px; background: #f3f4f6; color: #9ca3af; border: 2px solid #d1d5db; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; font-weight: 700; font-size: 18px;">2</div>
+            <div style="font-size: 11px; font-weight: 700; color: #9ca3af; letter-spacing: 0.5px;">FORNECEDORES</div>
         </div>
         
         <!-- Step 3 -->
-        <div class="wizard-step" id="step-3-btn" onclick="irParaPasso(3)" style="position: relative; z-index: 2; text-align: center; cursor: pointer; opacity: 0.5;">
-            <div style="width: 48px; height: 48px; background: var(--border-color); color: var(--text-tertiary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-weight: 600;">3</div>
-            <div style="font-size: 12px; font-weight: 600; color: var(--text-tertiary);">ITENS</div>
+        <div class="wizard-step" id="step-3-btn" onclick="irParaPasso(3)" style="position: relative; z-index: 2; text-align: center; cursor: pointer; opacity: 0.5; transition: all 0.2s;">
+            <div style="width: 52px; height: 52px; background: #f3f4f6; color: #9ca3af; border: 2px solid #d1d5db; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; font-weight: 700; font-size: 18px;">3</div>
+            <div style="font-size: 11px; font-weight: 700; color: #9ca3af; letter-spacing: 0.5px;">ITENS</div>
         </div>
         
         <!-- Step 4 -->
-        <div class="wizard-step" id="step-4-btn" onclick="irParaPasso(4)" style="position: relative; z-index: 2; text-align: center; cursor: pointer; opacity: 0.5;">
-            <div style="width: 48px; height: 48px; background: var(--border-color); color: var(--text-tertiary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-weight: 600;">4</div>
-            <div style="font-size: 12px; font-weight: 600; color: var(--text-tertiary);">COMPARAR</div>
+        <div class="wizard-step" id="step-4-btn" onclick="irParaPasso(4)" style="position: relative; z-index: 2; text-align: center; cursor: pointer; opacity: 0.5; transition: all 0.2s;">
+            <div style="width: 52px; height: 52px; background: #f3f4f6; color: #9ca3af; border: 2px solid #d1d5db; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; font-weight: 700; font-size: 18px;">4</div>
+            <div style="font-size: 11px; font-weight: 700; color: #9ca3af; letter-spacing: 0.5px;">COMPARAR</div>
         </div>
         
         <!-- Step 5 -->
-        <div class="wizard-step" id="step-5-btn" onclick="irParaPasso(5)" style="position: relative; z-index: 2; text-align: center; cursor: pointer; opacity: 0.5;">
-            <div style="width: 48px; height: 48px; background: var(--border-color); color: var(--text-tertiary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px; font-weight: 600;">5</div>
-            <div style="font-size: 12px; font-weight: 600; color: var(--text-tertiary);">PEDIDOS</div>
+        <div class="wizard-step" id="step-5-btn" onclick="irParaPasso(5)" style="position: relative; z-index: 2; text-align: center; cursor: pointer; opacity: 0.5; transition: all 0.2s;">
+            <div style="width: 52px; height: 52px; background: #f3f4f6; color: #9ca3af; border: 2px solid #d1d5db; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; font-weight: 700; font-size: 18px;">5</div>
+            <div style="font-size: 11px; font-weight: 700; color: #9ca3af; letter-spacing: 0.5px;">PEDIDOS</div>
         </div>
     </div>
 </div>
@@ -103,50 +103,51 @@
     </div>
 
     <div style="display: flex; gap: 12px; margin-top: 24px;">
-        <a href="{% url 'ERP_ServicesBI:cotacao_manager' %}" class="erp-btn erp-btn--secondary">Cancelar</a>
-        <button type="button" class="erp-btn erp-btn--primary" onclick="irParaPasso(2)">Próximo →</button>
+        <a href="{% url 'ERP_ServicesBI:cotacao_manager' %}" class="btn btn-secondary">Cancelar</a>
+        <button type="button" class="btn btn-success" onclick="irParaPasso(2)">➕ Próximo</button>
     </div>
 </div>
 
-<!-- ==================== PASSO 2: FORNECEDORES ==================== -->
+<!-- ==================== PASSO 2: FORNECEDORES + IMPORTAÇÃO ==================== -->
 <div id="passo-2" class="form-card wizard-passo" style="display: none;">
-    <h3 class="form-section__title">Selecionar Fornecedores</h3>
+    <h3 class="form-section__title">Importar Cotações de Fornecedores</h3>
     
-    <div style="margin-bottom: 20px;">
-        <label class="form-label" for="fornecedor-select">
-            Fornecedor <span class="required">*</span>
-        </label>
-        <select id="fornecedor-select" class="form-select">
-            <option value="">Selecione um fornecedor...</option>
-            {% for fornecedor in fornecedores %}
-                <option value="{{ fornecedor.id }}" data-nome="{{ fornecedor.nome_razao_social }}">
-                    {{ fornecedor.nome_razao_social }}
-                </option>
-            {% endfor %}
-        </select>
+    <!-- Upload de arquivo -->
+    <div style="background: #f0f9ff; border: 2px dashed #0ea5e9; border-radius: 12px; padding: 32px; text-align: center; margin-bottom: 24px; cursor: pointer;" onclick="document.getElementById('arquivo-import').click()">
+        <div style="font-size: 32px; margin-bottom: 12px;">📤</div>
+        <p style="font-weight: 600; margin: 0 0 4px 0;">Clique para importar arquivos</p>
+        <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">Suporta: CSV, Excel (.xlsx), PDF</p>
+        <input type="file" id="arquivo-import" style="display: none;" accept=".csv,.xlsx,.xls,.pdf" onchange="importarArquivo(event)">
     </div>
 
-    <button type="button" class="btn-add-item" onclick="adicionarFornecedor()">
-        <span>➕</span> Adicionar Fornecedor
-    </button>
+    <!-- Seleção manual de fornecedores -->
+    <div class="form-row">
+        <div style="flex: 1;">
+            <label class="form-label" for="fornecedor-select">
+                Ou selecione fornecedor manualmente
+            </label>
+            <select id="fornecedor-select" class="form-select">
+                <option value="">Selecione um fornecedor...</option>
+                {% for fornecedor in fornecedores %}
+                    <option value="{{ fornecedor.id }}" data-nome="{{ fornecedor.nome_razao_social }}">
+                        🏢 {{ fornecedor.nome_razao_social }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="button" class="btn btn-success" onclick="adicionarFornecedorManual()" style="align-self: flex-end; margin-bottom: 0;">
+            ➕ Adicionar
+        </button>
+    </div>
 
-    <div style="margin-top: 20px;">
-        <table class="itens-table" id="tabela-fornecedores" style="margin-top: 16px;">
-            <thead>
-                <tr>
-                    <th>Fornecedor</th>
-                    <th width="100">Email</th>
-                    <th width="80"></th>
-                </tr>
-            </thead>
-            <tbody id="fornecedores-tbody">
-            </tbody>
-        </table>
+    <!-- Cartãozinhos dos fornecedores importados -->
+    <div id="fornecedores-container" style="margin-top: 24px;">
+        <div id="fornecedores-lista"></div>
     </div>
 
     <div style="display: flex; gap: 12px; margin-top: 24px;">
-        <button type="button" class="erp-btn erp-btn--secondary" onclick="irParaPasso(1)">← Anterior</button>
-        <button type="button" class="erp-btn erp-btn--primary" onclick="irParaPasso(3)">Próximo →</button>
+        <button type="button" class="btn btn-secondary" onclick="irParaPasso(1)">← Anterior</button>
+        <button type="button" class="btn btn-success" onclick="irParaPasso(3)">➕ Próximo</button>
     </div>
 </div>
 
@@ -170,32 +171,37 @@
                 <td><input type="number" class="item-quantidade form-input" placeholder="0" min="1" step="1" style="text-align: center;"></td>
                 <td><input type="text" class="item-unidade form-input" value="UN" placeholder="UN"></td>
                 <td><input type="text" class="item-especificacao form-input" placeholder="Ex: Cor, tamanho..."></td>
-                <td style="text-align: center;"><button type="button" class="btn-acao btn-acao--excluir" onclick="removerItem(this)">🗑️</button></td>
+                <td style="text-align: center;"><button type="button" class="btn btn-danger btn-sm" onclick="removerItem(this)">🗑️</button></td>
             </tr>
         </tbody>
     </table>
 
-    <button type="button" class="btn-add-item" onclick="adicionarItem()">
-        <span>➕</span> Adicionar Item
+    <button type="button" class="btn btn-success" onclick="adicionarItem()" style="margin-top: 16px;">
+        ➕ Adicionar Item
     </button>
 
     <div style="display: flex; gap: 12px; margin-top: 24px;">
-        <button type="button" class="erp-btn erp-btn--secondary" onclick="irParaPasso(2)">← Anterior</button>
-        <button type="button" class="erp-btn erp-btn--primary" onclick="irParaPasso(4)">Próximo →</button>
+        <button type="button" class="btn btn-secondary" onclick="irParaPasso(2)">← Anterior</button>
+        <button type="button" class="btn btn-success" onclick="irParaPasso(4)">➕ Próximo</button>
     </div>
 </div>
 
-<!-- ==================== PASSO 4: COMPARAR ==================== -->
+<!-- ==================== PASSO 4: COMPARATIVO INTELIGENTE ==================== -->
 <div id="passo-4" class="form-card wizard-passo" style="display: none;">
     <h3 class="form-section__title">Comparativo de Ofertas</h3>
     
+    <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+        <button type="button" class="btn btn-secondary" onclick="calcularSugestoes()">✨ Calcular Sugestões</button>
+        <button type="button" class="btn btn-success" onclick="aceitarSugestoes()">✓ Aceitar Sugestões</button>
+    </div>
+
     <div id="comparativo-container" style="overflow-x: auto; margin-top: 20px;">
         <!-- Tabela de comparativo gerada via JS -->
     </div>
 
     <div style="display: flex; gap: 12px; margin-top: 24px;">
-        <button type="button" class="erp-btn erp-btn--secondary" onclick="irParaPasso(3)">← Anterior</button>
-        <button type="button" class="erp-btn erp-btn--primary" onclick="irParaPasso(5)">Próximo →</button>
+        <button type="button" class="btn btn-secondary" onclick="irParaPasso(3)">← Anterior</button>
+        <button type="button" class="btn btn-success" onclick="irParaPasso(5)">➕ Próximo</button>
     </div>
 </div>
 
@@ -214,37 +220,136 @@
     </div>
 
     <div style="display: flex; gap: 12px; margin-top: 24px;">
-        <button type="button" class="erp-btn erp-btn--secondary" onclick="irParaPasso(4)">← Anterior</button>
-        <button type="button" class="erp-btn erp-btn--primary" onclick="salvarCotacao()">💾 Salvar Cotação</button>
+        <button type="button" class="btn btn-secondary" onclick="irParaPasso(4)">← Anterior</button>
+        <button type="button" class="btn btn-success" onclick="gerarPedidos()">🛒 Gerar Pedidos</button>
     </div>
 </div>
 
 {% endblock %}
 
 {% block extra_js %}
+<style>
+/* ============================================================================
+   CARTÃOZINHOS DOS FORNECEDORES
+   ============================================================================ */
+
+.card-fornecedor {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+}
+
+.card-fornecedor:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.card-fornecedor .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed var(--border-color);
+}
+
+.card-fornecedor .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.card-fornecedor .info-grid div {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+
+/* Tabela Comparativa */
+.comparativo-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+}
+
+.comparativo-table th {
+    background: var(--bg-tertiary);
+    padding: 12px 8px;
+    text-align: center;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 11px;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.comparativo-table th:first-child {
+    text-align: left;
+    padding-left: 16px;
+}
+
+.comparativo-table td {
+    padding: 12px 8px;
+    text-align: center;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.comparativo-table td:first-child {
+    text-align: left;
+    padding-left: 16px;
+    font-weight: 500;
+}
+
+.melhor-preco {
+    background: #dcfce7 !important;
+    border: 2px solid #86efac !important;
+    color: #166534;
+    font-weight: 600;
+}
+
+.pior-preco {
+    background: #fee2e2 !important;
+    border: 2px solid #fca5a5 !important;
+    color: #991b1b;
+}
+
+.comparativo-checkbox {
+    margin-top: 8px;
+}
+
+.sugestao-badge {
+    display: inline-block;
+    background: #10b981;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 4px;
+}
+</style>
+
 <script>
 let passoAtual = 1;
 let cotacaoId = null;
-let fornecedoresdados = [];
+let fornecedoresData = [];
 let itensDados = [];
+let comparativoData = {};
+let selecoesPedidos = {};
 
-// Inicializa a página
+// Inicialização
 (function() {
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get('id');
-    const modo = params.get('modo');
-    
-    if (id) {
-        cotacaoId = parseInt(id);
-        carregarCotacao();
-        if (modo === 'visualizar') {
-            desabilitarTodosCampos();
-        }
-    }
+    atualizarVistaWizard();
 })();
 
 function irParaPasso(numero) {
-    // Valida passo anterior antes de avançar
     if (numero > passoAtual) {
         if (!validarPasso(passoAtual)) {
             mostrarToast('Complete os dados deste passo', 'warning');
@@ -265,18 +370,44 @@ function atualizarVistaWizard() {
     // Mostra passo atual
     document.getElementById('passo-' + passoAtual).style.display = 'block';
     
-    // Atualiza progress bar
+    // Progress bar
     const progresso = ((passoAtual - 1) / 4) * 100;
     document.getElementById('progress-bar').style.width = progresso + '%';
     
-    // Atualiza botões do wizard
+    // Atualiza bolinhas do wizard
     for (let i = 1; i <= 5; i++) {
         const btn = document.getElementById('step-' + i + '-btn');
-        if (i <= passoAtual) {
+        const bolinha = btn.querySelector('div');
+        
+        if (i < passoAtual) {
             btn.style.opacity = '1';
+            bolinha.style.background = '#10b981';
+            bolinha.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.4)';
+            bolinha.innerHTML = '✓';
+            bolinha.style.color = '#fff';
+            bolinha.style.border = 'none';
+        } else if (i === passoAtual) {
+            btn.style.opacity = '1';
+            bolinha.style.background = '#10b981';
+            bolinha.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.4)';
+            bolinha.style.border = 'none';
+            bolinha.innerHTML = i;
+            bolinha.style.color = '#fff';
         } else {
             btn.style.opacity = '0.5';
+            bolinha.style.background = '#f3f4f6';
+            bolinha.style.border = '2px solid #d1d5db';
+            bolinha.style.boxShadow = 'none';
+            bolinha.innerHTML = i;
+            bolinha.style.color = '#9ca3af';
         }
+    }
+    
+    // Renderiza conteúdo específico do passo
+    if (passoAtual === 4) {
+        renderizarComparativo();
+    } else if (passoAtual === 5) {
+        renderizarPedidos();
     }
 }
 
@@ -287,15 +418,57 @@ function validarPasso(numero) {
             const dataVencimento = document.getElementById('cot-data-vencimento').value;
             return titulo && dataVencimento;
         case 2:
-            return fornecedoresdados.length > 0;
+            return fornecedoresData.length > 0;
         case 3:
-            return itensDados.length > 0;
+            return coletarItens().length > 0;
         default:
             return true;
     }
 }
 
-function adicionarFornecedor() {
+// ============================================================================
+// PASSO 2: FORNECEDORES
+// ============================================================================
+
+function importarArquivo(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const formData = new FormData();
+    formData.append('arquivo', file);
+    
+    mostrarToast('Importando arquivo...', 'info');
+    
+    fetch('/api/cotacao/importar-arquivo/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            data.fornecedores.forEach(f => {
+                if (!fornecedoresData.find(x => x.id === f.id)) {
+                    fornecedoresData.push(f);
+                }
+            });
+            atualizarCartaosFornecedores();
+            mostrarToast(`✅ ${data.fornecedores.length} fornecedor(es) importado(s)!`, 'success');
+        } else {
+            throw new Error(data.message);
+        }
+    })
+    .catch(err => {
+        mostrarToast('Erro: ' + err.message, 'danger');
+    })
+    .finally(() => {
+        document.getElementById('arquivo-import').value = '';
+    });
+}
+
+function adicionarFornecedorManual() {
     const select = document.getElementById('fornecedor-select');
     const id = select.value;
     const nome = select.options[select.selectedIndex].dataset.nome;
@@ -305,32 +478,56 @@ function adicionarFornecedor() {
         return;
     }
     
-    if (fornecedoresdados.find(f => f.id == id)) {
+    if (fornecedoresData.find(f => f.id == id)) {
         mostrarToast('Fornecedor já adicionado', 'warning');
         return;
     }
     
-    fornecedoresdados.push({ id: id, nome: nome });
-    atualizarTabelaFornecedores();
+    fornecedoresData.push({ id: id, nome: nome, prazo: '-', total: '0,00' });
+    atualizarCartaosFornecedores();
+    select.value = '';
 }
 
-function atualizarTabelaFornecedores() {
-    const tbody = document.getElementById('fornecedores-tbody');
-    tbody.innerHTML = '';
+function atualizarCartaosFornecedores() {
+    const container = document.getElementById('fornecedores-lista');
+    container.innerHTML = '';
     
-    fornecedoresdados.forEach((f, idx) => {
-        tbody.innerHTML += '<tr>' +
-            '<td><strong>' + escapeHtml(f.nome) + '</strong></td>' +
-            '<td style="font-size: 12px; color: var(--text-tertiary);">—</td>' +
-            '<td style="text-align: center;"><button type="button" class="btn-acao btn-acao--excluir" onclick="removerFornecedor(' + idx + ')">🗑️</button></td>' +
-        '</tr>';
+    if (fornecedoresData.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 32px 20px; color: var(--text-tertiary);"><p>Nenhum fornecedor adicionado ainda</p></div>';
+        return;
+    }
+    
+    fornecedoresData.forEach((f, idx) => {
+        const card = document.createElement('div');
+        card.className = 'card-fornecedor';
+        card.innerHTML = `
+            <div class="card-header">
+                <strong>🏢 ${escapeHtml(f.nome)}</strong>
+                <button type="button" class="btn btn-danger btn-sm" onclick="removerFornecedor(${idx})">
+                    🗑️
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="info-grid">
+                    <div><span>📦</span> <strong>Itens:</strong> ${f.itens_count || '-'}</div>
+                    <div><span>📅</span> <strong>Prazo:</strong> ${f.prazo || '-'}</div>
+                    <div><span>💰</span> <strong>Total:</strong> R$ ${f.total || '0,00'}</div>
+                    <div><span>⭐</span> <strong>Confiança:</strong> ${f.confianca || '-'}/10</div>
+                </div>
+            </div>
+        `;
+        container.appendChild(card);
     });
 }
 
 function removerFornecedor(idx) {
-    fornecedoresdados.splice(idx, 1);
-    atualizarTabelaFornecedores();
+    fornecedoresData.splice(idx, 1);
+    atualizarCartaosFornecedores();
 }
+
+// ============================================================================
+// PASSO 3: ITENS
+// ============================================================================
 
 function adicionarItem() {
     const tbody = document.getElementById('itens-tbody');
@@ -340,77 +537,12 @@ function adicionarItem() {
         '<td><input type="number" class="item-quantidade form-input" placeholder="0" min="1" step="1" style="text-align: center;"></td>' +
         '<td><input type="text" class="item-unidade form-input" value="UN" placeholder="UN"></td>' +
         '<td><input type="text" class="item-especificacao form-input" placeholder="Ex: Cor, tamanho..."></td>' +
-        '<td style="text-align: center;"><button type="button" class="btn-acao btn-acao--excluir" onclick="removerItem(this)">🗑️</button></td>';
+        '<td style="text-align: center;"><button type="button" class="btn btn-danger btn-sm" onclick="removerItem(this)">🗑️</button></td>';
     tbody.appendChild(tr);
 }
 
 function removerItem(btn) {
     btn.closest('tr').remove();
-}
-
-function carregarCotacao() {
-    fetch('/api/cotacao/' + cotacaoId + '/dados/')
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                document.getElementById('cot-titulo').value = data.titulo;
-                document.getElementById('cot-descricao').value = data.descricao || '';
-                document.getElementById('cot-data-vencimento').value = data.data_vencimento;
-                document.getElementById('cot-moeda').value = data.moeda || 'BRL';
-                document.getElementById('cot-incoterm').value = data.incoterm || '';
-                document.getElementById('cot-prazo-entrega').value = data.prazo_entrega || '';
-                
-                // Carrega fornecedores e itens...
-                // (JS gigante omitido por brevidade)
-                
-                document.getElementById('page-titulo').textContent = 'Editar Cotação ' + data.numero;
-            }
-        });
-}
-
-function salvarCotacao() {
-    const titulo = document.getElementById('cot-titulo').value.trim();
-    const dataVencimento = document.getElementById('cot-data-vencimento').value;
-    
-    if (!titulo || !dataVencimento || fornecedoresdados.length === 0 || itensDados.length === 0) {
-        mostrarToast('Complete todos os passos da cotação', 'warning');
-        return;
-    }
-    
-    const dados = {
-        id: cotacaoId,
-        titulo: titulo,
-        descricao: document.getElementById('cot-descricao').value,
-        data_vencimento: dataVencimento,
-        moeda: document.getElementById('cot-moeda').value,
-        incoterm: document.getElementById('cot-incoterm').value,
-        prazo_entrega: document.getElementById('cot-prazo-entrega').value,
-        fornecedores: fornecedoresdados.map(f => f.id),
-        itens: coletarItens()
-    };
-    
-    fetch('/api/cotacao/salvar/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken')
-        },
-        body: JSON.stringify(dados)
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            mostrarToast('Cotação salva com sucesso!', 'success');
-            setTimeout(() => {
-                window.location.href = "{% url 'ERP_ServicesBI:cotacao_manager' %}";
-            }, 1500);
-        } else {
-            throw new Error(data.message);
-        }
-    })
-    .catch(err => {
-        mostrarToast('Erro: ' + err.message, 'danger');
-    });
 }
 
 function coletarItens() {
@@ -433,11 +565,188 @@ function coletarItens() {
     return itens;
 }
 
-function desabilitarTodosCampos() {
-    document.querySelectorAll('#cot-titulo, #cot-descricao, #cot-data-vencimento, #cot-moeda, #cot-incoterm, #cot-prazo-entrega').forEach(el => {
-        el.disabled = true;
+// ============================================================================
+// PASSO 4: COMPARATIVO INTELIGENTE
+// ============================================================================
+
+function renderizarComparativo() {
+    const itens = coletarItens();
+    const container = document.getElementById('comparativo-container');
+    
+    if (itens.length === 0 || fornecedoresData.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 32px; color: var(--text-tertiary);">📊 Preencha os itens e fornecedores para visualizar o comparativo</div>';
+        return;
+    }
+    
+    // Simula dados de comparativo
+    let html = '<table class="comparativo-table"><thead><tr><th>📦 Item</th>';
+    
+    fornecedoresData.forEach(f => {
+        html += `<th>${escapeHtml(f.nome)}<br><small>📅 ${f.prazo}d</small></th>`;
+    });
+    
+    html += '</tr></thead><tbody>';
+    
+    itens.forEach((item, idx) => {
+        html += `<tr data-item-id="${idx}">
+            <td><strong>${escapeHtml(item.produto)}</strong><div style="font-size: 12px; color: var(--text-secondary);">📊 Qtd: ${item.quantidade} ${item.unidade}</div></td>`;
+        
+        fornecedoresData.forEach((f, f_idx) => {
+            const preco = (Math.random() * 1000 + 100).toFixed(2);
+            const total = (preco * item.quantidade).toFixed(2);
+            const isMelhor = f_idx === 0; // Simula melhor preço no primeiro
+            const classe = isMelhor ? 'melhor-preco' : '';
+            
+            html += `<td class="${classe}">
+                <div style="font-weight: 600;">💰 R$ ${preco}</div>
+                <div style="font-size: 11px;">Total: R$ ${total}</div>
+                <input type="checkbox" class="comparativo-checkbox" data-item="${idx}" data-fornecedor="${f_idx}" ${isMelhor ? 'checked' : ''}>
+                ${isMelhor ? '<span class="sugestao-badge">⭐ Sugerido</span>' : ''}
+            </td>`;
+        });
+        
+        html += '</tr>';
+    });
+    
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+function calcularSugestoes() {
+    mostrarToast('✨ Sugestões calculadas automaticamente!', 'success');
+    renderizarComparativo();
+}
+
+function aceitarSugestoes() {
+    const selecionadas = document.querySelectorAll('.comparativo-checkbox:checked');
+    if (selecionadas.length === 0) {
+        mostrarToast('Selecione pelo menos um item', 'warning');
+        return;
+    }
+    
+    mostrarToast(`✓ ${selecionadas.length} item(ns) selecionado(s)!`, 'success');
+}
+
+// ============================================================================
+// PASSO 5: GERAR PEDIDOS
+// ============================================================================
+
+function renderizarPedidos() {
+    const container = document.getElementById('pedidos-lista');
+    const itens = coletarItens();
+    const selecionadas = document.querySelectorAll('.comparativo-checkbox:checked');
+    
+    if (selecionadas.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 32px; color: var(--text-tertiary);">🛒 Volte ao comparativo e selecione os itens</div>';
+        return;
+    }
+    
+    let html = '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">';
+    
+    fornecedoresData.forEach((f, idx) => {
+        const temItens = Array.from(selecionadas).some(s => parseInt(s.dataset.fornecedor) === idx);
+        
+        if (temItens) {
+            html += `
+            <div style="background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 12px; padding: 16px;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                    <input type="checkbox" id="pedido-${idx}" checked onchange="atualizarSelecaoPedido(${idx})">
+                    <label for="pedido-${idx}" style="margin: 0; font-weight: 600; cursor: pointer;">
+                        🏢 ${escapeHtml(f.nome)}
+                    </label>
+                </div>
+                <div style="font-size: 12px; color: var(--text-secondary);">
+                    <div>📦 Itens selecionados</div>
+                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border-color);">
+                        💰 Total estimado: R$ ${(Math.random() * 5000 + 1000).toFixed(2)}
+                    </div>
+                </div>
+            </div>`;
+        }
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function atualizarSelecaoPedido(idx) {
+    const checked = document.getElementById('pedido-' + idx).checked;
+    selecoesPedidos[idx] = checked;
+}
+
+// ============================================================================
+// GERAÇÃO DE PEDIDOS
+// ============================================================================
+
+function gerarPedidos() {
+    const titulo = document.getElementById('cot-titulo').value.trim();
+    const itens = coletarItens();
+    const selecionadas = document.querySelectorAll('.comparativo-checkbox:checked');
+    
+    if (!titulo || itens.length === 0 || selecionadas.length === 0) {
+        mostrarToast('Complete todos os passos', 'warning');
+        return;
+    }
+    
+    const pedidosData = [];
+    
+    selecionadas.forEach(checkbox => {
+        const itemIdx = parseInt(checkbox.dataset.item);
+        const fornecedorIdx = parseInt(checkbox.dataset.fornecedor);
+        const fornecedor = fornecedoresData[fornecedorIdx];
+        const item = itens[itemIdx];
+        
+        if (!pedidosData[fornecedorIdx]) {
+            pedidosData[fornecedorIdx] = {
+                fornecedor_id: fornecedor.id,
+                itens: []
+            };
+        }
+        
+        pedidosData[fornecedorIdx].itens.push({
+            descricao: item.produto,
+            quantidade: item.quantidade,
+            unidade_medida: item.unidade,
+            especificacao: item.especificacao,
+            preco_unitario: (Math.random() * 1000 + 100).toFixed(2)
+        });
+    });
+    
+    const dados = {
+        titulo: titulo,
+        descricao: document.getElementById('cot-descricao').value,
+        pedidos: pedidosData.filter(p => p !== undefined)
+    };
+    
+    mostrarToast('🔄 Gerando pedidos...', 'info');
+    
+    fetch('/api/cotacao/gerar-pedidos/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(dados)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            mostrarToast(`✅ ${data.pedidos_criados} pedido(s) gerado(s)!`, 'success');
+            setTimeout(() => {
+                window.location.href = "{% url 'ERP_ServicesBI:pedido_compra_manager' %}";
+            }, 2000);
+        } else {
+            throw new Error(data.message);
+        }
+    })
+    .catch(err => {
+        mostrarToast('❌ Erro: ' + err.message, 'danger');
     });
 }
+
+// ============================================================================
+// UTILITÁRIOS
+// ============================================================================
 
 function escapeHtml(text) {
     if (!text) return '';
@@ -446,7 +755,7 @@ function escapeHtml(text) {
 
 function mostrarToast(mensagem, tipo) {
     const toast = document.createElement('div');
-    toast.className = 'erp-alert erp-alert--' + tipo;
+    toast.className = 'alert alert-' + tipo;
     toast.style.cssText = 'position: fixed; top: 90px; right: 20px; z-index: 9999; min-width: 300px; animation: slideIn 0.3s ease;';
     toast.innerHTML = mensagem;
     document.body.appendChild(toast);

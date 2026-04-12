@@ -232,15 +232,15 @@
 let notaIdExcluir = null;
 
 function novaNota() {
-    window.location.href = "{% url 'ERP_ServicesBI:nota_fiscal_entrada_form' %}";
+    window.location.href = "{% url 'ERP_ServicesBI:nota_fiscal_entrada_add' %}";
 }
 
 function editarNota(id) {
-    window.location.href = "{% url 'ERP_ServicesBI:nota_fiscal_entrada_form' %}?id=" + id;
+    window.location.href = "{% url 'ERP_ServicesBI:nota_fiscal_entrada_add' %}?id=" + id;
 }
 
 function visualizarNota(id) {
-    window.location.href = "{% url 'ERP_ServicesBI:nota_fiscal_entrada_form' %}?id=" + id + "&modo=visualizar";
+    window.location.href = "{% url 'ERP_ServicesBI:nota_fiscal_entrada_add' %}?id=" + id + "&modo=visualizar";
 }
 
 function confirmarNotaDireto(id, numero) {

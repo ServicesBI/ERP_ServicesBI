@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""
+ERP_ServicesBI - urls.py CORRIGIDO
+Padrão: nome da URL = nome da view (ex: cliente_manager)
+"""
 from django.contrib.auth import views as auth_views
 from django.urls import path
 from . import views
@@ -5,363 +10,301 @@ from . import views
 app_name = 'ERP_ServicesBI'
 
 urlpatterns = [
-    # =============================================================================
-    # LOGIN
-    # =============================================================================
+    # =========================================================================
+    # LOGIN / LOGOUT
+    # =========================================================================
     path('login/', auth_views.LoginView.as_view(template_name='login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='ERP_ServicesBI:dashboard'), name='logout'),
 
-    # =============================================================================
+    # =========================================================================
     # DASHBOARD
-    # =============================================================================
+    # =========================================================================
     path('', views.dashboard, name='dashboard'),
-    path('dashboard/', views.dashboard, name='dashboard_alt'),
+    path('api/dashboard/dados/', views.api_dashboard_dados, name='api_dashboard_dados'),
 
-    # =============================================================================
+    # =========================================================================
     # CADASTRO - CLIENTES
-    # =============================================================================
-    path('clientes/', views.cliente_manager, name='cliente_manager'),
-    path('clientes/novo/', views.cliente_form, name='cliente_form'),
-    path('clientes/<int:pk>/editar/', views.cliente_form, name='cliente_form_edit'),
-    path('clientes/<int:pk>/excluir/', views.cliente_excluir, name='cliente_excluir'),
+    # =========================================================================
+    path('clientes/', views.cliente_manager, name='cliente_manager'),  # ✅ Alterado
+    path('clientes/novo/', views.cliente_form, name='cliente_add'),
+    path('clientes/<int:pk>/editar/', views.cliente_form, name='cliente_edit'),
+    path('clientes/<int:pk>/excluir/', views.cliente_delete, name='cliente_delete'),
+    path('api/cliente/<int:pk>/', views.cliente_detail_api, name='cliente_detail_api'),
 
-    # =============================================================================
-    # API - CONDIÇÃO E FORMA DE PAGAMENTO (AJAX)
-    # =============================================================================
-    path('api/condicao-pagamento/criar/', views.api_condicao_pagamento_criar, name='api_condicao_pagamento_criar'),
-    path('api/condicao-pagamento/<int:pk>/excluir/', views.api_condicao_pagamento_excluir, name='api_condicao_pagamento_excluir'),
-    path('api/forma-pagamento/criar/', views.api_forma_pagamento_criar, name='api_forma_pagamento_criar'),
-    path('api/forma-pagamento/<int:pk>/excluir/', views.api_forma_pagamento_excluir, name='api_forma_pagamento_excluir'),
-
-    # =============================================================================
-    # CADASTRO - VENDEDORES
-    # =============================================================================
-    path('vendedores/', views.vendedor_manager, name='vendedor_manager'),
-    path('vendedores/novo/', views.vendedor_form, name='vendedor_form'),
-    path('vendedores/<int:pk>/editar/', views.vendedor_form, name='vendedor_form_edit'),
-    path('vendedores/<int:pk>/excluir/', views.vendedor_excluir, name='vendedor_excluir'),
-
-    # =============================================================================
-    # CADASTRO - EMPRESAS
-    # =============================================================================
-    path('cadastro/empresas/', views.empresa_manager, name='empresa_list'),
-    path('cadastro/empresas/nova/', views.empresa_form, name='empresa_add'),
-    path('cadastro/empresas/editar/<int:pk>/', views.empresa_form, name='empresa_edit'),
-    path('cadastro/empresas/excluir/<int:pk>/', views.empresa_excluir, name='empresa_delete'),
-
-    # =============================================================================
+    # =========================================================================
     # CADASTRO - FORNECEDORES
-    # =============================================================================
-    path('cadastro/fornecedores/', views.fornecedor_manager, name='fornecedor_manager'),
-    path('cadastro/fornecedores/novo/', views.fornecedor_form, name='fornecedor_add'),
-    path('cadastro/fornecedores/editar/<int:pk>/', views.fornecedor_form, name='fornecedor_edit'),
-    path('cadastro/fornecedores/excluir/<int:pk>/', views.fornecedor_excluir, name='fornecedor_delete'),
+    # =========================================================================
+    path('fornecedores/', views.fornecedor_manager, name='fornecedor_manager'),  # ✅ Alterado
+    path('fornecedores/novo/', views.fornecedor_form, name='fornecedor_add'),
+    path('fornecedores/<int:pk>/editar/', views.fornecedor_form, name='fornecedor_edit'),
+    path('fornecedores/<int:pk>/excluir/', views.fornecedor_delete, name='fornecedor_delete'),
 
-    # =============================================================================
-    # APIs - CATEGORIA PRODUTO
-    # =============================================================================
-    path('api/categoria-produto/criar/', views.categoria_produto_create_ajax, name='categoria_produto_create_ajax'),
-    path('api/categoria-produto/<int:pk>/excluir/', views.categoria_produto_delete_ajax, name='categoria_produto_delete_ajax'),
-
-    # =============================================================================
+    # =========================================================================
     # CADASTRO - PRODUTOS
-    # =============================================================================
-    path('cadastro/produtos/', views.produto_manager, name='produto_list'),
-    path('cadastro/produtos/novo/', views.produto_form, name='produto_add'),
-    path('cadastro/produtos/editar/<int:pk>/', views.produto_form, name='produto_edit'),
-    path('cadastro/produtos/excluir/<int:pk>/', views.produto_excluir, name='produto_delete'),
+    # =========================================================================
+    path('produtos/', views.produto_manager, name='produto_manager'),  # ✅ Alterado
+    path('produtos/novo/', views.produto_form, name='produto_add'),
+    path('produtos/<int:pk>/editar/', views.produto_form, name='produto_edit'),
+    path('produtos/<int:pk>/excluir/', views.produto_delete, name='produto_delete'),
+    path('api/produto/<int:pk>/saldo/', views.api_produto_saldo_disponivel, name='api_produto_saldo_disponivel'),
 
-    # =============================================================================
-    # COMPRAS - COTAÇÕES
-    # =============================================================================
-    path('compras/cotacoes/', views.cotacao_manager, name='cotacao_manager'),
-    path('compras/cotacoes/form/', views.cotacao_form, name='cotacao_form'),  # ✅ NEW
-    path('compras/cotacoes/<int:pk>/gerar-pedidos/', views.cotacao_gerar_pedidos, name='cotacao_gerar_pedidos'),  # ✅ NEW
-    path('api/cotacao/salvar/', views.cotacao_salvar_api, name='cotacao_salvar_api'),
-    path('api/cotacao/<int:pk>/dados/', views.cotacao_dados_api, name='cotacao_dados_api'),
-    path('api/cotacao/<int:pk>/comparativo/', views.cotacao_comparativo_api, name='cotacao_comparativo_api'),
-    path('api/cotacao/<int:pk>/excluir/', views.cotacao_excluir_api, name='cotacao_excluir_api'),
-    path('api/cotacao/<int:pk>/enviar/', views.cotacao_enviar_api, name='cotacao_enviar_api'),
-    path('api/cotacao/<int:pk>/concluir/', views.cotacao_concluir_api, name='cotacao_concluir_api'),
-    path('api/cotacao/<int:pk>/importar-cotacao/', views.cotacao_importar_fornecedor, name='cotacao_importar_fornecedor'),
-    path('api/cotacao/<int:pk>/fornecedores-importados/', views.cotacao_fornecedores_importados_api, name='cotacao_fornecedores_importados_api'),
-    path('api/cotacao/<int:pk>/gerar-pedidos/', views.cotacao_gerar_pedidos, name='cotacao_gerar_pedidos'),
-    path('api/cotacao/<int:pk>/salvar-selecao/', views.cotacao_salvar_selecao, name='cotacao_salvar_selecao'),
-    path('api/cotacao/<int:pk>/calcular-sugestoes/', views.cotacao_calcular_sugestoes, name='cotacao_calcular_sugestoes'),
-    path('api/cotacao/<int:pk>/remover-fornecedor/<int:fornecedor_pk>/', views.cotacao_remover_fornecedor, name='cotacao_remover_fornecedor'),
-    path('api/cotacao/<int:pk>/copiar-email/', views.cotacao_copiar_lista_email, name='cotacao_copiar_lista_email'),
-    path('api/cotacao/<int:pk>/copiar-whatsapp/', views.cotacao_copiar_lista_whatsapp, name='cotacao_copiar_lista_whatsapp'),
-    path('compras/cotacao/<int:pk>/confirmar-delete/', views.cotacao_confirm_delete, name='cotacao_confirm_delete'),
+    # =========================================================================
+    # CADASTRO - VENDEDORES
+    # =========================================================================
+    path('vendedores/', views.vendedor_manager, name='vendedor_manager'),  # ✅ Alterado
+    path('vendedores/novo/', views.vendedor_form, name='vendedor_add'),
+    path('vendedores/<int:pk>/editar/', views.vendedor_form, name='vendedor_edit'),
+    path('vendedores/<int:pk>/excluir/', views.vendedor_delete, name='vendedor_delete'),
 
-    # =============================================================================
-    # COMPRAS - PEDIDOS DE COMPRA
-    # =============================================================================
-    path('compras/pedidos/', views.pedido_compra_manager, name='pedido_compra_manager'),
-    path('compras/pedidos/form/', views.pedido_compra_form, name='pedido_compra_form'),  # ✅ NEW
-    path('api/pedido/salvar/', views.pedido_salvar_api, name='pedido_salvar_api'),
-    path('api/pedido/<int:pk>/dados/', views.pedido_dados_api, name='pedido_dados_api'),
-    path('api/pedido/<int:pk>/dados-simples/', views.pedido_dados_simples_api, name='pedido_dados_simples_api'),
-    path('api/pedido/<int:pk>/cancelar/', views.pedido_cancelar_api, name='pedido_cancelar_api'),
-    path('api/pedido/<int:pk>/receber/', views.pedido_receber_api, name='pedido_receber_api'),
-    path('api/pedido/<int:pk>/dados-recebimento/', views.pedido_dados_recebimento_api, name='pedido_dados_recebimento_api'),
-    path('compras/pedido/<int:pk>/confirmar-delete/', views.pedido_compra_confirm_delete, name='pedido_compra_confirm_delete'),
-    path('compras/pedidos/<int:pk>/gerar-nfe/', views.pedido_compra_gerar_nfe, name='pedido_compra_gerar_nfe'),
-    path('api/pedido/<int:pk>/dados-para-nfe/', views.api_pedido_dados_para_nfe, name='api_pedido_dados_para_nfe'),
-    path('api/pedido/<int:pk>/gerar-nfe/', views.api_gerar_nfe_from_pedido, name='api_gerar_nfe_from_pedido'),
+    # =========================================================================
+    # CADASTRO - EMPRESAS
+    # =========================================================================
+    path('empresas/', views.empresa_manager, name='empresa_manager'),  # ✅ Alterado
+    path('empresas/nova/', views.empresa_form, name='empresa_add'),
+    path('empresas/<int:pk>/editar/', views.empresa_form, name='empresa_edit'),
+    path('empresas/<int:pk>/excluir/', views.empresa_delete, name='empresa_delete'),
 
-    # =============================================================================
-    # COMPRAS - APROVAÇÃO DE PEDIDOS
-    # =============================================================================
-    path('compras/aprovacoes/', views.pedido_aprovacao_list, name='pedido_aprovacao_list'),
-    path('compras/aprovacoes/<int:pk>/', views.pedido_aprovacao_detail, name='pedido_aprovacao_detail'),
-    path('compras/aprovacoes/<int:pk>/aprovar/', views.pedido_aprovacao_approve, name='pedido_aprovacao_approve'),
-    path('compras/aprovacoes/<int:pk>/rejeitar/', views.pedido_aprovacao_reject, name='pedido_aprovacao_reject'),
-    path('api/pedidos/pendentes-alcada/', views.api_pedidos_pendentes_alcada, name='api_pedidos_pendentes_alcada'),
-    path('api/pedido/<int:pk>/aprovar/', views.api_aprovar_pedido, name='api_aprovar_pedido'),
-    path('api/pedido/<int:pk>/rejeitar/', views.api_rejeitar_pedido, name='api_rejeitar_pedido'),
-    path('api/pedido/<int:pk>/historico-aprovacoes/', views.api_historico_aprovacoes, name='api_historico_aprovacoes'),
-    path('api/pedido/<int:pk>/divergencias-3way/', views.api_verificar_divergencias_3way, name='api_verificar_divergencias_3way'),
-    path('api/pedido/<int:pk>/enviar-aprovacao/', views.api_enviar_aprovacao, name='api_enviar_aprovacao'),  # ✅ NEW
+    # =========================================================================
+    # CADASTRO - TRANSPORTADORAS
+    # =========================================================================
+    path('transportadoras/', views.transportadora_manager, name='transportadora_manager'),
+    path('transportadoras/nova/', views.transportadora_form, name='transportadora_add'),
+    path('transportadoras/<int:pk>/editar/', views.transportadora_form, name='transportadora_edit'),
+    path('transportadoras/<int:pk>/excluir/', views.transportadora_delete, name='transportadora_delete'),
 
-    # =============================================================================
-    # COMPRAS - NOTAS FISCAIS DE ENTRADA
-    # =============================================================================
-    path('compras/notas-fiscais/', views.nota_fiscal_entrada_manager, name='nota_fiscal_entrada_manager'),
-    path('compras/notas-fiscais/form/', views.nota_fiscal_entrada_form, name='nota_fiscal_entrada_form'),  # ✅ NEW
-    path('api/nota-fiscal/salvar/', views.nota_fiscal_salvar_api, name='nota_fiscal_salvar_api'),
-    path('api/nota-fiscal/<int:pk>/dados/', views.nota_fiscal_dados_api, name='nota_fiscal_dados_api'),
-    path('api/nota-fiscal/<int:pk>/excluir/', views.nota_fiscal_excluir_api, name='nota_fiscal_excluir_api'),
-    path('api/nota-fiscal/<int:pk>/confirmar/', views.nota_fiscal_confirmar_api, name='nota_fiscal_confirmar_api'),
-    path('api/nota-fiscal/<int:pk>/cancelar/', views.nota_fiscal_cancelar_api, name='nota_fiscal_cancelar_api'),
-    path('compras/nota-fiscal/<int:pk>/confirmar-delete/', views.nota_fiscal_entrada_confirm_delete, name='nota_fiscal_entrada_confirm_delete'),
+    # =========================================================================
+    # CADASTRO - CATEGORIAS
+    # =========================================================================
+    path('categorias/', views.categoria_manager, name='categoria_manager'),
+    path('categorias/nova/', views.categoria_form, name='categoria_add'),
+    path('categorias/<int:pk>/editar/', views.categoria_form, name='categoria_edit'),
+    path('categorias/<int:pk>/excluir/', views.categoria_delete, name='categoria_delete'),
 
-    # =============================================================================
-    # COMPRAS - RELATÓRIOS
-    # =============================================================================
-    path('compras/relatorios/', views.relatorio_compras, name='relatorio_compras'),
-    path('api/compras/relatorio/dados/', views.relatorio_compras_dados_api, name='relatorio_compras_dados_api'),
-    path('api/compras/relatorio/exportar/', views.relatorio_compras_exportar_api, name='relatorio_compras_exportar_api'),
+    # =========================================================================
+    # CADASTRO - MARCAS
+    # =========================================================================
+    path('marcas/', views.marca_manager, name='marca_manager'),
+    path('marcas/nova/', views.marca_form, name='marca_add'),
+    path('marcas/<int:pk>/editar/', views.marca_form, name='marca_edit'),
+    path('marcas/<int:pk>/excluir/', views.marca_delete, name='marca_delete'),
 
-    # =============================================================================
-    # VENDAS - ORÇAMENTOS
-    # =============================================================================
-    path('vendas/orcamentos/', views.orcamento_manager, name='orcamento_manager'),
-    path('vendas/orcamentos/novo/', views.orcamento_form, name='orcamento_form'),
-    path('vendas/orcamentos/<int:pk>/editar/', views.orcamento_form, name='orcamento_form_edit'),
-    path('vendas/orcamentos/<int:pk>/excluir/', views.orcamento_excluir_api, name='orcamento_excluir'),
-    path('vendas/orcamentos/<int:pk>/gerar-pedido/', views.orcamento_gerar_pedido, name='orcamento_gerar_pedido'),
+    # =========================================================================
+    # CADASTRO - UNIDADES DE MEDIDA
+    # =========================================================================
+    path('unidades-medida/', views.unidade_medida_manager, name='unidade_medida_manager'),
+    path('unidades-medida/nova/', views.unidade_medida_form, name='unidade_medida_add'),
+    path('unidades-medida/<int:pk>/editar/', views.unidade_medida_form, name='unidade_medida_edit'),
+    path('unidades-medida/<int:pk>/excluir/', views.unidade_medida_delete, name='unidade_medida_delete'),
 
-    # =============================================================================
-    # VENDAS - PEDIDOS
-    # =============================================================================
-    path('vendas/pedidos/', views.pedido_venda_manager, name='pedido_venda_manager'),
-    path('vendas/pedidos/novo/', views.pedido_venda_form, name='pedido_venda_form'),
-    path('vendas/pedidos/<int:pk>/editar/', views.pedido_venda_form, name='pedido_venda_form_edit'),
-    path('vendas/pedidos/<int:pk>/excluir/', views.pedido_venda_excluir_api, name='pedido_venda_excluir'),
-    path('vendas/pedidos/<int:pk>/gerar-nfe/', views.pedido_venda_gerar_nfe, name='pedido_venda_gerar_nfe'),
-
-    # =============================================================================
-    # VENDAS - NOTAS FISCAIS DE SAÍDA
-    # =============================================================================
-    path('vendas/notas-fiscais/', views.nota_fiscal_saida_manager, name='nota_fiscal_saida_manager'),
-    path('vendas/notas-fiscais/novo/', views.nota_fiscal_saida_form, name='nota_fiscal_saida_form'),
-    path('vendas/notas-fiscais/<int:pk>/editar/', views.nota_fiscal_saida_form, name='nota_fiscal_saida_form_edit'),
-    path('vendas/notas-fiscais/<int:pk>/excluir/', views.nota_fiscal_saida_excluir_api, name='nota_fiscal_saida_excluir'),
-    # ✅ NOVAS APIs de Nota Fiscal Saída
-    path('api/nota-fiscal-saida/salvar/', views.nota_fiscal_saida_salvar_api, name='nota_fiscal_saida_salvar_api'),
-    path('api/nota-fiscal-saida/<int:pk>/dados/', views.nota_fiscal_saida_dados_api, name='nota_fiscal_saida_dados_api'),
-    path('api/nota-fiscal-saida/<int:pk>/confirmar/', views.nota_fiscal_saida_confirmar_api, name='nota_fiscal_saida_confirmar_api'),
-    path('api/nota-fiscal-saida/<int:pk>/cancelar/', views.nota_fiscal_saida_cancelar_api, name='nota_fiscal_saida_cancelar_api'),
-    path('vendas/nota-fiscal-saida/<int:pk>/confirmar-delete/', views.nota_fiscal_saida_confirm_delete, name='nota_fiscal_saida_confirm_delete'),
-    path('api/pedido-venda/<int:pk>/dados-para-nfe/', views.api_pedido_dados_para_nfe_saida, name='api_pedido_dados_para_nfe_saida'),
-    path('api/pedido-venda/<int:pk>/gerar-nfe/', views.api_gerar_nfe_from_pedido_venda, name='api_gerar_nfe_from_pedido_venda'),
-
-    # =============================================================================
-    # VENDAS - RELATÓRIOS
-    # =============================================================================
-    path('vendas/relatorios/', views.relatorio_vendas, name='relatorio_vendas'),
-
-    # =============================================================================
-    # FINANCEIRO - RELATÓRIO
-    # =============================================================================
-    path('financeiro/', views.relatorio_financeiro, name='relatorio_financeiro'),
-    # Alias para PDF - redireciona para o mesmo relatório por enquanto
-    path('financeiro/pdf/', views.relatorio_financeiro, name='relatorio_financeiro_pdf'),
-
-    # =============================================================================
-    # FINANCEIRO - FLUXO DE CAIXA
-    # =============================================================================
-    path('fluxo-caixa/', views.fluxo_caixa_list, name='fluxo_caixa_list'),
-    path('fluxo-caixa/adicionar/', views.fluxo_caixa_add, name='fluxo_caixa_add'),
-    path('fluxo-caixa/<int:pk>/editar/', views.fluxo_caixa_edit, name='fluxo_caixa_edit'),
-    path('fluxo-caixa/<int:pk>/excluir/', views.fluxo_caixa_delete, name='fluxo_caixa_delete'),
-
-    # Alias usado pelos templates do fluxo de caixa
-    path('movimentacao-caixa/adicionar/', views.fluxo_caixa_add, name='movimentacao_caixa_add'),
-
-    # =============================================================================
-    # FINANCEIRO - CONTAS A RECEBER
-    # =============================================================================
-    path('contas-receber/', views.conta_receber_list, name='conta_receber_list'),
-    path('contas-receber/adicionar/', views.conta_receber_add, name='conta_receber_add'),
-    path('contas-receber/<int:pk>/editar/', views.conta_receber_edit, name='conta_receber_edit'),
-    path('contas-receber/<int:pk>/excluir/', views.conta_receber_delete, name='conta_receber_excluir'),
-    path('contas-receber/<int:pk>/baixar/', views.conta_receber_baixar, name='conta_receber_baixar'),
-
-    # =============================================================================
-    # FINANCEIRO - CONTAS A PAGAR
-    # =============================================================================
-    path('contas-pagar/', views.conta_pagar_list, name='conta_pagar_list'),
-    path('contas-pagar/adicionar/', views.conta_pagar_add, name='conta_pagar_add'),
-    path('contas-pagar/<int:pk>/editar/', views.conta_pagar_edit, name='conta_pagar_edit'),
-    path('contas-pagar/<int:pk>/excluir/', views.conta_pagar_delete, name='conta_pagar_excluir'),
-    path('contas-pagar/<int:pk>/baixar/', views.conta_pagar_baixar, name='conta_pagar_baixar'),
-
-    # =============================================================================
-    # FINANCEIRO - CONCILIAÇÃO BANCÁRIA
-    # =============================================================================
-    path('conciliacao-bancaria/', views.conciliacao_bancaria_list, name='conciliacao_bancaria_list'),
-    path('conciliacao-bancaria/adicionar/', views.conciliacao_bancaria_add, name='conciliacao_bancaria_add'),
-    path('conciliacao-bancaria/<int:pk>/editar/', views.conciliacao_bancaria_edit, name='conciliacao_bancaria_edit'),
-    path('conciliacao-bancaria/<int:pk>/detalhar/', views.conciliacao_bancaria_detail, name='conciliacao_bancaria_detail'),
-    path('conciliacao-bancaria/<int:pk>/excluir/', views.conciliacao_bancaria_delete, name='conciliacao_bancaria_delete'),
-    path('conciliacao-bancaria/<int:pk>/processar/', views.conciliacao_bancaria_processar, name='conciliacao_bancaria_processar'),
-    path('conciliacao-bancaria/<int:pk>/vincular/', views.conciliacao_bancaria_vincular, name='conciliacao_bancaria_vincular'),
-    path('conciliacao-bancaria/importar-ofx/', views.conciliacao_importar_ofx, name='conciliacao_importar_ofx'),
-    path('conciliacao-bancaria/buscar-lancamentos/', views.conciliacao_buscar_lancamentos, name='conciliacao_buscar_lancamentos'),
-    path('conciliacao-bancaria/realizar/', views.conciliacao_realizar, name='conciliacao_realizar'),
-    path('conciliacao-bancaria/auto/', views.conciliacao_auto, name='conciliacao_auto'),
-
-    # =============================================================================
-    # FINANCEIRO - DRE GERENCIAL
-    # =============================================================================
-    path('dre/', views.dre_list, name='dre_list'),
-    path('dre/adicionar/', views.dre_add, name='dre_add'),
-    path('dre/<int:pk>/editar/', views.dre_edit, name='dre_edit'),
-
-    # Alias usado pelo template dre_manager.html
-    path('dre/configuracao/', views.dre_edit, name='dre_configuracao'),
-
-    # NOVAS URLS:
-    path('dre/salvar/', views.dre_salvar, name='dre_salvar'),
-    path('dre/relatorio/<int:pk>/', views.dre_relatorio, name='dre_relatorio'),
-    path('dre/comparativo/', views.dre_comparativo, name='dre_comparativo'),
-
-    # =============================================================================
-    # FINANCEIRO - PLANEJADO X REALIZADO
-    # =============================================================================
-    # ✅ CORRIGIDO: Adicionada rota para planejado_x_realizado_manager
-    path('planejado-realizado/', views.planejado_x_realizado_manager, name='planejado_x_realizado_manager'),
-    path('planejado-realizado/lista/', views.planejado_x_realizado_list, name='planejado_x_realizado_list'),
-    path('planejado-realizado/novo/', views.planejado_x_realizado_add, name='planejado_x_realizado_add'),
-    path('planejado-realizado/<int:pk>/editar/', views.planejado_x_realizado_edit, name='planejado_x_realizado_edit'),
-    path('planejado-realizado/excel/', views.planejado_x_realizado_excel, name='planejado_x_realizado_excel'),
-    path('api/projetos/criar/', views.api_criar_projeto, name='api_criar_projeto'),
+    # =========================================================================
+    # CADASTRO - PROJETOS
+    # =========================================================================
+    path('projetos/', views.projeto_manager, name='projeto_manager'),
+    path('projetos/novo/', views.projeto_form, name='projeto_add'),
+    path('projetos/<int:pk>/editar/', views.projeto_form, name='projeto_edit'),
+    path('projetos/<int:pk>/excluir/', views.projeto_excluir, name='projeto_delete'),
     path('api/projeto/criar/', views.projeto_create_ajax, name='projeto_create_ajax'),
     path('api/projeto/<int:pk>/excluir/', views.projeto_delete_ajax, name='projeto_delete_ajax'),
 
-    # =============================================================================
-    # FINANCEIRO - CATEGORIAS (mantidas para APIs AJAX dos forms)
-    # =============================================================================
-    path('categorias/', views.categoria_financeira_list, name='categoria_financeira_list'),
-    path('categorias/adicionar/', views.categoria_financeira_add, name='categoria_financeira_add'),
-    path('categorias/<int:pk>/editar/', views.categoria_financeira_edit, name='categoria_financeira_edit'),
-    path('categorias/<int:pk>/excluir/', views.categoria_financeira_delete, name='categoria_financeira_delete'),
+    # =========================================================================
+    # COMPRAS - COTAÇÕES
+    # =========================================================================
+    path('cotacoes/', views.cotacao_manager, name='cotacao_manager'),  # ✅ Alterado
+    path('cotacoes/nova/', views.cotacao_form, name='cotacao_add'),
+    path('cotacoes/<int:pk>/editar/', views.cotacao_form, name='cotacao_edit'),
+    path('cotacoes/<int:pk>/excluir/', views.cotacao_delete, name='cotacao_delete'),
+    path('api/cotacao/<int:pk>/dados/', views.cotacao_dados_api, name='cotacao_dados_api'),
+    path('api/cotacao/enviar/', views.cotacao_enviar_api, name='cotacao_enviar_api'),
+    path('api/cotacao/item/add/', views.cotacao_item_add_api, name='cotacao_item_add_api'),
+    path('api/cotacao/item/<int:item_id>/delete/', views.cotacao_item_delete_api, name='cotacao_item_delete_api'),
 
-    # =============================================================================
-    # FINANCEIRO - CENTROS DE CUSTO (mantidos para APIs AJAX dos forms)
-    # =============================================================================
+    # =========================================================================
+    # COMPRAS - PEDIDOS DE COMPRA
+    # =========================================================================
+    path('pedidos-compra/', views.pedido_compra_manager, name='pedido_compra_manager'),  # ✅ Alterado
+    path('pedidos-compra/novo/', views.pedido_compra_form, name='pedido_compra_add'),
+    path('pedidos-compra/<int:pk>/editar/', views.pedido_compra_form, name='pedido_compra_edit'),
+    path('pedidos-compra/<int:pk>/excluir/', views.pedido_compra_delete, name='pedido_compra_delete'),
+    path('api/pedido-compra/<int:pk>/dados/', views.pedido_compra_dados_api, name='pedido_compra_dados_api'),
+    path('api/pedido-compra/salvar/', views.pedido_salvar_api, name='pedido_salvar_api'),
+    path('api/pedido-compra/item/add/', views.pedido_item_add_api, name='pedido_item_add_api'),
+    path('api/pedido-compra/item/<int:item_id>/delete/', views.pedido_item_delete_api, name='pedido_item_delete_api'),
+    path('api/pedido-compra/enviar-aprovacao/', views.api_enviar_aprovacao, name='api_enviar_aprovacao'),
+
+    # =========================================================================
+    # COMPRAS - NOTAS FISCAIS DE ENTRADA
+    # =========================================================================
+    path('notas-entrada/', views.nota_fiscal_entrada_manager, name='nota_fiscal_entrada_manager'),  # ✅ Alterado
+    path('notas-entrada/nova/', views.nota_fiscal_entrada_form, name='nota_fiscal_entrada_add'),
+    path('notas-entrada/<int:pk>/editar/', views.nota_fiscal_entrada_form, name='nota_fiscal_entrada_edit'),
+    path('notas-entrada/<int:pk>/excluir/', views.nota_fiscal_entrada_delete, name='nota_fiscal_entrada_delete'),
+    path('notas-entrada/nfe/', views.entrada_nfe, name='entrada_nfe'),
+    path('api/nota-entrada/salvar/', views.nota_fiscal_salvar_api, name='nota_fiscal_salvar_api'),
+    path('api/nota-entrada/<int:pk>/dados/', views.nota_fiscal_entrada_dados_api, name='nota_fiscal_entrada_dados_api'),
+    path('api/nota-entrada/item/add/', views.nota_fiscal_entrada_item_add_api, name='nota_fiscal_entrada_item_add_api'),
+    path('api/nota-entrada/item/<int:item_id>/delete/', views.nota_fiscal_entrada_item_delete_api, name='nota_fiscal_entrada_item_delete_api'),
+    path('api/nota-entrada/<int:pk>/confirmar/', views.nota_fiscal_entrada_confirmar_recebimento, name='nota_fiscal_entrada_confirmar'),
+
+    # =========================================================================
+    # COMPRAS - RELATÓRIOS
+    # =========================================================================
+    path('relatorio-compras/', views.relatorio_compras, name='relatorio_compras'),
+
+    # =========================================================================
+    # VENDAS - ORÇAMENTOS
+    # =========================================================================
+    path('orcamentos/', views.orcamento_manager, name='orcamento_manager'),  # ✅ Alterado
+    path('orcamentos/novo/', views.orcamento_form, name='orcamento_add'),
+    path('orcamentos/<int:pk>/editar/', views.orcamento_form, name='orcamento_edit'),
+    path('orcamentos/<int:pk>/excluir/', views.orcamento_delete, name='orcamento_delete'),
+    path('api/orcamento/<int:pk>/dados/', views.orcamento_dados_api, name='orcamento_dados_api'),
+    path('api/orcamento/salvar/', views.orcamento_salvar_api, name='orcamento_salvar_api'),
+    path('api/orcamento/item/add/', views.orcamento_item_add_api, name='orcamento_item_add_api'),
+    path('api/orcamento/item/<int:item_id>/delete/', views.orcamento_item_delete_api, name='orcamento_item_delete_api'),
+    path('api/orcamento/<int:pk>/gerar-pedido/', views.orcamento_gerar_pedido, name='orcamento_gerar_pedido'),
+
+    # =========================================================================
+    # VENDAS - ORÇAMENTOS DE PROJETO
+    # =========================================================================
+    path('orcamentos-projeto/', views.orcamento_projeto_manager, name='orcamento_projeto_manager'),
+    path('orcamentos-projeto/novo/', views.orcamento_projeto_form, name='orcamento_projeto_add'),
+    path('orcamentos-projeto/<int:pk>/editar/', views.orcamento_projeto_form, name='orcamento_projeto_edit'),
+    path('orcamentos-projeto/<int:pk>/excluir/', views.orcamento_projeto_delete, name='orcamento_projeto_delete'),
+
+    # =========================================================================
+    # VENDAS - PEDIDOS DE VENDA
+    # =========================================================================
+    path('pedidos-venda/', views.pedido_venda_manager, name='pedido_venda_manager'),  # ✅ Alterado
+    path('pedidos-venda/novo/', views.pedido_venda_form, name='pedido_venda_add'),
+    path('pedidos-venda/<int:pk>/editar/', views.pedido_venda_form, name='pedido_venda_edit'),
+    path('pedidos-venda/<int:pk>/excluir/', views.pedido_venda_delete, name='pedido_venda_delete'),
+    path('api/pedido-venda/<int:pk>/dados/', views.pedido_venda_dados_api, name='pedido_venda_dados_api'),
+    path('api/pedido-venda/salvar/', views.pedido_venda_salvar_api, name='pedido_venda_salvar_api'),
+    path('api/pedido-venda/item/add/', views.pedido_venda_item_add_api, name='pedido_venda_item_add_api'),
+    path('api/pedido-venda/item/<int:item_id>/delete/', views.pedido_venda_item_delete_api, name='pedido_venda_item_delete_api'),
+    path('api/pedido-venda/<int:pk>/gerar-nfe/', views.pedido_venda_gerar_nfe, name='pedido_venda_gerar_nfe'),
+
+    # =========================================================================
+    # VENDAS - NOTAS FISCAIS DE SAÍDA
+    # =========================================================================
+    path('notas-saida/', views.nota_fiscal_saida_manager, name='nota_fiscal_saida_manager'),  # ✅ Alterado
+    path('notas-saida/nova/', views.nota_fiscal_saida_form, name='nota_fiscal_saida_add'),
+    path('notas-saida/<int:pk>/editar/', views.nota_fiscal_saida_form, name='nota_fiscal_saida_edit'),
+    path('notas-saida/<int:pk>/excluir/', views.nota_fiscal_saida_delete, name='nota_fiscal_saida_delete'),
+    path('api/nota-saida/<int:pk>/dados/', views.nota_fiscal_saida_dados_api, name='nota_fiscal_saida_dados_api'),
+    path('api/nota-saida/salvar/', views.nota_fiscal_saida_salvar_api, name='nota_fiscal_saida_salvar_api'),
+    path('api/nota-saida/item/add/', views.nota_fiscal_saida_item_add_api, name='nota_fiscal_saida_item_add_api'),
+    path('api/nota-saida/item/<int:item_id>/delete/', views.nota_fiscal_saida_item_delete_api, name='nota_fiscal_saida_item_delete_api'),
+    path('api/nota-saida/<int:pk>/confirmar-entrega/', views.nota_fiscal_saida_confirmar_entrega, name='nota_fiscal_saida_confirmar_entrega'),
+
+    # =========================================================================
+    # VENDAS - RELATÓRIOS
+    # =========================================================================
+    path('relatorio-vendas/', views.relatorio_vendas, name='relatorio_vendas'),
+
+    # =========================================================================
+    # FINANCEIRO - RELATÓRIO
+    # =========================================================================
+    path('financeiro/', views.relatorio_financeiro, name='relatorio_financeiro'),
+
+    # =========================================================================
+    # FINANCEIRO - FLUXO DE CAIXA
+    # =========================================================================
+    path('fluxo-caixa/', views.fluxo_caixa_manager, name='fluxo_caixa_manager'),  # ✅ Alterado
+
+    # =========================================================================
+    # FINANCEIRO - CONTAS A PAGAR
+    # =========================================================================
+    path('contas-pagar/', views.conta_pagar_list, name='conta_pagar_list'),
+    path('contas-pagar/nova/', views.conta_pagar_add, name='conta_pagar_add'),
+    path('contas-pagar/<int:pk>/editar/', views.conta_pagar_edit, name='conta_pagar_edit'),
+    path('contas-pagar/<int:pk>/excluir/', views.conta_pagar_delete, name='conta_pagar_delete'),
+    path('api/conta-pagar/<int:pk>/baixar/', views.conta_pagar_baixar, name='conta_pagar_baixar'),
+
+    # =========================================================================
+    # FINANCEIRO - CONTAS A RECEBER
+    # =========================================================================
+    path('contas-receber/', views.conta_receber_list, name='conta_receber_list'),
+    path('contas-receber/nova/', views.conta_receber_add, name='conta_receber_add'),
+    path('contas-receber/<int:pk>/editar/', views.conta_receber_edit, name='conta_receber_edit'),
+    path('contas-receber/<int:pk>/excluir/', views.conta_receber_delete, name='conta_receber_delete'),
+    path('api/conta-receber/<int:pk>/baixar/', views.conta_receber_baixar, name='conta_receber_baixar'),
+
+    # =========================================================================
+    # FINANCEIRO - CONCILIAÇÃO BANCÁRIA
+    # =========================================================================
+    path('conciliacao/', views.conciliacao_bancaria_manager, name='conciliacao_bancaria_manager'),  # ✅ Alterado
+
+    # =========================================================================
+    # FINANCEIRO - DRE
+    # =========================================================================
+    path('dre/', views.dre_manager, name='dre_manager'),  # ✅ Alterado
+
+    # =========================================================================
+    # FINANCEIRO - PLANEJADO X REALIZADO
+    # =========================================================================
+    path('planejado-realizado/', views.planejado_x_realizado_manager, name='planejado_x_realizado_manager'),
+
+    # =========================================================================
+    # FINANCEIRO - CATEGORIAS FINANCEIRAS
+    # =========================================================================
+    path('categorias-financeiras/', views.categoria_financeira_list, name='categoria_financeira_list'),
+
+    # =========================================================================
+    # FINANCEIRO - CENTROS DE CUSTO
+    # =========================================================================
     path('centros-custo/', views.centro_custo_list, name='centro_custo_list'),
-    path('centros-custo/adicionar/', views.centro_custo_add, name='centro_custo_add'),
-    path('centros-custo/<int:pk>/editar/', views.centro_custo_edit, name='centro_custo_edit'),
-    path('centros-custo/<int:pk>/excluir/', views.centro_custo_delete, name='centro_custo_delete'),
 
-    # =============================================================================
-    # FINANCEIRO - APIs AJAX (categorias e centros de custo)
-    # =============================================================================
-    path('api/categorias/criar/', views.api_categoria_criar, name='api_categoria_criar'),
-    path('api/categorias/<int:pk>/excluir/', views.api_categoria_excluir, name='api_categoria_excluir'),
-    path('api/centros-custo/criar/', views.api_centro_custo_criar, name='api_centro_custo_criar'),
-    path('api/centros-custo/<int:pk>/excluir/', views.api_centro_custo_excluir, name='api_centro_custo_excluir'),
+    # =========================================================================
+    # FINANCEIRO - CONTAS BANCÁRIAS
+    # =========================================================================
+    path('contas-bancarias/', views.conta_bancaria_list, name='conta_bancaria_list'),
 
-    # Alias usado pelo conta_pagar_form.html e conta_receber_form.html
-    path('api/financeiro/categorias/criar/', views.api_categoria_criar, name='api_financeiro_categoria_criar'),
-    path('api/financeiro/categorias/<int:pk>/excluir/', views.api_categoria_excluir, name='api_financeiro_categoria_excluir'),
-    path('api/financeiro/centros-custo/criar/', views.api_centro_custo_criar, name='api_financeiro_centro_custo_criar'),
-    path('api/financeiro/centros-custo/<int:pk>/excluir/', views.api_centro_custo_excluir, name='api_financeiro_centro_custo_excluir'),
+    # =========================================================================
+    # FINANCEIRO - FORMAS DE PAGAMENTO
+    # =========================================================================
+    path('formas-pagamento/', views.forma_pagamento_list, name='forma_pagamento_list'),
 
-    # =============================================================================
+    # =========================================================================
+    # FINANCEIRO - CONDIÇÕES DE PAGAMENTO
+    # =========================================================================
+    path('condicoes-pagamento/', views.condicao_pagamento_list, name='condicao_pagamento_list'),
+    path('condicoes-pagamento/nova/', views.condicao_pagamento_add, name='condicao_pagamento_add'),
+    path('condicoes-pagamento/<int:pk>/editar/', views.condicao_pagamento_edit, name='condicao_pagamento_edit'),
+    path('condicoes-pagamento/<int:pk>/excluir/', views.condicao_pagamento_delete, name='condicao_pagamento_delete'),
+    path('api/condicao-pagamento/<int:pk>/dados/', views.condicao_pagamento_dados_api, name='condicao_pagamento_dados_api'),
+
+    # =========================================================================
     # ESTOQUE - MOVIMENTAÇÕES
-    # =============================================================================
-    path('estoque/movimentacoes/', views.movimentacao_estoque_list, name='movimentacao_estoque_list'),
-    path('estoque/movimentacoes/nova/', views.movimentacao_estoque_add, name='movimentacao_estoque_add'),
-    path('estoque/movimentacoes/<int:pk>/editar/', views.movimentacao_estoque_edit, name='movimentacao_estoque_edit'),
-    path('estoque/movimentacoes/<int:pk>/', views.movimentacao_estoque_detail, name='movimentacao_estoque_detail'),
-    path('estoque/movimentacoes/<int:pk>/excluir/', views.movimentacao_estoque_delete, name='movimentacao_estoque_delete'),
+    # =========================================================================
+    path('movimentacoes/', views.movimentacao_estoque_manager, name='movimentacao_estoque_manager'),  # ✅ Alterado
 
-    # =============================================================================
-    # ESTOQUE - DEPÓSITOS
-    # =============================================================================
-    path('estoque/depositos/', views.deposito_list, name='deposito_list'),
-    path('estoque/depositos/novo/', views.deposito_add, name='deposito_add'),
-    path('estoque/depositos/<int:pk>/editar/', views.deposito_edit, name='deposito_edit'),
-    path('estoque/depositos/<int:pk>/excluir/', views.deposito_delete, name='deposito_delete'),
+    # =========================================================================
+    # ESTOQUE - INVENTÁRIOS
+    # =========================================================================
+    path('inventarios/', views.inventario_manager, name='inventario_manager'),  # ✅ Alterado
 
-    # =============================================================================
-    # ESTOQUE - DEPÓSITOS (AJAX) - CORRIGIDO
-    # =============================================================================
-    path('estoque/depositos/add/ajax/', views.deposito_create_ajax, name='deposito_create_ajax'),
-    path('estoque/depositos/<int:pk>/delete/ajax/', views.deposito_delete_ajax, name='deposito_delete_ajax'),
-
-    # =============================================================================
-    # ESTOQUE - APIs - CORRIGIDO (removida api_produto_saldo duplicada)
-    # =============================================================================
-    path('api/estoque/saldo/', views.api_estoque_saldo, name='api_estoque_saldo'),
-    path('api/produto/<int:pk>/saldo/', views.api_produto_saldo_disponivel, name='api_produto_saldo_disponivel'),
-    path('api/produtos/busca/', views.api_produtos_busca, name='api_produtos_busca'),
-
-    # =============================================================================
-    # ESTOQUE - INVENTÁRIO
-    # =============================================================================
-    path('estoque/inventarios/', views.inventario_list, name='inventario_list'),
-    path('estoque/inventarios/novo/', views.inventario_add, name='inventario_add'),
-    path('estoque/inventarios/<int:pk>/contagem/', views.inventario_contagem, name='inventario_contagem'),
-    path('estoque/inventarios/<int:pk>/finalizar/', views.inventario_finalizar, name='inventario_finalizar'),
-    path('estoque/inventarios/<int:pk>/editar/', views.inventario_edit, name='inventario_edit'),
-    path('estoque/inventarios/<int:pk>/excluir/', views.inventario_delete, name='inventario_delete'),
-
-    # =============================================================================
-    # ESTOQUE - ENTRADA NF-E
-    # =============================================================================
-    path('estoque/entradas-nfe/', views.entrada_nfe_list, name='entrada_nfe_list'),
-    path('estoque/entradas-nfe/nova/', views.entrada_nfe_add, name='entrada_nfe_add'),
-    path('estoque/entradas-nfe/<int:pk>/itens/', views.entrada_nfe_itens, name='entrada_nfe_itens'),
-    path('estoque/entradas-nfe/<int:pk>/finalizar/', views.entrada_nfe_finalizar, name='entrada_nfe_finalizar'),
-    path('estoque/entradas-nfe/<int:pk>/', views.entrada_nfe_detail, name='entrada_nfe_detail'),
-    path('estoque/entradas-nfe/<int:pk>/editar/', views.entrada_nfe_edit, name='entrada_nfe_edit'),
-    path('estoque/entradas-nfe/importar-xml/', views.entrada_nfe_importar_xml, name='entrada_nfe_importar_xml'),
-
-    # =============================================================================
-    # ESTOQUE - RELATÓRIOS
-    # =============================================================================
-    path('estoque/relatorio-posicao/', views.relatorio_estoque, name='relatorio_estoque'),
-    path('estoque/relatorio-movimentacoes/', views.relatorio_movimentacao, name='relatorio_movimentacoes'),
-    path('estoque/consulta-saldo/', views.consulta_saldo, name='consulta_saldo'),
-
-    # =============================================================================
-    # ESTOQUE - APIs
-    # =============================================================================
-    path('api/produto/<int:produto_id>/saldo/', views.api_produto_saldo_disponivel, name='api_produto_saldo'),
-    path('api/produtos/busca/', views.api_produtos_busca, name='api_produtos_busca'),
-
-    # =============================================================================
+    # =========================================================================
     # ESTOQUE - TRANSFERÊNCIAS
-    # =============================================================================
-    path('estoque/transferencias/', views.transferencia_list, name='transferencia_list'),
-    path('estoque/transferencias/nova/', views.transferencia_add, name='transferencia_add'),
-    path('estoque/transferencias/<int:pk>/', views.transferencia_detail, name='transferencia_detail'),
-    path('estoque/transferencias/<int:pk>/editar/', views.transferencia_edit, name='transferencia_edit'),
-    path('estoque/transferencias/<int:pk>/excluir/', views.transferencia_delete, name='transferencia_delete'),
-    path('estoque/transferencias/<int:pk>/enviar/', views.transferencia_enviar, name='transferencia_enviar'),
-    path('estoque/transferencias/<int:pk>/receber/', views.transferencia_receber, name='transferencia_receber'),
+    # =========================================================================
+    path('transferencias/', views.transferencia_estoque_manager, name='transferencia_estoque_manager'),  # ✅ Alterado
+
+    # =========================================================================
+    # ESTOQUE - DEPÓSITOS
+    # =========================================================================
+    path('depositos/', views.deposito_list, name='deposito_list'),
+
+    # =========================================================================
+    # ESTOQUE - RELATÓRIOS
+    # =========================================================================
+    path('relatorio-estoque/posicao/', views.relatorio_estoque_posicao, name='relatorio_estoque_posicao'),
+    path('relatorio-estoque/movimentacao/', views.relatorio_estoque_movimentacao, name='relatorio_estoque_movimentacao'),
+    path('relatorio-estoque/inventario/', views.relatorio_estoque_inventario, name='relatorio_estoque_inventario'),
+
+    # =========================================================================
+    # APIs GENÉRICAS
+    # =========================================================================
+    path('api/buscar-produtos/', views.api_buscar_produtos, name='api_buscar_produtos'),
+    path('api/buscar-clientes/', views.api_buscar_clientes, name='api_buscar_clientes'),
+    path('api/buscar-fornecedores/', views.api_buscar_fornecedores, name='api_buscar_fornecedores'),
 ]

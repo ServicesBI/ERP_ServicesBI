@@ -2,54 +2,93 @@
 {% load static custom_filters %}
 
 {% block title %}Cotações - ERP ServicesBI{% endblock %}
+{% block breadcrumb %}Compras / Cotações{% endblock %}
 
 {% block content %}
-
-<!-- ==================== MODO LISTA ==================== -->
-<div id="modo-lista">
-    <!-- HEADER -->
+<div class="page-container">
+    
+    <!-- PAGE HEADER -->
     <div class="page-header">
-        <div class="page-header__title">
-            <h1>COTAÇÕES</h1>
-            <p>Gerenciamento de cotações de fornecedores</p>
+        <div class="page-header__left">
+            <h1 class="page-header__title">COTAÇÕES</h1>
+            <p class="page-header__subtitle">Gerenciamento de cotações comparativas</p>
         </div>
-        <button type="button" class="erp-btn erp-btn--primary erp-btn--lg" onclick="novaCotacao()">
-            <span>➕</span> Nova Cotação
-        </button>
+        <div class="page-header__right">
+            <a href="{% url 'ERP_ServicesBI:cotacao_add' %}" class="btn-novo">
+                ➕ Nova Cotação
+            </a>
+        </div>
     </div>
 
+    <!-- MESSAGES -->
     {% if messages %}
         {% for message in messages %}
-            <div class="erp-alert erp-alert--{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} erp-mb-4">
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
                 {{ message }}
             </div>
         {% endfor %}
     {% endif %}
 
-    <!-- CARDS DE RESUMO -->
+    <!-- RESUMO CARDS COM ÍCONES -->
     <div class="resumo-grid">
-        <div class="resumo-card resumo-card--total">
-            <div class="resumo-card__icon">📋</div>
-            <div class="resumo-card__label">Total</div>
-            <div class="resumo-card__value">{{ total_cotacoes|default:"0" }}</div>
+        <!-- Card 1: Total de Cotações -->
+        <div class="card">
+            <div class="card-header">
+                <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
+                    <span style="font-size: 28px;">📋</span>
+                    <h3 class="card-title" style="margin: 0; border: none; padding: 0; font-size: 12px;">Total de Cotações</h3>
+                </div>
+            </div>
+            <div class="resumo-card__content">
+                <div class="resumo-card__value">{{ total_cotacoes|default:"0" }}</div>
+                <div class="resumo-card__subtitle">Todas as cotações</div>
+                <div class="resumo-card__trend">↑ 12%</div>
+            </div>
         </div>
 
-        <div class="resumo-card resumo-card--em_analise">
-            <div class="resumo-card__icon">🔍</div>
-            <div class="resumo-card__label">Em Análise</div>
-            <div class="resumo-card__value">{{ em_analise|default:"0" }}</div>
+        <!-- Card 2: Em Análise -->
+        <div class="card">
+            <div class="card-header">
+                <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
+                    <span style="font-size: 28px;">🔍</span>
+                    <h3 class="card-title" style="margin: 0; border: none; padding: 0; font-size: 12px;">Em Análise</h3>
+                </div>
+            </div>
+            <div class="resumo-card__content">
+                <div class="resumo-card__value" style="color: var(--info-500);">{{ em_analise|default:"0" }}</div>
+                <div class="resumo-card__subtitle">Aguardando análise</div>
+                <div class="resumo-card__trend">↑ 8%</div>
+            </div>
         </div>
 
-        <div class="resumo-card resumo-card--concluida">
-            <div class="resumo-card__icon">✅</div>
-            <div class="resumo-card__label">Concluída</div>
-            <div class="resumo-card__value">{{ concluidas|default:"0" }}</div>
+        <!-- Card 3: Concluída -->
+        <div class="card">
+            <div class="card-header">
+                <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
+                    <span style="font-size: 28px;">✅</span>
+                    <h3 class="card-title" style="margin: 0; border: none; padding: 0; font-size: 12px;">Concluída</h3>
+                </div>
+            </div>
+            <div class="resumo-card__content">
+                <div class="resumo-card__value" style="color: var(--success-500);">{{ concluidas|default:"0" }}</div>
+                <div class="resumo-card__subtitle">Finalizadas</div>
+                <div class="resumo-card__trend">↑ 5%</div>
+            </div>
         </div>
 
-        <div class="resumo-card resumo-card--cancelada">
-            <div class="resumo-card__icon">❌</div>
-            <div class="resumo-card__label">Cancelada</div>
-            <div class="resumo-card__value">{{ canceladas|default:"0" }}</div>
+        <!-- Card 4: Cancelada -->
+        <div class="card">
+            <div class="card-header">
+                <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
+                    <span style="font-size: 28px;">❌</span>
+                    <h3 class="card-title" style="margin: 0; border: none; padding: 0; font-size: 12px;">Cancelada</h3>
+                </div>
+            </div>
+            <div class="resumo-card__content">
+                <div class="resumo-card__value" style="color: var(--danger-500);">{{ canceladas|default:"0" }}</div>
+                <div class="resumo-card__subtitle">Não utilizadas</div>
+                <div class="resumo-card__trend resumo-card__trend--down">↓ 3%</div>
+            </div>
         </div>
     </div>
 
@@ -58,28 +97,37 @@
         <div class="search-box">
             <span class="search-box__icon">🔍</span>
             <form method="get" style="display: contents;">
-                <input type="text" name="search" placeholder="Buscar por número ou título..." 
-                       value="{{ search|default:'' }}">
+                <input type="text" name="search" placeholder="Buscar por número ou título..." value="{{ search|default:'' }}">
             </form>
         </div>
-
+        
         <select name="status" class="form-select" style="width: 180px;" onchange="this.form.submit()">
             <option value="">Todos os status</option>
+            <option value="rascunho" {% if status == 'rascunho' %}selected{% endif %}>Rascunho</option>
             <option value="em_analise" {% if status == 'em_analise' %}selected{% endif %}>Em Análise</option>
             <option value="concluida" {% if status == 'concluida' %}selected{% endif %}>Concluída</option>
             <option value="cancelada" {% if status == 'cancelada' %}selected{% endif %}>Cancelada</option>
         </select>
-
+        
         {% if search or status %}
-        <a href="{% url 'ERP_ServicesBI:cotacao_manager' %}" class="erp-btn erp-btn--secondary">
-            Limpar
-        </a>
+            <a href="{% url 'ERP_ServicesBI:cotacao_manager' %}" class="btn btn-secondary">
+                Limpar
+            </a>
         {% endif %}
+        
+        <div class="toolbar-spacer">
+            <span class="per-page-label">Itens:</span>
+            <select name="per_page" class="per-page-select" onchange="this.form.submit()">
+                <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+                <option value="25" {% if per_page == 25 or not per_page %}selected{% endif %}>25</option>
+                <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+            </select>
+        </div>
     </div>
 
-    <!-- TABELA -->
+    <!-- TABLE -->
     <div class="table-container">
-        <table class="data-table">
+        <table class="table">
             <thead>
                 <tr>
                     <th>Número</th>
@@ -88,49 +136,37 @@
                     <th>Fornecedores</th>
                     <th>Data Criação</th>
                     <th>Status</th>
-                    <th width="180">Ações</th>
+                    <th style="width: 120px;">Ações</th>
                 </tr>
             </thead>
             <tbody>
                 {% for cotacao in cotacoes %}
                 <tr id="linha-{{ cotacao.id }}">
-                    <td class="col-numero">{{ cotacao.numero }}</td>
+                    <td style="font-weight: 600; color: var(--text-primary);">{{ cotacao.numero }}</td>
                     <td>{{ cotacao.titulo|truncatechars:35 }}</td>
-                    <td style="text-align: center;">{{ cotacao.itens.count }}</td>
-                    <td style="text-align: center;">{{ cotacao.fornecedores.count }}</td>
-                    <td>{{ cotacao.data_criacao|date:"d/m/Y" }}</td>
+                    <td style="text-align: center; color: var(--text-secondary);">{{ cotacao.itens.count|default:"0" }}</td>
+                    <td style="text-align: center; color: var(--text-secondary);">{{ cotacao.fornecedores.count|default:"0" }}</td>
+                    <td style="font-size: 12px; color: var(--text-tertiary);">{{ cotacao.data_criacao|date:"d/m/Y" }}</td>
                     <td>
-                        <span class="status-pill status-pill--{{ cotacao.status|lower }}">
-                            {{ cotacao.get_status_display }}
+                        <span class="badge {% if cotacao.status == 'concluida' %}badge-success{% elif cotacao.status == 'em_analise' %}badge-info{% elif cotacao.status == 'cancelada' %}badge-danger{% else %}badge-warning{% endif %}">
+                            {% if cotacao.status == 'rascunho' %}Rascunho
+                            {% elif cotacao.status == 'em_analise' %}Em Análise
+                            {% elif cotacao.status == 'concluida' %}Concluída
+                            {% elif cotacao.status == 'cancelada' %}Cancelada
+                            {% else %}{{ cotacao.get_status_display }}{% endif %}
                         </span>
                     </td>
                     <td>
-                        <div class="acoes">
-                            <button type="button" class="btn-acao btn-acao--visualizar" title="Visualizar"
-                                    onclick="visualizarCotacao({{ cotacao.id }})">
-                                👁️
-                            </button>
-                            {% if cotacao.status == 'rascunho' %}
-                            <button type="button" class="btn-acao btn-acao--editar" title="Editar"
-                                    onclick="editarCotacao({{ cotacao.id }})">
-                                ✏️
-                            </button>
-                            <button type="button" class="btn-acao btn-acao--enviar" title="Enviar para Análise"
-                                    onclick="enviarAnalise({{ cotacao.id }})">
-                                📤
-                            </button>
-                            {% endif %}
+                        <div style="display: flex; gap: 8px;">
+                            <a href="{% url 'ERP_ServicesBI:cotacao_add' %}" class="btn-acao btn-acao--editar" title="Editar">✏️</a>
                             {% if cotacao.status == 'concluida' %}
-                            <button type="button" class="btn-acao btn-acao--visualizar" title="Gerar Pedidos"
-                                    onclick="gerarPedidos({{ cotacao.id }})">
-                                📄
-                            </button>
+                                <a href="javascript:void(0)" onclick="gerarPedidos({{ cotacao.id }})" class="btn-acao btn-acao--visualizar" title="Gerar Pedidos">📄</a>
                             {% endif %}
                             {% if cotacao.status in 'rascunho,em_analise' %}
-                            <button type="button" class="btn-acao btn-acao--excluir" title="Cancelar"
-                                    onclick="abrirModalCancelamento({{ cotacao.id }}, '{{ cotacao.numero }}', '{{ cotacao.titulo|escapejs }}')">
-                                🗑️
-                            </button>
+                                <button type="button" class="btn-acao btn-acao--excluir" title="Cancelar"
+                                        onclick="abrirModalCancelamento({{ cotacao.id }}, '{{ cotacao.numero }}', '{{ cotacao.titulo|escapejs }}')">
+                                    🗑️
+                                </button>
                             {% endif %}
                         </div>
                     </td>
@@ -143,9 +179,9 @@
                             <div class="empty-state__title">Nenhuma cotação encontrada</div>
                             <p>{% if search %}Tente outro termo de busca{% else %}Crie sua primeira cotação{% endif %}</p>
                             {% if not search %}
-                            <button type="button" class="erp-btn erp-btn--primary" style="margin-top: 16px;" onclick="novaCotacao()">
-                                ➕ Criar cotação
-                            </button>
+                                <a href="{% url 'ERP_ServicesBI:cotacao_add' %}" class="btn btn-primary" style="margin-top: 16px;">
+                                    ➕ Criar cotação
+                                </a>
                             {% endif %}
                         </div>
                     </td>
@@ -154,33 +190,29 @@
             </tbody>
         </table>
 
+        <!-- PAGINATION -->
         {% if cotacoes.has_other_pages %}
         <div class="pagination-bar">
-            <div class="pagination-info">
-                Mostrando {{ cotacoes.start_index }}-{{ cotacoes.end_index }} de {{ cotacoes.paginator.count }}
-            </div>
+            <div class="pagination-info">Mostrando {{ cotacoes.start_index }}-{{ cotacoes.end_index }} de {{ cotacoes.paginator.count }}</div>
             <div class="pagination-btns">
                 {% if cotacoes.has_previous %}
-                    <a href="?page={{ cotacoes.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}" 
-                       class="pagination-btn">←</a>
+                    <a href="?page={{ cotacoes.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="pagination-btn">←</a>
                 {% else %}
                     <button class="pagination-btn" disabled>←</button>
                 {% endif %}
-
+                
                 {% for num in cotacoes.paginator.page_range %}
                     {% if num >= cotacoes.number|add:'-2' and num <= cotacoes.number|add:'2' %}
                         {% if num == cotacoes.number %}
                             <span class="pagination-btn active">{{ num }}</span>
                         {% else %}
-                            <a href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}" 
-                               class="pagination-btn">{{ num }}</a>
+                            <a href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="pagination-btn">{{ num }}</a>
                         {% endif %}
                     {% endif %}
                 {% endfor %}
-
+                
                 {% if cotacoes.has_next %}
-                    <a href="?page={{ cotacoes.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}" 
-                       class="pagination-btn">→</a>
+                    <a href="?page={{ cotacoes.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="pagination-btn">→</a>
                 {% else %}
                     <button class="pagination-btn" disabled>→</button>
                 {% endif %}
@@ -188,9 +220,10 @@
         </div>
         {% endif %}
     </div>
+
 </div>
 
-<!-- MODAL DE CANCELAMENTO - CSS INLINE (IGUAL AO DE CLIENTES) -->
+<!-- MODAL CANCELAMENTO -->
 <div id="modalCancelamento" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; padding: 20px;">
     <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; width: 100%; max-width: 420px; box-shadow: 0 20px 25px rgba(0, 0, 0, 0.3); overflow: hidden;">
         <div style="background: var(--danger-500); color: #ffffff; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;">
@@ -201,19 +234,19 @@
             <div style="width: 72px; height: 72px; background: rgba(239, 68, 68, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 36px;">🗑️</div>
             <div style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">Tem certeza que deseja cancelar?</div>
             <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Você está prestes a cancelar a cotação:</div>
-
+            
             <div style="background: var(--bg-tertiary); border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;">
                 <div id="modalCotacaoNumero" style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 3px;"></div>
-                <div id="modalCotacaoTitulo" style="font-size: 11px; color: var(--text-tertiary); font-family: monospace;"></div>
+                <div id="modalCotacaoTitulo" style="font-size: 11px; color: var(--text-tertiary);"></div>
             </div>
-
+            
             <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 12px; color: var(--danger-500);">
                 <span>🚨</span> <strong>Atenção:</strong> Esta ação não pode ser desfeita!
             </div>
         </div>
         <div style="display: flex; gap: 10px; padding: 16px 20px; border-top: 1px solid var(--border-color); justify-content: flex-end;">
-            <button type="button" onclick="fecharModalCancelamento()" class="erp-btn erp-btn--secondary" style="padding: 8px 16px;">Cancelar</button>
-            <button type="button" id="btnConfirmarCancelamento" onclick="executarCancelamento()" class="erp-btn erp-btn--danger" style="padding: 8px 16px; display: flex; align-items: center; gap: 6px;">🗑️ Sim, Cancelar</button>
+            <button type="button" onclick="fecharModalCancelamento()" class="btn btn-secondary" style="padding: 8px 16px;">Cancelar</button>
+            <button type="button" id="btnConfirmarCancelamento" onclick="executarCancelamento()" class="btn btn-danger" style="padding: 8px 16px; display: flex; align-items: center; gap: 6px;">🗑️ Sim, Cancelar</button>
         </div>
     </div>
 </div>
@@ -223,39 +256,6 @@
 {% block extra_js %}
 <script>
 let cotacaoIdCancelar = null;
-
-function novaCotacao() {
-    window.location.href = "{% url 'ERP_ServicesBI:cotacao_form' %}";
-}
-
-function editarCotacao(id) {
-    window.location.href = "{% url 'ERP_ServicesBI:cotacao_form' %}?id=" + id;
-}
-
-function visualizarCotacao(id) {
-    window.location.href = "{% url 'ERP_ServicesBI:cotacao_form' %}?id=" + id + "&modo=visualizar";
-}
-
-function enviarAnalise(id) {
-    if (!confirm('Deseja enviar esta cotação para análise?')) return;
-
-    fetch('/api/cotacao/' + id + '/enviar-analise/', {
-        method: 'POST',
-        headers: {'X-CSRFToken': getCookie('csrftoken')}
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.success) {
-            mostrarToast('Cotação enviada para análise!', 'success');
-            location.reload();
-        } else {
-            throw new Error(data.message);
-        }
-    })
-    .catch(err => {
-        mostrarToast('Erro: ' + err.message, 'danger');
-    });
-}
 
 function gerarPedidos(id) {
     window.location.href = "{% url 'ERP_ServicesBI:cotacao_gerar_pedidos' 0 %}".replace('0', id);
@@ -282,9 +282,8 @@ function executarCancelamento() {
     btn.disabled = true;
     btn.innerHTML = '⏳ Cancelando...';
 
-    fetch('/api/cotacao/' + cotacaoIdCancelar + '/cancelar/', {
-        method: 'POST',
-        headers: {'X-CSRFToken': getCookie('csrftoken')}
+    erp_fetch('/api/cotacao/' + cotacaoIdCancelar + '/cancelar/', {
+        method: 'POST'
     })
     .then(r => r.json())
     .then(data => {
@@ -297,19 +296,19 @@ function executarCancelamento() {
                 linha.style.transform = 'translateX(-30px)';
                 setTimeout(() => {
                     linha.remove();
-                    if (document.querySelectorAll('.data-table tbody tr').length === 0) {
+                    if (document.querySelectorAll('.table tbody tr').length === 0) {
                         location.reload();
                     }
                 }, 400);
             }
-            mostrarToast(data.message, 'success');
+            showToast(data.message, 'success');
         } else {
             throw new Error(data.message);
         }
     })
     .catch(err => {
         fecharModalCancelamento();
-        mostrarToast(err.message || 'Erro ao cancelar', 'danger');
+        showToast(err.message || 'Erro ao cancelar', 'danger');
     })
     .finally(() => {
         btn.disabled = false;
@@ -325,41 +324,5 @@ document.getElementById('modalCancelamento').addEventListener('click', function(
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') fecharModalCancelamento();
 });
-
-function mostrarToast(mensagem, tipo) {
-    const toast = document.createElement('div');
-    toast.className = 'erp-alert erp-alert--' + tipo;
-    toast.style.cssText = 'position: fixed; top: 90px; right: 20px; z-index: 9999; min-width: 300px; animation: slideIn 0.3s ease; box-shadow: var(--shadow-lg);';
-    toast.innerHTML = mensagem;
-    document.body.appendChild(toast);
-
-    setTimeout(() => {
-        toast.style.animation = 'slideOut 0.3s ease';
-        setTimeout(() => toast.remove(), 300);
-    }, 5000);
-}
-
-function getCookie(name) {
-    let v = null;
-    if (document.cookie) {
-        const c = document.cookie.split(';');
-        for (let i = 0; i < c.length; i++) {
-            const x = c[i].trim();
-            if (x.substring(0, name.length + 1) === (name + '=')) {
-                v = decodeURIComponent(x.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return v;
-}
-
-// Adicionar animações CSS
-const s = document.createElement('style');
-s.textContent = `
-    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-    @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
-`;
-document.head.appendChild(s);
 </script>
 {% endblock %}

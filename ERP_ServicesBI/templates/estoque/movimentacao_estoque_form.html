@@ -569,7 +569,7 @@ html[data-theme="dark"] .btn-select-action {
             <h1>{% if movimentacao %}Editar{% else %}Nova{% endif %} Movimentação</h1>
             <p>{% if movimentacao %}Altere os dados da movimentação{% else %}Preencha os dados para registrar uma nova movimentação{% endif %}</p>
         </div>
-        <a href="{% url 'ERP_ServicesBI:movimentacao_estoque_list' %}" class="btn-voltar">
+        <a href="{% url 'ERP_ServicesBI:movimentacao_estoque_manager' %}" class="btn-voltar">
             ← Voltar para lista
         </a>
     </div>
@@ -814,7 +814,7 @@ html[data-theme="dark"] .btn-select-action {
 
             <!-- Ações -->
             <div class="form-actions">
-                <a href="{% url 'ERP_ServicesBI:movimentacao_estoque_list' %}" class="btn-voltar">
+                <a href="{% url 'ERP_ServicesBI:movimentacao_estoque_manager' %}" class="btn-voltar">
                     ← Cancelar
                 </a>
                 <button type="submit" class="btn-salvar">

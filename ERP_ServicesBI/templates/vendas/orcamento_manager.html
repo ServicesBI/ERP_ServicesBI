@@ -688,7 +688,7 @@ html[data-theme="dark"] .data-table tbody tr:hover {
         <h1>VENDAS</h1>
         <p>Gerenciamento de orçamentos</p>
     </div>
-    <a href="{% url 'ERP_ServicesBI:orcamento_form' %}" class="erp-btn erp-btn--primary erp-btn--lg">
+    <a href="{% url 'ERP_ServicesBI:orcamento_add' %}" class="erp-btn erp-btn--primary erp-btn--lg">
         <span>➕</span> Novo Orçamento
     </a>
 </div>
@@ -856,7 +856,7 @@ html[data-theme="dark"] .data-table tbody tr:hover {
                         <div class="empty-state__title">Nenhum orçamento encontrado</div>
                         <p>{% if search %}Tente outro termo de busca{% else %}Cadastre seu primeiro orçamento{% endif %}</p>
                         {% if not search %}
-                        <a href="{% url 'ERP_ServicesBI:orcamento_form' %}" class="empty-state__link" style="margin-top: 16px; display: inline-block;">
+                        <a href="{% url 'ERP_ServicesBI:orcamento_add' %}" class="empty-state__link" style="margin-top: 16px; display: inline-block;">
                             ➕ Criar orçamento
                         </a>
                         {% endif %}

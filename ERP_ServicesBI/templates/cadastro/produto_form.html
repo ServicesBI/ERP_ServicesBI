@@ -18,7 +18,7 @@
             <h1>{% if produto %}Editar{% else %}Novo{% endif %} Produto</h1>
             <p>{% if produto %}Altere os dados do produto cadastrado{% else %}Preencha os dados para cadastrar um novo produto{% endif %}</p>
         </div>
-        <a href="{% url 'ERP_ServicesBI:produto_list' %}" class="btn-voltar">
+        <a href="{% url 'ERP_ServicesBI:produto_manager' %}" class="btn-voltar">
             ← Voltar para lista
         </a>
     </div>
@@ -195,7 +195,7 @@
             
             <!-- Ações -->
             <div class="form-actions">
-                <a href="{% url 'ERP_ServicesBI:produto_list' %}" class="btn-voltar">
+                <a href="{% url 'ERP_ServicesBI:produto_manager' %}" class="btn-voltar">
                     ← Cancelar
                 </a>
                 <button type="submit" class="btn-salvar">

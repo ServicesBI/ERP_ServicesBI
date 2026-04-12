@@ -598,7 +598,7 @@ html[data-theme="dark"] .data-table tbody tr:hover {
         <h1>VENDAS</h1>
         <p>Gerenciamento de notas fiscais de saída</p>
     </div>
-    <a href="{% url 'ERP_ServicesBI:nota_fiscal_saida_form' %}" class="erp-btn erp-btn--primary erp-btn--lg">
+    <a href="{% url 'ERP_ServicesBI:nota_fiscal_saida_add' %}" class="erp-btn erp-btn--primary erp-btn--lg">
         <span>➕</span> Nova NF
     </a>
 </div>
@@ -739,7 +739,7 @@ html[data-theme="dark"] .data-table tbody tr:hover {
                         <div class="empty-state__title">Nenhuma nota fiscal encontrada</div>
                         <p>{% if search %}Tente outro termo de busca{% else %}Cadastre sua primeira NF{% endif %}</p>
                         {% if not search %}
-                        <a href="{% url 'ERP_ServicesBI:nota_fiscal_saida_form' %}" class="empty-state__link" style="margin-top: 16px; display: inline-block;">
+                        <a href="{% url 'ERP_ServicesBI:nota_fiscal_saida_add' %}" class="empty-state__link" style="margin-top: 16px; display: inline-block;">
                             ➕ Criar nota fiscal
                         </a>
                         {% endif %}

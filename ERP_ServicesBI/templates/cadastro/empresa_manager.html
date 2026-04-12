@@ -7,7 +7,7 @@
 
 {% block content %}
 <div class="page-container">
-    
+
     <!-- PAGE HEADER -->
     <div class="page-header">
         <div class="page-header__left">
@@ -101,13 +101,13 @@
                 <input type="text" name="search" placeholder="Buscar por nome, CNPJ..." value="{{ search|default:'' }}">
             </form>
         </div>
-        
+
         {% if search %}
-            <a href="{% url 'ERP_ServicesBI:empresa_list' %}" class="btn btn-secondary">
+            <a href="{% url 'ERP_ServicesBI:empresa_manager' %}" class="btn btn-secondary">
                 Limpar
             </a>
         {% endif %}
-        
+
         <div class="toolbar-spacer">
             <span class="per-page-label">Itens:</span>
             <select name="per_page" class="per-page-select" onchange="this.form.submit()">
@@ -147,7 +147,7 @@
                         <div style="display: flex; gap: 8px;">
                             <a href="{% url 'ERP_ServicesBI:empresa_edit' empresa.id %}" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 6px; background: transparent; color: var(--text-tertiary); cursor: pointer; transition: all 0.2s;" title="Editar">✏️</a>
                             <button type="button" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 6px; background: transparent; color: var(--text-tertiary); cursor: pointer; transition: all 0.2s;" title="Excluir"
-                                    onclick="abrirModalExclusao({{ empresa.id }}, '{{ empresa.razao_social|escapejs }}', '{{ empresa.cnpj|default:''|escapejs }}')">
+                                    onclick="abrirModalExclusao({{ empresa.id }}, '{{ empresa.razao_social|escapejs }}', '{{ empresa.cnpj|format_cpf_cnpj|escapejs }}')">
                                 🗑️
                             </button>
                         </div>
@@ -180,7 +180,7 @@
                 {% else %}
                     <button style="min-width: 32px; height: 32px; padding: 0 8px; border: 1px solid var(--border-color); border-radius: 6px; background: transparent; color: var(--text-secondary); font-size: 12px; cursor: not-allowed; display: flex; align-items: center; justify-content: center; opacity: 0.3;">←</button>
                 {% endif %}
-                
+
                 {% for num in empresas.paginator.page_range %}
                     {% if num >= empresas.number|add:'-2' and num <= empresas.number|add:'2' %}
                         {% if num == empresas.number %}
@@ -190,7 +190,7 @@
                         {% endif %}
                     {% endif %}
                 {% endfor %}
-                
+
                 {% if empresas.has_next %}
                     <a href="?page={{ empresas.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if per_page %}&per_page={{ per_page }}{% endif %}" style="min-width: 32px; height: 32px; padding: 0 8px; border: 1px solid var(--border-color); border-radius: 6px; background: transparent; color: var(--text-secondary); font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; text-decoration: none;">→</a>
                 {% else %}
@@ -203,30 +203,30 @@
 
 </div>
 
-<!-- MODAL EXCLUSÃO -->
-<div id="modalExclusao" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; padding: 20px;">
-    <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; width: 100%; max-width: 420px; box-shadow: 0 20px 25px rgba(0, 0, 0, 0.3); overflow: hidden;">
-        <div style="background: var(--danger-500); color: #ffffff; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;">
-            <div style="font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px;">⚠️ Confirmar Exclusão</div>
-            <button type="button" onclick="fecharModalExclusao()" style="background: none; border: none; color: #ffffff; font-size: 24px; cursor: pointer; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: background 0.2s;">×</button>
+<!-- ✅ MODAL EXCLUSÃO - PADRONIZADO IGUAL AO CLIENTE -->
+<div id="modalExclusao" class="modal-overlay">
+    <div class="modal-form">
+        <div class="modal-form__header" style="background: #fb6882; color: #ffffff;">
+            <div class="modal-form__title" style="color: #ffffff;">⚠️ Confirmar Exclusão</div>
+            <button type="button" class="modal-form__close" onclick="fecharModalExclusao()" style="color: #ffffff;">×</button>
         </div>
-        <div style="padding: 28px 20px; text-align: center;">
+        <div class="modal-form__body" style="text-align: center;">
             <div style="width: 72px; height: 72px; background: rgba(239, 68, 68, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 36px;">🗑️</div>
             <div style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">Tem certeza que deseja excluir?</div>
             <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Você está prestes a excluir a empresa:</div>
-            
+
             <div style="background: var(--bg-tertiary); border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;">
                 <div id="modalEmpresaNome" style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 3px;"></div>
                 <div id="modalEmpresaCnpj" style="font-size: 11px; color: var(--text-tertiary); font-family: monospace;"></div>
             </div>
-            
-            <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 12px; color: var(--danger-500);">
+
+            <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 12px; color: #f44336;">
                 <span>🚨</span> <strong>Atenção:</strong> Esta ação não pode ser desfeita!
             </div>
         </div>
-        <div style="display: flex; gap: 10px; padding: 16px 20px; border-top: 1px solid var(--border-color); justify-content: flex-end;">
+        <div class="modal-form__footer">
             <button type="button" onclick="fecharModalExclusao()" class="btn btn-secondary" style="padding: 8px 16px;">Cancelar</button>
-            <button type="button" id="btnConfirmarExclusao" onclick="executarExclusao()" class="btn btn-danger" style="padding: 8px 16px; display: flex; align-items: center; gap: 6px;">🗑️ Sim, Excluir</button>
+            <button type="button" id="btnConfirmarExclusao" onclick="executarExclusao()" class="btn btn-danger" style="padding: 8px 16px; display: flex; align-items: center; gap: 6px; background: #fb6882;">🗑️ Sim, Excluir</button>
         </div>
     </div>
 </div>
@@ -241,25 +241,26 @@ const modalExclusao = document.getElementById('modalExclusao');
 function abrirModalExclusao(id, nome, cnpj) {
     empresaIdExcluir = id;
     document.getElementById('modalEmpresaNome').textContent = nome;
+    // ✅ FORMATA CNPJ NO MODAL
     document.getElementById('modalEmpresaCnpj').textContent = cnpj || '';
-    modalExclusao.style.display = 'flex';
+    modalExclusao.classList.add('active');
     document.body.style.overflow = 'hidden';
 }
 
 function fecharModalExclusao() {
-    modalExclusao.style.display = 'none';
+    modalExclusao.classList.remove('active');
     document.body.style.overflow = '';
     empresaIdExcluir = null;
 }
 
 function executarExclusao() {
     if (!empresaIdExcluir) return;
-    
+
     const btn = document.getElementById('btnConfirmarExclusao');
     btn.disabled = true;
     btn.innerHTML = '⏳ Excluindo...';
-    
-    fetch(`/cadastro/empresas/excluir/${empresaIdExcluir}/`, {
+
+    fetch(`/empresas/${empresaIdExcluir}/excluir/`, {
         method: 'POST',
         headers: {
             'X-CSRFToken': getCookie('csrftoken'),
@@ -270,19 +271,11 @@ function executarExclusao() {
     .then(data => {
         if (data.success) {
             fecharModalExclusao();
-            const linha = document.getElementById(`linha-${empresaIdExcluir}`);
-            if (linha) {
-                linha.style.transition = 'all 0.4s ease';
-                linha.style.opacity = '0';
-                linha.style.transform = 'translateX(-30px)';
-                setTimeout(() => {
-                    linha.remove();
-                    if (document.querySelectorAll('.table tbody tr').length === 0) {
-                        location.reload();
-                    }
-                }, 400);
-            }
             mostrarToast(data.message, 'success');
+            // ✅ ATUALIZAR PÁGINA AUTOMATICAMENTE APÓS 1.5 SEGUNDOS
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
         } else {
             throw new Error(data.message);
         }
@@ -302,7 +295,7 @@ modalExclusao.addEventListener('click', function(e) {
 });
 
 document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && modalExclusao.style.display === 'flex') {
+    if (e.key === 'Escape' && modalExclusao.classList.contains('active')) {
         fecharModalExclusao();
     }
 });
@@ -320,7 +313,7 @@ function mostrarToast(mensagem, tipo) {
     `;
     toast.innerHTML = mensagem;
     document.body.appendChild(toast);
-    
+
     setTimeout(() => {
         toast.remove();
     }, 5000);

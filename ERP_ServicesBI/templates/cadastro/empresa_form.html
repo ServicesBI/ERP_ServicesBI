@@ -25,11 +25,11 @@
             <h1>{% if empresa %}Editar{% else %}Nova{% endif %} Empresa</h1>
             <p>{% if empresa %}Altere os dados da empresa cadastrada{% else %}Preencha os dados para cadastrar uma nova empresa{% endif %}</p>
         </div>
-        <a href="{% url 'ERP_ServicesBI:empresa_list' %}" class="btn-voltar">
+        <a href="{% url 'ERP_ServicesBI:empresa_manager' %}" class="btn-voltar">
             ← Voltar para lista
         </a>
     </div>
-    
+
     {% if messages %}
         {% for message in messages %}
             <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
@@ -37,11 +37,11 @@
             </div>
         {% endfor %}
     {% endif %}
-    
+
     <div class="form-card">
         <form method="post" id="empresaForm" novalidate>
             {% csrf_token %}
-            
+
             <!-- Checkbox Ativo -->
             <div class="form-row" style="margin-bottom: 28px;">
                 <div class="form-group full-width">
@@ -53,11 +53,11 @@
                     </label>
                 </div>
             </div>
-            
+
             <!-- Seção: Dados da Empresa -->
             <div class="form-section">
                 <h2 class="form-section__title">Dados da Empresa</h2>
-                
+
                 <div class="form-row">
                     <div class="form-group full-width {% if form.razao_social.errors %}has-error{% endif %}">
                         <label class="form-label" for="id_razao_social">
@@ -72,7 +72,7 @@
                         {% endif %}
                     </div>
                 </div>
-                
+
                 <div class="form-row">
                     <div class="form-group {% if form.nome_fantasia.errors %}has-error{% endif %}">
                         <label class="form-label" for="id_nome_fantasia">
@@ -86,7 +86,7 @@
                             <span class="form-error">⚠️ {{ form.nome_fantasia.errors.0 }}</span>
                         {% endif %}
                     </div>
-                    
+
                     <div class="form-group {% if form.cnpj.errors %}has-error{% endif %}">
                         <label class="form-label" for="id_cnpj">
                             CNPJ <span class="required">*</span>
@@ -100,7 +100,7 @@
                         {% endif %}
                     </div>
                 </div>
-                
+
                 <div class="form-row">
                     <div class="form-group {% if form.inscricao_estadual.errors %}has-error{% endif %}">
                         <label class="form-label" for="id_inscricao_estadual">Inscrição Estadual</label>
@@ -112,7 +112,7 @@
                             <span class="form-error">⚠️ {{ form.inscricao_estadual.errors.0 }}</span>
                         {% endif %}
                     </div>
-                    
+
                     <div class="form-group {% if form.inscricao_municipal.errors %}has-error{% endif %}">
                         <label class="form-label" for="id_inscricao_municipal">Inscrição Municipal</label>
                         <input type="text" name="inscricao_municipal" id="id_inscricao_municipal" 
@@ -125,11 +125,11 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Seção: Contato -->
             <div class="form-section">
                 <h2 class="form-section__title">Contato</h2>
-                
+
                 <div class="form-row">
                     <div class="form-group {% if form.telefone.errors %}has-error{% endif %}">
                         <label class="form-label" for="id_telefone">Telefone</label>
@@ -141,7 +141,7 @@
                             <span class="form-error">⚠️ {{ form.telefone.errors.0 }}</span>
                         {% endif %}
                     </div>
-                    
+
                     <div class="form-group {% if form.email.errors %}has-error{% endif %}">
                         <label class="form-label" for="id_email">E-mail</label>
                         <input type="email" name="email" id="id_email" 
@@ -154,11 +154,11 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Seção: Endereço -->
             <div class="form-section">
                 <h2 class="form-section__title">Endereço</h2>
-                
+
                 <div class="form-row">
                     <div class="form-group {% if form.cep.errors %}has-error{% endif %}">
                         <label class="form-label" for="id_cep">CEP</label>
@@ -171,7 +171,7 @@
                         {% endif %}
                     </div>
                 </div>
-                
+
                 <div class="form-row">
                     <div class="form-group full-width {% if form.endereco.errors %}has-error{% endif %}">
                         <label class="form-label" for="id_endereco">Endereço</label>
@@ -184,7 +184,7 @@
                         {% endif %}
                     </div>
                 </div>
-                
+
                 <div class="form-row">
                     <div class="form-group {% if form.numero.errors %}has-error{% endif %}">
                         <label class="form-label" for="id_numero">Número</label>
@@ -196,7 +196,7 @@
                             <span class="form-error">⚠️ {{ form.numero.errors.0 }}</span>
                         {% endif %}
                     </div>
-                    
+
                     <div class="form-group {% if form.bairro.errors %}has-error{% endif %}">
                         <label class="form-label" for="id_bairro">Bairro</label>
                         <input type="text" name="bairro" id="id_bairro" 
@@ -208,7 +208,7 @@
                         {% endif %}
                     </div>
                 </div>
-                
+
                 <div class="form-row">
                     <div class="form-group {% if form.cidade.errors %}has-error{% endif %}">
                         <label class="form-label" for="id_cidade">Cidade</label>
@@ -220,7 +220,7 @@
                             <span class="form-error">⚠️ {{ form.cidade.errors.0 }}</span>
                         {% endif %}
                     </div>
-                    
+
                     <div class="form-group {% if form.estado.errors %}has-error{% endif %}">
                         <label class="form-label" for="id_estado">Estado</label>
                         <select name="estado" id="id_estado" class="form-select">
@@ -259,10 +259,10 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Ações -->
             <div class="form-actions">
-                <a href="{% url 'ERP_ServicesBI:empresa_list' %}" class="btn-voltar">
+                <a href="{% url 'ERP_ServicesBI:empresa_manager' %}" class="btn-voltar">
                     ← Cancelar
                 </a>
                 <button type="submit" class="btn-salvar">
@@ -284,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         if (cnpjInput.value) mascaraCnpj(cnpjInput);
     }
-    
+
     const telefoneInput = document.getElementById('id_telefone');
     if (telefoneInput) {
         telefoneInput.addEventListener('input', function() {
@@ -292,7 +292,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         if (telefoneInput.value) mascaraTelefone(telefoneInput);
     }
-    
+
     const cepInput = document.getElementById('id_cep');
     if (cepInput) {
         cepInput.addEventListener('input', function() {
@@ -300,7 +300,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         if (cepInput.value) mascaraCep(cepInput);
     }
-    
+
     const form = document.getElementById('empresaForm');
     if (form) {
         form.addEventListener('submit', function(e) {

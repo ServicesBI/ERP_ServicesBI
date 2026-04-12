@@ -299,7 +299,7 @@ html[data-theme="dark"] .form-textarea:focus {
             <h1>{% if inventario %}Editar{% else %}Novo{% endif %} Inventário</h1>
             <p>{% if inventario %}Altere os dados do inventário{% else %}Preencha os dados para criar um novo inventário{% endif %}</p>
         </div>
-        <a href="{% url 'ERP_ServicesBI:inventario_list' %}" class="btn-voltar">
+        <a href="{% url 'ERP_ServicesBI:inventario_manager' %}" class="btn-voltar">
             ← Voltar para lista
         </a>
     </div>
@@ -390,7 +390,7 @@ html[data-theme="dark"] .form-textarea:focus {
             {% endif %}
 
             <div class="form-actions">
-                <a href="{% url 'ERP_ServicesBI:inventario_list' %}" class="btn-voltar">
+                <a href="{% url 'ERP_ServicesBI:inventario_manager' %}" class="btn-voltar">
                     Cancelar
                 </a>
                 <button type="submit" class="btn-salvar">

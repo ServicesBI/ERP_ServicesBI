@@ -103,7 +103,7 @@
         </div>
         
         {% if search %}
-            <a href="{% url 'ERP_ServicesBI:fornecedor_list' %}" class="btn btn-secondary">
+            <a href="{% url 'ERP_ServicesBI:fornecedor_manager' %}" class="btn btn-secondary">
                 Limpar
             </a>
         {% endif %}
@@ -147,7 +147,7 @@
                         <div style="display: flex; gap: 8px;">
                             <a href="{% url 'ERP_ServicesBI:fornecedor_edit' fornecedor.id %}" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 6px; background: transparent; color: var(--text-tertiary); cursor: pointer; transition: all 0.2s;" title="Editar">✏️</a>
                             <button type="button" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 6px; background: transparent; color: var(--text-tertiary); cursor: pointer; transition: all 0.2s;" title="Excluir"
-                                    onclick="abrirModalExclusao({{ fornecedor.id }}, '{{ fornecedor.nome_razao_social|escapejs }}', '{{ fornecedor.cpf_cnpj|default:''|escapejs }}')">
+                                    onclick="abrirModalExclusao({{ fornecedor.id }}, '{{ fornecedor.nome_razao_social|escapejs }}', '{{ fornecedor.cpf_cnpj|format_cpf_cnpj|escapejs }}')">
                                 🗑️
                             </button>
                         </div>
@@ -242,12 +242,12 @@ function abrirModalExclusao(id, nome, documento) {
     fornecedorIdExcluir = id;
     document.getElementById('modalFornecedorNome').textContent = nome;
     document.getElementById('modalFornecedorDocumento').textContent = documento || '';
-    modalExclusao.style.display = 'flex';
+    modalExclusao.classList.add('active');
     document.body.style.overflow = 'hidden';
 }
 
 function fecharModalExclusao() {
-    modalExclusao.style.display = 'none';
+    modalExclusao.classList.remove('active');
     document.body.style.overflow = '';
     fornecedorIdExcluir = null;
 }
@@ -259,7 +259,7 @@ function executarExclusao() {
     btn.disabled = true;
     btn.innerHTML = '⏳ Excluindo...';
     
-    fetch(`/cadastro/fornecedores/excluir/${fornecedorIdExcluir}/`, {
+    fetch(`/fornecedores/${fornecedorIdExcluir}/excluir/`, {
         method: 'POST',
         headers: {
             'X-CSRFToken': getCookie('csrftoken'),
@@ -270,19 +270,11 @@ function executarExclusao() {
     .then(data => {
         if (data.success) {
             fecharModalExclusao();
-            const linha = document.getElementById(`linha-${fornecedorIdExcluir}`);
-            if (linha) {
-                linha.style.transition = 'all 0.4s ease';
-                linha.style.opacity = '0';
-                linha.style.transform = 'translateX(-30px)';
-                setTimeout(() => {
-                    linha.remove();
-                    if (document.querySelectorAll('.table tbody tr').length === 0) {
-                        location.reload();
-                    }
-                }, 400);
-            }
             mostrarToast(data.message, 'success');
+            // ✅ RELOAD AUTOMÁTICO APÓS 1.5s
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
         } else {
             throw new Error(data.message);
         }
@@ -302,7 +294,7 @@ modalExclusao.addEventListener('click', function(e) {
 });
 
 document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && modalExclusao.style.display === 'flex') {
+    if (e.key === 'Escape' && modalExclusao.classList.contains('active')) {
         fecharModalExclusao();
     }
 });

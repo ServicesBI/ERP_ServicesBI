@@ -1,241 +1,317 @@
 /**
- * ERP ServicesBI - Core JavaScript (CORRIGIDO)
- * Funções: Sidebar, Submenus, Dark/Light Theme, Alerts
- * 
- * SINCRONIZADO COM erp-theme.css que usa: body.light-mode
+ * ERP-CORE.JS - VERSÃO LIMPA E OTIMIZADA
+ * Sidebar responsivo, Tema, Submenu, Link Ativo
  */
 
-/* ============================================================
-   TEMA DARK / LIGHT - CORRIGIDO
-   ============================================================ */
+document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+    initSidebar();
+    initSubmenu();
+    initActiveLinks();
+    attachEventListeners();
+});
 
-function toggleTheme() {
-    var body = document.body;
-    var isLightMode = body.classList.contains('light-mode');
-    
-    if (isLightMode) {
-        // Estava em light, voltar para dark
-        body.classList.remove('light-mode');
-        localStorage.setItem('erp-theme', 'dark');
-        updateThemeIcon('dark');
-    } else {
-        // Estava em dark, ir para light
-        body.classList.add('light-mode');
-        localStorage.setItem('erp-theme', 'light');
-        updateThemeIcon('light');
-    }
-    
-    // Dispara evento para que gráficos possam se reinicializar
-    window.dispatchEvent(new CustomEvent('themeChanged', { 
-        detail: { theme: isLightMode ? 'dark' : 'light' } 
-    }));
-}
-
-function updateThemeIcon(theme) {
-    var icon = document.getElementById('themeIcon');
-    if (icon) {
-        icon.textContent = (theme === 'dark') ? '🌙' : '☀️';
-    }
-}
+// ==========================================
+//  TEMA (DARK/LIGHT MODE)
+// ==========================================
 
 function initTheme() {
-    var saved = localStorage.getItem('erp-theme');
+    const savedTheme = localStorage.getItem('erp-theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     
-    // Se não tiver salvo, verifica preferência do SO
-    if (!saved) {
-        saved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
+    let isDark = savedTheme === 'dark' || (savedTheme === null && prefersDark);
+    applyTheme(isDark);
+}
+
+function applyTheme(isDark) {
+    const body = document.body;
+    const html = document.documentElement;
+    const themeIcon = document.getElementById('theme-icon');
+    const themeText = document.getElementById('theme-text');
     
-    var body = document.body;
-    
-    if (saved === 'light') {
-        body.classList.add('light-mode');
-        updateThemeIcon('light');
-    } else {
+    if (isDark) {
         body.classList.remove('light-mode');
-        updateThemeIcon('dark');
-    }
-}
-
-/* ============================================================
-   SIDEBAR - TOGGLE SUBMENU
-   ============================================================ */
-
-function toggleSubmenu(element) {
-    if (event) {
-        event.preventDefault();
-    }
-    
-    var item = element.closest('.erp-sidebar__item');
-    
-    if (item.classList.contains('open')) {
-        item.classList.remove('open');
+        if (themeIcon) themeIcon.textContent = '🌙';
+        if (themeText) themeText.textContent = 'Dark';
     } else {
-        item.classList.add('open');
+        body.classList.add('light-mode');
+        if (themeIcon) themeIcon.textContent = '☀️';
+        if (themeText) themeText.textContent = 'Light';
     }
     
-    saveSidebarState();
+    localStorage.setItem('erp-theme', isDark ? 'dark' : 'light');
+    html.setAttribute('data-theme', isDark ? 'dark' : 'light');
 }
 
-function saveSidebarState() {
-    var openMenus = [];
-    var items = document.querySelectorAll('.erp-sidebar__item');
+function toggleTheme() {
+    const isDarkMode = document.body.classList.contains('light-mode') === false;
+    applyTheme(!isDarkMode);
+}
+
+// ==========================================
+//  SIDEBAR RESPONSIVO
+// ==========================================
+
+function initSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.querySelector('.toggle-sidebar');
     
-    items.forEach(function(item, index) {
-        if (item.classList.contains('open')) {
-            openMenus.push(index);
+    if (!sidebar) return;
+    
+    // Handler do botao hamburger
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleSidebar();
+        });
+    }
+    
+    // Fechar ao clicar fora (mobile)
+    document.addEventListener('click', (e) => {
+        const isClickInsideSidebar = sidebar.contains(e.target);
+        const isClickOnToggle = toggleBtn && toggleBtn.contains(e.target);
+        
+        if (!isClickInsideSidebar && !isClickOnToggle && isMobileView()) {
+            if (!sidebar.classList.contains('collapsed')) {
+                closeSidebar();
+            }
         }
     });
     
-    localStorage.setItem('sidebarOpenMenus', JSON.stringify(openMenus));
-}
-
-function restoreSidebarState() {
-    var saved = localStorage.getItem('sidebarOpenMenus');
-    if (saved) {
-        try {
-            var openMenus = JSON.parse(saved);
-            var allItems = document.querySelectorAll('.erp-sidebar__item');
-            
-            openMenus.forEach(function(index) {
-                if (allItems[index]) {
-                    allItems[index].classList.add('open');
-                }
-            });
-        } catch (e) {
-            console.error('Erro ao restaurar sidebar:', e);
+    // Fechar ao clicar em link (mobile)
+    const sidebarLinks = sidebar.querySelectorAll('a[href]');
+    sidebarLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            if (isMobileView()) {
+                closeSidebar();
+            }
+        });
+    });
+    
+    // Ajustar ao redimensionar
+    window.addEventListener('resize', () => {
+        if (!isMobileView()) {
+            openSidebar();
         }
-    }
+    });
 }
-
-/* ============================================================
-   SIDEBAR MOBILE - TOGGLE COM OVERLAY
-   ============================================================ */
 
 function toggleSidebar() {
-    var sidebar = document.getElementById('sidebar');
-    var overlay = document.getElementById('sidebarOverlay');
+    const sidebar = document.getElementById('sidebar');
+    const main = document.getElementById('main');
     
-    if (sidebar) {
-        sidebar.classList.toggle('open');
-    }
+    if (!sidebar) return;
     
-    if (overlay) {
-        overlay.classList.toggle('open');
-    }
+    sidebar.classList.toggle('collapsed');
+    if (main) main.classList.toggle('sidebar-collapsed');
 }
 
-/* ============================================================
-   FECHAR SIDEBAR AO CLICAR EM LINK (MOBILE)
-   ============================================================ */
+function openSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const main = document.getElementById('main');
+    
+    if (!sidebar) return;
+    
+    sidebar.classList.remove('collapsed');
+    if (main) main.classList.remove('sidebar-collapsed');
+}
 
-function closeSidebarOnLinkClick() {
-    if (window.innerWidth < 768) {
-        var links = document.querySelectorAll('.erp-sidebar__submenu-link, .erp-sidebar__link');
+function closeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const main = document.getElementById('main');
+    
+    if (!sidebar) return;
+    
+    sidebar.classList.add('collapsed');
+    if (main) main.classList.add('sidebar-collapsed');
+}
+
+function isMobileView() {
+    return window.innerWidth <= 768;
+}
+
+// ==========================================
+//  SUBMENU EXPANSIVEL
+// ==========================================
+
+function initSubmenu() {
+    const sidebar = document.getElementById('sidebar');
+    if (!sidebar) return;
+    
+    const hasSubmenuItems = sidebar.querySelectorAll('.sidebar-item.has-submenu');
+    
+    hasSubmenuItems.forEach(item => {
+        const link = item.querySelector('.sidebar-link');
         
-        links.forEach(function(link) {
-            link.addEventListener('click', function() {
-                var sidebar = document.getElementById('sidebar');
-                var overlay = document.getElementById('sidebarOverlay');
-                
-                if (sidebar) {
-                    sidebar.classList.remove('open');
-                }
-                if (overlay) {
-                    overlay.classList.remove('open');
-                }
-            });
+        if (!link) return;
+        
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            toggleSubmenu(item);
         });
-    }
-}
-
-/* ============================================================
-   ALERTS - FECHAR AUTOMATICAMENTE
-   ============================================================ */
-
-function initAlerts() {
-    var alerts = document.querySelectorAll('.erp-alert, .alert');
-    
-    alerts.forEach(function(alert) {
-        // Se não tiver classe 'alert-persistent', fechar automaticamente
-        if (!alert.classList.contains('alert-persistent')) {
-            setTimeout(function() {
-                alert.style.opacity = '0';
-                alert.style.transition = 'opacity 0.5s ease';
-                
-                setTimeout(function() {
-                    alert.remove();
-                }, 500);
-            }, 5000); // 5 segundos
-        }
     });
 }
 
-/* ============================================================
-   CONFIRMAÇÃO DE EXCLUSÃO
-   ============================================================ */
-
-function initDeleteConfirmations() {
-    var deleteButtons = document.querySelectorAll('[data-confirm]');
+function toggleSubmenu(item) {
+    const sidebar = document.getElementById('sidebar');
+    if (!sidebar) return;
     
-    deleteButtons.forEach(function(button) {
-        button.addEventListener('click', function(e) {
-            var message = this.dataset.confirm || 'Tem certeza que deseja excluir?';
+    const allSubmenuItems = sidebar.querySelectorAll('.sidebar-item.has-submenu');
+    
+    allSubmenuItems.forEach(otherItem => {
+        if (otherItem !== item) {
+            otherItem.classList.remove('open');
+        }
+    });
+    
+    item.classList.toggle('open');
+}
+
+// ==========================================
+//  LINK ATIVO
+// ==========================================
+
+function initActiveLinks() {
+    const currentPath = window.location.pathname;
+    const sidebar = document.getElementById('sidebar');
+    
+    if (!sidebar) return;
+    
+    const allLinks = sidebar.querySelectorAll('a[href]');
+    
+    allLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        
+        if (!href) return;
+        
+        const linkPath = href.replace(/\/$/, '');
+        const cleanCurrentPath = currentPath.replace(/\/$/, '');
+        
+        if (cleanCurrentPath === linkPath || cleanCurrentPath.includes(linkPath)) {
+            link.classList.add('active');
             
-            if (!confirm(message)) {
-                e.preventDefault();
-                e.stopPropagation();
+            const parentSubmenu = link.closest('.sidebar-item.has-submenu');
+            if (parentSubmenu) {
+                parentSubmenu.classList.add('open');
             }
-        });
+        } else {
+            link.classList.remove('active');
+        }
     });
 }
 
-/* ============================================================
-   AUTO-FECHAR SIDEBAR EM RESIZE
-   ============================================================ */
+// ==========================================
+//  EVENT LISTENERS
+// ==========================================
 
-function initResponsiveSidebar() {
-    window.addEventListener('resize', function() {
-        var sidebar = document.getElementById('sidebar');
-        var overlay = document.getElementById('sidebarOverlay');
-        
-        if (window.innerWidth >= 768) {
-            // Desktop: remover classes de aberto
-            if (sidebar) {
-                sidebar.classList.remove('open');
-            }
-            if (overlay) {
-                overlay.classList.remove('open');
+function attachEventListeners() {
+    // Theme toggle
+    const themeBtn = document.querySelector('.theme-toggle');
+    if (themeBtn) {
+        themeBtn.addEventListener('click', toggleTheme);
+    }
+    
+    // Detectar mudanca de tema do sistema
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        if (!localStorage.getItem('erp-theme')) {
+            applyTheme(e.matches);
+        }
+    });
+    
+    // Fechar sidebar com ESC (mobile)
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isMobileView()) {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar && !sidebar.classList.contains('collapsed')) {
+                closeSidebar();
             }
         }
     });
 }
 
-/* ============================================================
-   INIT - EXECUTAR TUDO QUANDO DOCUMENT ESTIVER PRONTO
-   ============================================================ */
+// ==========================================
+//  UTILIDADES
+// ==========================================
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Temas
-    initTheme();
-    
-    // Sidebar
-    restoreSidebarState();
-    closeSidebarOnLinkClick();
-    initResponsiveSidebar();
-    
-    // Alerts e confirmações
-    initAlerts();
-    initDeleteConfirmations();
-    
-    console.log('✅ ERP Core JS inicializado com sucesso!');
-});
+function formatCurrency(value) {
+    if (value === null || value === undefined) return 'R$ 0,00';
+    return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+    }).format(value);
+}
 
-/* ============================================================
-   EVENT LISTENER PARA REINICIAR ALERTS (AJAX, etc)
-   ============================================================ */
+function formatDate(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR');
+}
 
-document.addEventListener('contentUpdated', function() {
-    initAlerts();
-    initDeleteConfirmations();
-});
+function formatDateTime(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleString('pt-BR');
+}
+
+function copyToClipboard(text) {
+    if (!text) {
+        console.warn('Nenhum texto para copiar');
+        return;
+    }
+    
+    navigator.clipboard.writeText(text).then(() => {
+        console.log('Copiado para clipboard!');
+    }).catch(err => {
+        console.error('Erro ao copiar:', err);
+    });
+}
+
+function confirmDelete(message = 'Tem certeza que deseja deletar? Esta acao nao pode ser desfeita.') {
+    return confirm(message);
+}
+
+function showNotification(message, type = 'info', duration = 3000) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-' + type;
+    alertDiv.textContent = message;
+    alertDiv.style.animation = 'slideIn 0.3s ease';
+    
+    const main = document.getElementById('main');
+    if (main) {
+        main.insertBefore(alertDiv, main.firstChild);
+        
+        setTimeout(() => {
+            alertDiv.style.animation = 'slideOut 0.3s ease';
+            setTimeout(() => alertDiv.remove(), 300);
+        }, duration);
+    }
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction() {
+        const args = arguments;
+        const later = () => {
+            clearTimeout(timeout);
+            func.apply(this, args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// ==========================================
+//  EXPORTAR PARA GLOBAL
+// ==========================================
+
+window.toggleTheme = toggleTheme;
+window.toggleSidebar = toggleSidebar;
+window.openSidebar = openSidebar;
+window.closeSidebar = closeSidebar;
+window.formatCurrency = formatCurrency;
+window.formatDate = formatDate;
+window.formatDateTime = formatDateTime;
+window.copyToClipboard = copyToClipboard;
+window.confirmDelete = confirmDelete;
+window.showNotification = showNotification;
+window.debounce = debounce;

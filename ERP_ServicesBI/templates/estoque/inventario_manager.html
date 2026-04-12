@@ -769,7 +769,7 @@ html[data-theme="dark"] .data-table tbody tr:hover {
         <h1>CONTAGEM DE INVENTÁRIO</h1>
         <p>{{ inventario.numero }} - {{ inventario.deposito.nome|default:"Sem depósito" }}</p>
     </div>
-    <a href="{% url 'ERP_ServicesBI:inventario_list' %}" class="erp-btn erp-btn--secondary">
+    <a href="{% url 'ERP_ServicesBI:inventario_manager' %}" class="erp-btn erp-btn--secondary">
         ← Voltar para lista
     </a>
 </div>
@@ -849,7 +849,7 @@ html[data-theme="dark"] .data-table tbody tr:hover {
 
     {% if inventario.status != 'concluido' %}
     <div class="contagem-actions">
-        <a href="{% url 'ERP_ServicesBI:inventario_list' %}" class="erp-btn erp-btn--secondary">
+        <a href="{% url 'ERP_ServicesBI:inventario_manager' %}" class="erp-btn erp-btn--secondary">
             Voltar
         </a>
         <form method="post" action="{% url 'ERP_ServicesBI:inventario_finalizar' inventario.id %}" style="display: inline;">
@@ -962,7 +962,7 @@ html[data-theme="dark"] .data-table tbody tr:hover {
     </div>
 
     {% if search or deposito_id or status %}
-    <a href="{% url 'ERP_ServicesBI:inventario_list' %}" class="erp-btn erp-btn--secondary">
+    <a href="{% url 'ERP_ServicesBI:inventario_manager' %}" class="erp-btn erp-btn--secondary">
         Limpar
     </a>
     {% endif %}
@@ -1003,7 +1003,7 @@ html[data-theme="dark"] .data-table tbody tr:hover {
                 <td class="col-itens">{{ inv.itens.count }}</td>
                 <td>
                     <div class="acoes">
-                        <a href="{% url 'ERP_ServicesBI:inventario_list' %}?contagem={{ inv.id }}" 
+                        <a href="{% url 'ERP_ServicesBI:inventario_manager' %}?contagem={{ inv.id }}" 
                            class="btn-acao btn-acao--contar" title="Realizar Contagem">
                             🔍
                         </a>
